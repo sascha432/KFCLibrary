@@ -12,7 +12,7 @@ class SemaphoreMutex
 {
 public:
     SemaphoreMutex() :
-        _locked(0),
+        _locked(0)
     {
         lock();
     }

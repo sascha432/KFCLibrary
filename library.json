@@ -5,47 +5,71 @@
         "name": "sascha lammers",
         "maintainer": true
     },
-    "frameworks": "arduino",
+    "repository":
+    {
+      "type": "git",
+      "url": "https://github.com/sascha432/KFCLibrary.git"
+    },
+    "frameworks": [
+        "espidf", 
+        "arduino"
+    ],
     "platforms": [
+        "atmelavr",
         "espressif8266",
         "espressif32"
     ],
-    "build": {
-        "srcFilter": [
-            "-<KFCBaseLibrary/src/mock/>",
-            "-<KFCBaseLibrary/src/VirtualPin/>"
-        ],
-        "build": {
-            "includeDir": [
-                "KFCBaseLibrary/include",
-                "KFCConfiguration/src",
-                "KFCEventScheduler/include",
-                "KFCGfx/include",
-                "KFCJson/include",
-                "KFCOpenWeather/src",
-                "KFCPinMonitor/src",
-                "KFCResetDetector/include",
-                "KFCRestApi",
-                "KFCSyslog/include",
-                "KFCSyslog/include",
-                "KFCWebFramework/include",
-                "stl_ext/include"
-            ],
-            "srcDir": [
-                "KFCBaseLibrary/src",
-                "KFCConfiguration/src",
-                "KFCEventScheduler/src",
-                "KFCGfx/src",
-                "KFCJson/src",
-                "KFCOpenWeather/src",
-                "KFCPinMonitor/src",
-                "KFCResetDetector/src",
-                "KFCRestApi",
-                "KFCSyslog/src",
-                "KFCWebBuilder/src",
-                "KFCWebFramework/src",
-                "stl_ext/src"
-            ]
+    "runnable": true,
+    "dependencies": [ 
+        {
+            "name": "libcrcc16",
+            "version": "https://github.com/sascha432/libcrc16.git#1.0.1"
         }
+    ],
+    "build": {
+        "srcDir": [
+            "../KFCBaseLibrary/include/*",
+            "../KFCConfiguration/src/*",
+            "./KFCEventScheduler/src/*"
+        ],
+        "flags": [
+            "-I../KFCBaseLibrary/include",
+            "-I../KFCConfiguration/src",
+            "-I../KFCEventScheduler/include",
+            "-I../KFCGfx/include",
+            "-I../KFCJson/include",
+            "-I../KFCOpenWeather/src",
+            "-I../KFCPinMonitor/src",
+            "-I../KFCResetDetector/include",
+            "-I../KFCRestApi",
+            "-I../KFCSyslog/include",
+            "-I../KFCSyslog/include",
+            "-I../KFCWebFramework/include",
+            "-I../../stl_ext/include",
+            "-D _POSIX_C_SOURCE=200809L",
+            "-D __GNU_VISIBLE=1",
+            "-D __MISC_VISIBLE=1",
+            "-D KFC_LIBRARY_VERSION 1003",
+            "-D DEBUG_OUTPUT=Serial"
+        ],
+        "srcFilter": [
+            "+<../KFCBaseLibrary/include/*>",
+            "+<../KFCConfiguration/src/*>",
+            "+<../KFCEventScheduler/src/*>",
+            "+<../KFCGfx/src>",
+            "+<../KFCJson/src>",
+            "+<../KFCOpenWeather/src>",
+            "+<../KFCPinMonitor/src>",
+            "+<../KFCResetDetector/src>",
+            "+<../KFCResetDetector/include>",
+            "+<../KFCRestApi>",
+            "+<../KFCSyslog/include>",
+            "+<../KFCSyslog/include>",
+            "+<../KFCWebFramework/include>",
+            "+<../stl_ext/include>",
+            "-<../KFCBaseLibrary/src/mock/>",
+            "-<../KFCBaseLibrary/src/VirtualPin/>"
+        ],
+        "libArchive": true
     }
 }

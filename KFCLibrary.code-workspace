@@ -9,6 +9,9 @@
 			"activityBar.background": "#34127E",
 			"titleBar.activeBackground": "#481AB0",
 			"titleBar.activeForeground": "#FBFAFE"
+		},
+		"files.associations": {
+			"algorithm": "cpp"
 		}
 	}
 }

@@ -563,8 +563,8 @@ constexpr size_t kGetRequiredBitsForValue(int64_t value, size_t count) {
 // get number of bits to store values between from and to
 constexpr size_t kGetRequiredBitsForRange(int64_t from, int64_t to) {
     return from < 0 || to < 0 ?
-        stdex::max(_kGetRequiredBitsForValue(static_cast<uint64_t>(-stdex::min<int64_t>(from, to)), 1), _kGetRequiredBitsForValue(-from + to + 1, from <= 0 && to <= 0 ? 0 : 1)) :
-        stdex::max(_kGetRequiredBitsForValue(stdex::max<uint64_t>(from, to), 0), _kGetRequiredBitsForValue(from + to));
+        std::max(_kGetRequiredBitsForValue(static_cast<uint64_t>(-std::min<int64_t>(from, to)), 1), _kGetRequiredBitsForValue(-from + to + 1, from <= 0 && to <= 0 ? 0 : 1)) :
+        std::max(_kGetRequiredBitsForValue(std::max<uint64_t>(from, to), 0), _kGetRequiredBitsForValue(from + to));
 }
 
 // get number of bits for values from 0 to (num - offset)
