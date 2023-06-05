@@ -57,9 +57,9 @@
       "+<../KFCOpenWeather/src>",
       "+<../KFCPinMonitor/src>",
       "+<../KFCResetDetector/src>",
-      "+<../KFCResetDetector/src>",
       "+<../KFCRestApi>",
       "+<../KFCSyslog/src>",
+      "+<../KFCWebBuilder/src>",
       "+<../KFCWebFramework/src>",
       "+<../stl_ext/src>"
     ],
