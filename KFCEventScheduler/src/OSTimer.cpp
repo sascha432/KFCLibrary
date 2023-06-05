@@ -11,12 +11,6 @@
 #    pragma GCC optimize("O3")
 #endif
 
-#if ESP32
-
-ETSTimerEx::ETSTimerExTimerVector &ETSTimerEx::_timers;
-
-#endif
-
 void ICACHE_FLASH_ATTR OSTimer::_OSTimerCallback(OSTimer *timer)
 {
     MUTEX_LOCK_BLOCK(timer->getLock()) {
