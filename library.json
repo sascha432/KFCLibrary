@@ -34,7 +34,7 @@
       "-I./KFCEventScheduler/include",
       "-I./KFCGfx/include",
       "-I./KFCJson/include",
-      "-I./KFCOpenWeather/src",
+      "-I./KFCOpenWeather/include",
       "-I./KFCPinMonitor/src",
       "-I./KFCResetDetector/include",
       "-I./KFCRestApi",
@@ -49,19 +49,19 @@
       "-D DEBUG_OUTPUT=Serial"
     ],
     "srcFilter": [
-      "+<../KFCBaseLibrary/src>",
-      "+<../KFCConfiguration/src>",
-      "+<../KFCEventScheduler/src>",
-      "+<../KFCGfx/src>",
-      "+<../KFCJson/src>",
-      "+<../KFCOpenWeather/src>",
-      "+<../KFCPinMonitor/src>",
-      "+<../KFCResetDetector/src>",
-      "+<../KFCRestApi>",
-      "+<../KFCSyslog/src>",
-      "+<../KFCWebBuilder/src>",
-      "+<../KFCWebFramework/src>",
-      "+<../stl_ext/src>"
+      "+<./KFCBaseLibrary/src>",
+      "+<./KFCConfiguration/src>",
+      "+<./KFCEventScheduler/src>",
+      "+<./KFCJson/src>",
+      "+<./KFCOpenWeather/src>",
+      "+<./KFCPinMonitor/src>",
+      "+<./KFCResetDetector/src>",
+      "+<./KFCRestApi>",
+      "+<./KFCSyslog/src>",
+      "+<./KFCWebBuilder/src>",
+      "+<./KFCWebFramework/src>",
+      "+<./stl_ext/src>",
+      "-<./KFCGfx/src>"
     ],
     "libArchive": true
   }
