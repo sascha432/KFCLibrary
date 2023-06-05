@@ -218,7 +218,7 @@ private:
             }
         };
 
-        static RtcTimer &_rtcTimer;
+        static RtcTimer _rtcTimer;
     #endif
 };
 

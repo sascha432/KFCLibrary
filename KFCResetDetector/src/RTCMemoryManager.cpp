@@ -39,6 +39,10 @@
 #    include <user_interface.h>
 #endif
 
+#if RTC_SUPPORT == 0
+    RTCMemoryManager::RtcTimer RTCMemoryManager::_rtcTimer;
+#endif
+
 namespace RTCMemoryManagerNS {
 
     #if ESP8266

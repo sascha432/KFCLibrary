@@ -43,13 +43,6 @@ namespace PluginComponents {
 
 }
 
-#if RTC_SUPPORT == 0
-    using RtcTimerUninitialized = stdex::UninitializedClass<RTCMemoryManager::RtcTimer>;
-    static RtcTimerUninitialized rtcTimerNoInit __attribute__((section(".noinit")));
-
-    RTCMemoryManager::RtcTimer &RTCMemoryManager::_rtcTimer = rtcTimerNoInit._object;
-#endif
-
 #if ENABLE_DEEP_SLEEP
 
     using DeepSleepPinStateUninitialized = stdex::UninitializedClass<DeepSleep::PinState>;
@@ -101,9 +94,6 @@ void reset_detector_setup_global_ctors()
         deepSleepParamNoInit.init();
     #endif
     rtcMemoryLockNoInit.init();
-    #if RTC_SUPPORT == 0
-        rtcTimerNoInit.init();
-    #endif
     resetDetectorNoInit.init();
     pluginsVectorNoInit.init();
     pluginRegisterNoInit.init();
