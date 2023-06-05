@@ -1,17 +1,17 @@
 {
-	"folders": [
-		{
-			"path": "."
-		}
-	],
-	"settings": {
-		"workbench.colorCustomizations": {
-			"activityBar.background": "#34127E",
-			"titleBar.activeBackground": "#481AB0",
-			"titleBar.activeForeground": "#FBFAFE"
-		},
-		"files.associations": {
-			"algorithm": "cpp"
-		}
-	}
+    "folders": [
+        {
+            "path": "."
+        }
+    ],
+    "settings": {
+        "workbench.colorCustomizations": {
+            "activityBar.background": "#34127E",
+            "titleBar.activeBackground": "#481AB0",
+            "titleBar.activeForeground": "#FBFAFE"
+        },
+        "files.associations": {
+            "algorithm": "cpp"
+        }
+    }
 }

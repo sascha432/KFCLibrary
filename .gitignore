@@ -1,0 +1,5 @@
+.pio/
+.vscode/
+.vs/
+builder.log
+web_builder.hash
