@@ -48,7 +48,21 @@ def build_webui(source, target, env, force = False):
             php_bin = 'php'
     php_bin = which(php_bin);
 
-    php_file = env_abspath(env, '$PROJECT_DIR/lib/KFCWebBuilder/bin/include/cli_tool.php')
+    src = os.path.abspath(env.subst("$PROJECT_LIBDEPS_DIR/$PIOENV/KFCLibrary"))
+    lib_dst = os.path.abspath(env.subst("$PROJECT_DIR/lib/KFCLibrary"))
+    if platform.system() == 'Windows':
+        a = [ 'mklink', '/J', lib_dst, src ]
+        return_code = subprocess.run(a, shell=True).returncode
+    else:
+        try:
+            os.symlink(src, lib_dst, target_is_directory=True)
+            return_code = 0
+        except:
+            return_code = 1
+    if return_code:
+        click.secho('Failed to create symlink: [%u] %s -> %s\nMake sure this links to the current library' % (return_code, src, lib_dst), fg='yellow')
+
+    php_file = env_abspath(env, '$PROJECT_LIBDEPS_DIR/$PIOENV/KFCLibrary/KFCWebBuilder/bin/include/cli_tool.php')
     json_file = env_abspath(env, '$PROJECT_DIR/KFCWebBuilder.json')
 
     build = extract_re([r'#define\s+__BUILD_NUMBER\s+"(?P<build>[0-9]+)"'], env_abspath(env, '$PROJECT_DIR/include/build.h'))
@@ -131,6 +145,8 @@ def build_webui(source, target, env, force = False):
         click.secho('failed to run: %s' % cli_cmd)
         print()
         env.Exit(1)
+
+    os.unlink(lib_dst)
 
 def rebuild_webui(source, target, env):
     build_webui(source, target, env, True)
