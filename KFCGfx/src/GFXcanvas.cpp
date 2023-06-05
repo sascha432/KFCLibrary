@@ -2,6 +2,8 @@
  * Author: sascha_lammers@gmx.de
  */
 
+#if HAVE_KFCGFXLIB
+
 #include "GFXCanvasConfig.h"
 #include <Arduino_compat.h>
 
@@ -21,3 +23,5 @@ namespace GFXCanvas {
 }
 
 #pragma GCC pop_options
+
+#endif

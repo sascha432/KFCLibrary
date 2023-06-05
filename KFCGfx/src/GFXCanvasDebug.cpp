@@ -2,6 +2,8 @@
 * Author: sascha_lammers@gmx.de
 */
 
+#if HAVE_KFCGFXLIB
+
 #include <Arduino_compat.h>
 #include <PrintString.h>
 #if LOGGER
@@ -39,5 +41,7 @@ bool __debug_GFXCanvasBounds_printf(const DebugContext &p, const char *format, .
 #endif
     return true;
 }
+
+#endif
 
 #endif

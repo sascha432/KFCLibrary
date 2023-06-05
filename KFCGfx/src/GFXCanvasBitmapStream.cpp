@@ -2,6 +2,8 @@
 * Author: sascha_lammers@gmx.de
 */
 
+#if HAVE_KFCGFXLIB
+
 // http://www.daubnet.com/en/file-format-bmp
 
 #include <Arduino_compat.h>
@@ -139,3 +141,5 @@ void GFXCanvasBitmapStream::_createHeader()
 }
 
 #pragma GCC pop_options
+
+#endif

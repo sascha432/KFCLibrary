@@ -2,6 +2,7 @@
 * Author: sascha_lammers@gmx.de
 */
 
+#if HAVE_KFCGFXLIB
 
 #include <Arduino_compat.h>
 #include <debug_helper.h>
@@ -148,3 +149,5 @@ Cache &SingleLineCache::get(GFXCanvasCompressed &canvas, sYType y)
 }
 
 #pragma GCC pop_options
+
+#endif

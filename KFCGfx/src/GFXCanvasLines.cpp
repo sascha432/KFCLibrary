@@ -2,6 +2,8 @@
 * Author: sascha_lammers@gmx.de
 */
 
+#if HAVE_KFCGFXLIB
+
 #include <Arduino_compat.h>
 #include "GFXCanvasConfig.h"
 
@@ -49,3 +51,4 @@ Lines::~Lines()
 
 #pragma GCC pop_options
 
+#endif

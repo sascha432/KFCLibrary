@@ -2,6 +2,8 @@
 * Author: sascha_lammers@gmx.de
 */
 
+#if HAVE_KFCGFXLIB
+
 #include "AsyncBitmapStreamResponse.h"
 #include "GFXCanvasConfig.h"
 #include <debug_helper_disable.h>
@@ -21,3 +23,5 @@ size_t AsyncBitmapStreamResponse::_fillBuffer(uint8_t* buf, size_t maxLen)
     }
     return maxLen;
 }
+
+#endif

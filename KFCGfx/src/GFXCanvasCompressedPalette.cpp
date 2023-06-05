@@ -2,6 +2,7 @@
 * Author: sascha_lammers@gmx.de
 */
 
+#if HAVE_KFCGFXLIB
 
 #include <Arduino_compat.h>
 #include "GFXCanvasConfig.h"
@@ -116,3 +117,5 @@ void GFXCanvasCompressedPalette::_RLEencode(ColorType *data, Buffer &buffer)
 }
 
 #pragma GCC pop_options
+
+#endif
