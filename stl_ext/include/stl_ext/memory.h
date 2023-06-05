@@ -85,7 +85,6 @@ namespace STL_STD_EXT_NAMESPACE_EX {
         __attribute__((__always_inline__))
         inline void init(_Args... args)
         {
-            // ::new(static_cast<void *>(&_object)) _T(args...);
             new_at(&_object, args...);
         }
         
