@@ -27,7 +27,7 @@
   ],
   "build": {
     "srcDir": ".",
-    "extraScript": "./KFCWebBuilder/scripts/extra_script.py",
+    "extraScript": "./scripts/extra_script.py",
     "flags": [
       "-I./KFCBaseLibrary/include",
       "-I./KFCConfiguration/include",
@@ -60,8 +60,8 @@
       "+<./KFCSyslog/src>",
       "+<./KFCWebBuilder/src>",
       "+<./KFCWebFramework/src>",
-      "+<./stl_ext/src>",
-      "-<./KFCGfx/src>"
+      "+<./KFCGfx/src>",
+      "+<./stl_ext/src>"
     ],
     "libArchive": true
   }
