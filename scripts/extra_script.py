@@ -15,6 +15,8 @@ from datetime import datetime
 import platform
 from shutil import which
 
+# NOTE: Single extra script per library.json
+
 symlinks = []
 
 def extract_re(regex, filename):
