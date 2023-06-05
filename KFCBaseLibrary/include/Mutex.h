@@ -22,7 +22,10 @@
 class MutexLock
 {
 public:
-    MutexLock(SemaphoreMutex &pLock, bool performInitialLock = true) : _lock(pLock), _locked(performInitialLock ? lock() : 0) {
+    MutexLock(SemaphoreMutex &pLock, bool performInitialLock = true) : _lock(pLock), _locked(0) {
+        if (performInitialLock) {
+            lock();
+        }
     }
     ~MutexLock() {
         if (_locked) {
@@ -50,7 +53,10 @@ public:
 class MutexLockRecursive
 {
 public:
-    MutexLockRecursive(SemaphoreMutexRecursive &pLock, bool performInitialLock = true) : _lock(pLock), _locked(performInitialLock ? lock() : 0) {
+    MutexLockRecursive(SemaphoreMutexRecursive &pLock, bool performInitialLock = true) : _lock(pLock), _locked(0) {
+        if (performInitialLock) {
+            lock();
+        }
     }
     ~MutexLockRecursive() {
         unlockAll();
