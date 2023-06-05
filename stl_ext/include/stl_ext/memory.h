@@ -18,17 +18,16 @@ namespace STL_STD_EXT_NAMESPACE_EX {
 #undef new
 
     // create an object inside any writable and executable memory area
-    template<typename _Ta>
-    inline static void new_at(void *ptr)
+    template<typename _Ta, class... _Args>
+    inline static void new_at(_Ta *ptr, _Args... args)
     {
-        ::new(ptr) _Ta();
-
+        ::new(static_cast<void *>(ptr)) _Ta(args...);
     }
 
-    template<typename _Ta>
-    inline static void new_at(_Ta &obj)
+    template<typename _Ta, class... _Args>
+    inline static void new_at(_Ta &obj, _Args... args)
     {
-        ::new(static_cast<void *>(std::addressof(obj))) _Ta();
+        ::new(static_cast<void *>(std::addressof(obj))) _Ta(args...);
 
     }
 
@@ -82,12 +81,14 @@ namespace STL_STD_EXT_NAMESPACE_EX {
         ~UninitializedClass() {}
 
         // init() must be called for each uninitialized object
+        template<class... _Args>
         __attribute__((__always_inline__))
-        inline void init()
+        inline void init(_Args... args)
         {
-            new_at<_T>(&_object);
+            // ::new(static_cast<void *>(&_object)) _T(args...);
+            new_at(&_object, args...);
         }
-
+        
     };
 
 }
