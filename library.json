@@ -1,6 +1,3 @@
-/ 20230605022257
-// https://raw.githubusercontent.com/sascha432/KFCLibrary/main/library.json
-
 {
   "name": "KFCLibrary",
   "version": "0.1.3",
@@ -30,13 +27,13 @@
   ],
   "build": {
     "srcDir": [
-      "../KFCBaseLibrary/include/*",
-      "../KFCConfiguration/src/*",
+      "./KFCBaseLibrary/src/*",
+      "./KFCConfiguration/src/*",
       "./KFCEventScheduler/src/*"
     ],
     "flags": [
       "-I../KFCBaseLibrary/include",
-      "-I../KFCConfiguration/src",
+      "-I../KFCConfiguration/include",
       "-I../KFCEventScheduler/include",
       "-I../KFCGfx/include",
       "-I../KFCJson/include",
