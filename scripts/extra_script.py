@@ -150,7 +150,7 @@ def build_webui(source, target, env, force = False):
         print()
         env.Exit(1)
 
-    os.unlink(lib_dst)
+    # os.unlink(lib_dst)
 
 def rebuild_webui(source, target, env):
     build_webui(source, target, env, True)
