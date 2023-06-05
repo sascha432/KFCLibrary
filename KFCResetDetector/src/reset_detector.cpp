@@ -8,6 +8,9 @@
 #include <LoopFunctions.h>
 #include <PluginComponent.h>
 #include <plugins_menu.h>
+#include <RTCMemoryManager.h>
+#include <OSTimer.h>
+#include <deep_sleep.h>
 #include <PrintHtmlEntitiesString.h>
 #include "save_crash.h"
 #if IOT_SWITCH
@@ -18,29 +21,109 @@
 #    include "debug_pre_setup.h"
 #endif
 
-ResetDetector resetDetector; // __attribute__((section(".noinit")));
+using ResetDetectorUninitialized = stdex::UninitializedClass<ResetDetector>;
+static ResetDetectorUninitialized resetDetectorNoInit __attribute__((section(".noinit")));
+ResetDetector &resetDetector = resetDetectorNoInit._object;
+
+using PluginsVectorUninitialized = stdex::UninitializedClass<PluginComponents::PluginsVector>;
+static PluginsVectorUninitialized pluginsVectorNoInit __attribute__((section(".noinit")));
+
+using PluginRegisterUninitialized = stdex::UninitializedClass<PluginComponents::RegisterEx>;
+static PluginRegisterUninitialized pluginRegisterNoInit __attribute__((section(".noinit")));
+
+using RtcMemoryLockUninitialized = stdex::UninitializedClass<SemaphoreMutexStatic>;
+static RtcMemoryLockUninitialized rtcMemoryLockNoInit __attribute__((section(".noinit")));
+
+SemaphoreMutexStatic &RTCMemoryManager::_lock = rtcMemoryLockNoInit._object;
+
+namespace PluginComponents {
+
+    PluginsVector &_plugins = pluginsVectorNoInit._object;
+    RegisterEx &_pluginRegister = pluginRegisterNoInit._object;
+
+}
+
+#if RTC_SUPPORT == 0
+    using RtcTimerUninitialized = stdex::UninitializedClass<RTCMemoryManager::RtcTimer>;
+    static RtcTimerUninitialized rtcTimerNoInit __attribute__((section(".noinit")));
+
+    RTCMemoryManager::RtcTimer &RTCMemoryManager::_rtcTimer = rtcTimerNoInit._object;
+#endif
+
+#if ENABLE_DEEP_SLEEP
+
+    using DeepSleepPinStateUninitialized = stdex::UninitializedClass<DeepSleep::PinState>;
+    static DeepSleepPinStateUninitialized deepSleepPinStateNoInit __attribute__((section(".noinit")));
+
+    using DeepSleepParamUninitialized = stdex::UninitializedClass<DeepSleepParam>;
+    static DeepSleepParamUninitialized deepSleepParamNoInit __attribute__((section(".noinit")));
+
+    namespace DeepSleep {
+        PinState &deepSleepPinState = deepSleepPinStateNoInit._object;
+        DeepSleepParam &deepSleepParams = deepSleepParamNoInit._object;
+    }
+
+#endif
+
+#if ESP32
+
+    using ETSTimerExTimersUninitialized = stdex::UninitializedClass<ETSTimerEx::ETSTimerExTimerVector>;
+    static ETSTimerExTimersUninitialized timersNoInit __attribute__((section(".noinit")));
+
+    ETSTimerEx::ETSTimerExTimerVector &ETSTimerEx::_timers = timersNoInit._object;
+
+#endif
 
 //
-// main function that initializes all objects that are used before the memory is wiped out
+// separate function to initialize objects before the global c'tor function is executed
 //
-static int kfc_setup_done = 0;
+// must be defined as UninitializedClass<CLASS> and use a pointer or reference
+//
+// using ResetDetectorUninitialized = stdex::UninitializedClass<ResetDetector>;
+// static ResetDetectorUninitialized resetDetectorNoInit __attribute__((section(".noinit")));
+// ResetDetector &resetDetector = resetDetectorNoInit._object;
+//
+static int global_ctors = 0;
 
-void kfc_setup()
+void reset_detector_setup_global_ctors()
 {
     __LDBG_printf("kfc_setup calls=%d\n", kfc_setup_done);
-    if (kfc_setup_done++) {
+    if (global_ctors++) {
         return;
     }
 
     #if ESP32
-        stdex::new_at(ETSTimerEx::_timers);
+        rtcTimerNoInit.init();
     #endif
-    stdex::new_at(RTCMemoryManager::_lock);
-    stdex::new_at(RTCMemoryManager::_rtcTimer);
-    // stdex::new_at(resetDetector);
-    stdex::new_at(PluginComponents::_pluginRegister);
+    #if ENABLE_DEEP_SLEEP
+        DeepSleep::enableWiFiOnBoot = false;
+        deepSleepPinStateNoInit.init();
+        deepSleepParamNoInit.init();
+    #endif
+    rtcMemoryLockNoInit.init();
+    #if RTC_SUPPORT == 0
+        rtcTimerNoInit.init();
+    #endif
+    resetDetectorNoInit.init();
+    pluginsVectorNoInit.init();
+    pluginRegisterNoInit.init();
     resetDetector.begin();
+    #if ENABLE_DEEP_SLEEP
+        DeepSleep::preinit();
+        #warning this has not been tested yet
+    #endif
 }
+
+#if ESP8266
+extern "C" void preinit(void) {
+    reset_detector_setup_global_ctors();
+}
+#endif
+#if ESP32
+extern "C" init() {
+    reset_detector_setup_global_ctors();
+}
+#endif
 
 ResetDetector::ResetDetector()
 {
@@ -48,7 +131,6 @@ ResetDetector::ResetDetector()
     #if ESP8266 && DEBUG_RESET_DETECTOR
         _uart = nullptr;
     #endif
-    kfc_setup();
 }
 
 void ResetDetector::end()
@@ -149,9 +231,11 @@ void ResetDetector::begin()
     _writeData();
 
     #if ESP8266
+        // ets_timer_* seems to be ready at this point
         armTimer();
     #elif ESP32
         // the timer must be started in setup()
+        // calling it before will cause an exception
     #endif
 
     #if IOT_SWITCH && IOT_SWITCH_STORE_STATES_RTC_MEM

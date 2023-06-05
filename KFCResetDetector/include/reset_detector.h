@@ -58,8 +58,6 @@
 #    include <debug_helper.h>
 #    include <plugins.h>
 
-extern void kfc_setup();
-
 class ResetDetector {
 public:
     using Reason_t = uint8_t;
@@ -177,7 +175,9 @@ public:
 
 class HardwareSerial;
 
-extern ResetDetector resetDetector;
+extern ResetDetector &resetDetector;
+
+extern "C" void reset_detector_setup_global_ctors();
 
 #    if RESET_DETECTOR_INCLUDE_HPP_INLINE
 #        include "reset_detector.hpp"

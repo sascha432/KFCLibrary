@@ -189,7 +189,8 @@ struct ETSTimerEx
         bool _running;
         bool _locked;
 
-        static std::list<ETSTimerEx *> _timers;
+        using ETSTimerExTimerVector = std::list<ETSTimerEx *>;
+        static ETSTimerExTimerVector &_timers;
 
     #elif ESP8266 || _MSC_VER
 

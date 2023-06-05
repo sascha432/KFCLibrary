@@ -39,18 +39,6 @@
 #    include <user_interface.h>
 #endif
 
-#if ENABLE_DEEP_SLEEP
-namespace DeepSleep {
-    extern "C" uint64_t _realTimeOffset;
-}
-#endif
-
-SemaphoreMutexStatic RTCMemoryManager::_lock __attribute__((section(".noinit")));
-
-#if RTC_SUPPORT == 0
-    RTCMemoryManager::RtcTimer RTCMemoryManager::_rtcTimer __attribute__((section(".noinit")));
-#endif
-
 namespace RTCMemoryManagerNS {
 
     #if ESP8266

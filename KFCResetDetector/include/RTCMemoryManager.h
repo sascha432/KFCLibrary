@@ -177,7 +177,7 @@ public:
 
     static bool dump(Print &output, RTCMemoryId id);
 
-    static SemaphoreMutexStatic _lock;
+    static SemaphoreMutexStatic &_lock;
 
 private:
     static bool _readHeader(Header_t &header);
@@ -218,7 +218,7 @@ private:
             }
         };
 
-        static RtcTimer _rtcTimer;
+        static RtcTimer &_rtcTimer;
     #endif
 };
 

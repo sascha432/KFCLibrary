@@ -13,7 +13,7 @@
 
 #if ESP32
 
-std::list<ETSTimerEx *> ETSTimerEx::_timers;
+ETSTimerEx::ETSTimerExTimerVector &ETSTimerEx::_timers;
 
 #endif
 
