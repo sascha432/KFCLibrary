@@ -38,7 +38,7 @@ void kfc_setup()
     stdex::new_at(RTCMemoryManager::_lock);
     stdex::new_at(RTCMemoryManager::_rtcTimer);
     // stdex::new_at(resetDetector);
-    stdex::new_at(PluginComponents::_plugins);
+    stdex::new_at(PluginComponents::_pluginRegister);
     resetDetector.begin();
 }
 
