@@ -21,8 +21,8 @@
   "runnable": true,
   "dependencies": [
     {
-      "name": "libcrcc16",
-      "version": "https://github.com/sascha432/libcrc16.git#1.0.1"
+      "name": "libcrc16",
+      "version": "https://github.com/sascha432/libcrc16.git"
     }
   ],
   "build": {
@@ -45,7 +45,7 @@
       "-D _POSIX_C_SOURCE=200809L",
       "-D __GNU_VISIBLE=1",
       "-D __MISC_VISIBLE=1",
-      "-D KFC_LIBRARY_VERSION 1003",
+      "-D KFC_LIBRARY_VERSION=1003",
       "-D DEBUG_OUTPUT=Serial"
     ],
     "srcFilter": [
