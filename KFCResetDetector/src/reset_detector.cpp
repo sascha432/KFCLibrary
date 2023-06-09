@@ -22,143 +22,96 @@
 #    include "debug_pre_setup.h"
 #endif
 
-#if ESP8266
+//
+// separate function to initialize objects before the global c'tor function is executed
+//
+// must be defined as UninitializedClass<CLASS> and use a pointer or reference
+//
+// using ResetDetectorUninitialized = stdex::UninitializedClass<ResetDetector>;
+// static ResetDetectorUninitialized resetDetectorNoInit __attribute__((section(".noinit")));
+// ResetDetector &resetDetector = resetDetectorNoInit._object;
+//
+// all other c'tors are initialized in reverse order by do_global_ctors(void) in core_esp8266_main.cpp or esp_system/startup.c
 
-    using ResetDetectorUninitialized = stdex::UninitializedClass<ResetDetector>;
-    static ResetDetectorUninitialized resetDetectorNoInit __attribute__((section(".noinit")));
-    ResetDetector &resetDetector = resetDetectorNoInit._object;
+using ResetDetectorUninitialized = stdex::UninitializedClass<ResetDetector>;
+static ResetDetectorUninitialized resetDetectorNoInit __attribute__((section(".noinit")));
+ResetDetector &resetDetector = resetDetectorNoInit._object;
 
-    using HardwareSerialUninitialized = stdex::UninitializedClass<HardwareSerial>;
-    static HardwareSerialUninitialized serial0NoInit __attribute__((section(".noinit")));
-    HardwareSerial &Serial0 = serial0NoInit._object;
+using PluginsVectorUninitialized = stdex::UninitializedClass<PluginComponents::PluginsVector>;
+static PluginsVectorUninitialized pluginsVectorNoInit __attribute__((section(".noinit")));
 
-    using SerialWrapperUninitialized = stdex::UninitializedClass<SerialHandler::Wrapper>;
-    static SerialWrapperUninitialized serialWrapperNoInit __attribute__((section(".noinit")));
-    SerialHandler::Wrapper &serialHandler = serialWrapperNoInit._object;
+using PluginRegisterUninitialized = stdex::UninitializedClass<PluginComponents::RegisterEx>;
+static PluginRegisterUninitialized pluginRegisterNoInit __attribute__((section(".noinit")));
 
-    using PluginsVectorUninitialized = stdex::UninitializedClass<PluginComponents::PluginsVector>;
-    static PluginsVectorUninitialized pluginsVectorNoInit __attribute__((section(".noinit")));
+using RtcMemoryLockUninitialized = stdex::UninitializedClass<SemaphoreMutexStatic>;
+static RtcMemoryLockUninitialized rtcMemoryLockNoInit __attribute__((section(".noinit")));
 
-    using PluginRegisterUninitialized = stdex::UninitializedClass<PluginComponents::RegisterEx>;
-    static PluginRegisterUninitialized pluginRegisterNoInit __attribute__((section(".noinit")));
+SemaphoreMutexStatic &RTCMemoryManager::_lock = rtcMemoryLockNoInit._object;
 
-    using RtcMemoryLockUninitialized = stdex::UninitializedClass<SemaphoreMutexStatic>;
-    static RtcMemoryLockUninitialized rtcMemoryLockNoInit __attribute__((section(".noinit")));
+namespace PluginComponents {
 
-    SemaphoreMutexStatic &RTCMemoryManager::_lock = rtcMemoryLockNoInit._object;
+    PluginsVector &_plugins = pluginsVectorNoInit._object;
+    RegisterEx &_pluginRegister = pluginRegisterNoInit._object;
 
-    namespace PluginComponents {
+}
 
-        PluginsVector &_plugins = pluginsVectorNoInit._object;
-        RegisterEx &_pluginRegister = pluginRegisterNoInit._object;
+#if ENABLE_DEEP_SLEEP
 
+    using DeepSleepPinStateUninitialized = stdex::UninitializedClass<DeepSleep::PinState>;
+    static DeepSleepPinStateUninitialized deepSleepPinStateNoInit __attribute__((section(".noinit")));
+
+    using DeepSleepParamUninitialized = stdex::UninitializedClass<DeepSleepParam>;
+    static DeepSleepParamUninitialized deepSleepParamNoInit __attribute__((section(".noinit")));
+
+    namespace DeepSleep {
+        PinState &deepSleepPinState = deepSleepPinStateNoInit._object;
+        DeepSleepParam &deepSleepParams = deepSleepParamNoInit._object;
     }
 
-    #if ENABLE_DEEP_SLEEP
+#endif
 
-        using DeepSleepPinStateUninitialized = stdex::UninitializedClass<DeepSleep::PinState>;
-        static DeepSleepPinStateUninitialized deepSleepPinStateNoInit __attribute__((section(".noinit")));
+#if ESP32
 
-        using DeepSleepParamUninitialized = stdex::UninitializedClass<DeepSleepParam>;
-        static DeepSleepParamUninitialized deepSleepParamNoInit __attribute__((section(".noinit")));
+    using ETSTimerExTimersUninitialized = stdex::UninitializedClass<ETSTimerEx::ETSTimerExTimerVector>;
+    static ETSTimerExTimersUninitialized timersNoInit __attribute__((section(".noinit")));
 
-        namespace DeepSleep {
-            PinState &deepSleepPinState = deepSleepPinStateNoInit._object;
-            DeepSleepParam &deepSleepParams = deepSleepParamNoInit._object;
+    ETSTimerEx::ETSTimerExTimerVector &ETSTimerEx::_timers = timersNoInit._object;
+
+#endif
+
+#if DEBUG_RESET_DETECTOR || ESP32
+    uint32_t reset_detector_setup_global_ctors_counter = 0;
+#endif
+
+// needs to be called from preinit()
+void reset_detector_setup_global_ctors()
+{
+    #if DEBUG_RESET_DETECTOR || ESP32
+        reset_detector_setup_global_ctors_counter++;
+        __LDBG_printf("reset_detector_setup_global_ctors=%u", reset_detector_setup_global_ctors_counter);
+        if (reset_detector_setup_global_ctors_counter > 1) {
+            return;
         }
-
     #endif
 
     #if ESP32
-
-        using ETSTimerExTimersUninitialized = stdex::UninitializedClass<ETSTimerEx::ETSTimerExTimerVector>;
-        static ETSTimerExTimersUninitialized timersNoInit __attribute__((section(".noinit")));
-
-        ETSTimerEx::ETSTimerExTimerVector &ETSTimerEx::_timers = timersNoInit._object;
-
+        timersNoInit.ctor();
     #endif
-
-    //
-    // separate function to initialize objects before the global c'tor function is executed
-    //
-    // must be defined as UninitializedClass<CLASS> and use a pointer or reference
-    //
-    // using ResetDetectorUninitialized = stdex::UninitializedClass<ResetDetector>;
-    // static ResetDetectorUninitialized resetDetectorNoInit __attribute__((section(".noinit")));
-    // ResetDetector &resetDetector = resetDetectorNoInit._object;
-    //
-
-    #if DEBUG_RESET_DETECTOR
-        int reset_detector_setup_global_ctors_counter = 0;
-    #endif
-
-    // needs to be called from preinit()
-    void reset_detector_setup_global_ctors()
-    {
-        #if DEBUG_RESET_DETECTOR
-            reset_detector_setup_global_ctors_counter++;
-            __LDBG_printf("reset_detector_setup_global_ctors");
-        #endif
-
-        serial0NoInit.init(UART0);
-        serialWrapperNoInit.init(&Serial0);
-        #if ESP32
-            timersNoInit.init();
-        #endif
-        #if ENABLE_DEEP_SLEEP
-            DeepSleep::enableWiFiOnBoot = false;
-            deepSleepPinStateNoInit.init();
-            deepSleepParamNoInit.init();
-        #endif
-        rtcMemoryLockNoInit.init();
-        resetDetectorNoInit.init();
-        pluginsVectorNoInit.init();
-        pluginRegisterNoInit.init();
-        resetDetector.begin();
-        #if ENABLE_DEEP_SLEEP
-            DeepSleep::preinit();
-            #warning this has not been tested yet
-        #endif
-    }
-
-#elif ESP32
-
-    // ESP32 does not use the same c'tor initialization method
-
-    static ResetDetector resetDetectorNoInit;
-    ResetDetector &resetDetector = resetDetectorNoInit;
-
-    static PluginComponents::PluginsVector pluginsVectorNoInit;
-
-    static PluginComponents::RegisterEx pluginRegisterNoInit;
-
-    static SemaphoreMutexStatic rtcMemoryLockNoInit;
-    SemaphoreMutexStatic &RTCMemoryManager::_lock = rtcMemoryLockNoInit;
-
-    namespace PluginComponents {
-
-        PluginsVector &_plugins = pluginsVectorNoInit;
-        RegisterEx &_pluginRegister = pluginRegisterNoInit;
-
-    }
-
     #if ENABLE_DEEP_SLEEP
-
-        static DeepSleep::PinState deepSleepPinStateNoInit;
-
-        static DeepSleepParam deepSleepParamNoInit;
-
-        namespace DeepSleep {
-            PinState &deepSleepPinState = deepSleepPinStateNoInit;
-            DeepSleepParam &deepSleepParams = deepSleepParamNoInit;
-        }
-
+        DeepSleep::enableWiFiOnBoot = false;
+        deepSleepPinStateNoInit.ctor();
+        deepSleepParamNoInit.ctor();
     #endif
-
-    static ETSTimerEx::ETSTimerExTimerVector timersNoInit;
-    ETSTimerEx::ETSTimerExTimerVector &ETSTimerEx::_timers = timersNoInit;
-
-#endif
+    rtcMemoryLockNoInit.ctor();
+    resetDetectorNoInit.ctor();
+    pluginsVectorNoInit.ctor();
+    pluginRegisterNoInit.ctor();
+    resetDetector.begin();
+    #if ENABLE_DEEP_SLEEP
+        DeepSleep::preinit();
+        #warning this has not been tested yet
+    #endif
+}
 
 ResetDetector::ResetDetector()
 {
@@ -196,7 +149,7 @@ void ResetDetector::begin(HardwareSerial *serial, int baud)
             }
             __LDBG_printf("serial=%p begin=%u", serial, baud);
         #endif
-        #if IOT_LED_MATRIX_STANDBY_PIN == 3
+        #if IOT_LED_MATRIX_STANDBY_PIN == 3 || IOT_LED_MATRIX_OUTPUT_PIN == 3
             serial->begin(baud, SERIAL_8N1, SERIAL_TX_ONLY, 1);
         #else
             serial->begin(baud, SERIAL_8N1);
@@ -276,6 +229,7 @@ void ResetDetector::begin()
     #if IOT_SWITCH && IOT_SWITCH_STORE_STATES_RTC_MEM
         SwitchPlugin_rtcMemLoadState();
     #endif
+
     __LDBG_printf("return");
 }
 

@@ -13,9 +13,14 @@
 #    define __RESET_DETECTOR_INCLUDED
 #    define __RESET_DETECTOR_INSIDE_INCLUDE
 
+//TODO remove
+#if ESP32
+#define DEBUG_RESET_DETECTOR 1
+#endif
+
 // enable debug output
 #    ifndef DEBUG_RESET_DETECTOR
-#        define DEBUG_RESET_DETECTOR 1
+#        define DEBUG_RESET_DETECTOR 0
 #    endif
 
 // include methods in source code = 0, or in header as always inline = 1
