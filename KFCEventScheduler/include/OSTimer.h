@@ -106,7 +106,7 @@ struct ETSTimerEx
     static constexpr uint32_t kUnusedMagic = 0x12345678;
 
     #if DEBUG_OSTIMER
-        ETSTimerEx(const char *name);
+        ETSTimerEx(const char *name = nullptr);
     #else
         ETSTimerEx();
     #endif

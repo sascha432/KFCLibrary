@@ -34,7 +34,7 @@
 
 #if DEBUG_OSTIMER
     inline ETSTimerEx::ETSTimerEx(const char *name) :
-        _name(strdup_P(name)),
+        _name(strdup_P(name ? name : PSTR("unknown"))),
         _called(0),
         _calledWhileLocked(0),
 #else
