@@ -13,8 +13,7 @@
 #endif
 
 #ifndef DEBUG_RTC_MEMORY_MANAGER
-#    define DEBUG_RTC_MEMORY_MANAGER 0
-// #    define DEBUG_RTC_MEMORY_MANAGER (0 || defined(DEBUG_ALL))
+#    define DEBUG_RTC_MEMORY_MANAGER (0 || defined(DEBUG_ALL))
 #endif
 
 #if DEBUG_RTC_MEMORY_MANAGER
@@ -285,5 +284,5 @@ inline void RTCMemoryManager::setNtpUpdate()
 #include <pop_pack.h>
 
 #if DEBUG_RTC_MEMORY_MANAGER
-#include "debug_helper_disable.h"
+#    include "debug_helper_disable.h"
 #endif

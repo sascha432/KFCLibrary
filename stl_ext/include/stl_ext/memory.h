@@ -80,14 +80,15 @@ namespace STL_STD_EXT_NAMESPACE_EX {
         UninitializedClass() {}
         ~UninitializedClass() {}
 
-        // init() must be called for each uninitialized object
+        // ctor() must be called for each uninitialized object
+        // it creates the object in the reserved memory calling the c'tor with the arguments
         template<class... _Args>
         __attribute__((__always_inline__))
-        inline void init(_Args... args)
+        inline void ctor(_Args... args)
         {
             new_at(&_object, args...);
         }
-        
+
     };
 
 }
