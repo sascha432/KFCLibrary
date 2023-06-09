@@ -2,6 +2,8 @@
  * Author: sascha_lammers@gmx.de
  */
 
+#if PIN_MONITOR
+
 #include <Arduino_compat.h>
 #include "pin_monitor.h"
 
@@ -60,3 +62,5 @@ namespace PinMonitor {
     }
 
 }
+
+#endif

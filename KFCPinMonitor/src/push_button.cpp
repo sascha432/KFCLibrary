@@ -2,6 +2,8 @@
  * Author: sascha_lammers@gmx.de
  */
 
+#if PIN_MONITOR
+
 #include <Arduino_compat.h>
 #include <MicrosTimer.h>
 #include "pin_monitor.h"
@@ -154,3 +156,5 @@ const __FlashStringHelper *PushButton::eventTypeToString(EventType eventType)
     }
     return F("NONE");
 }
+
+#endif

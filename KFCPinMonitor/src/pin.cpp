@@ -2,20 +2,22 @@
   Author: sascha_lammers@gmx.de
 */
 
-#include <Arduino_compat.h>
-#include "pin_monitor.h"
+#if PIN_MONITOR
+
 #include "pin.h"
+#include "pin_monitor.h"
+#include <Arduino_compat.h>
 #if ESP8266
-#include <Schedule.h>
+#    include <Schedule.h>
 #endif
 #include "interrupt_impl.h"
-#include "rotary_encoder.h"
 #include "monitor.h"
+#include "rotary_encoder.h"
 
 #if DEBUG_PIN_MONITOR
-#include <debug_helper_enable.h>
+#    include <debug_helper_enable.h>
 #else
-#include <debug_helper_disable.h>
+#    include <debug_helper_disable.h>
 #endif
 
 using namespace PinMonitor;
@@ -57,6 +59,8 @@ using namespace PinMonitor;
 #if PIN_MONITOR_USE_POLLING == 0
     #undef _GPI
     #undef mask
+#endif
+
 #endif
 
 #endif

@@ -2,6 +2,8 @@
   Author: sascha_lammers@gmx.de
 */
 
+#if PIN_MONITOR
+
 #include <Arduino_compat.h>
 #include <PrintHtmlEntitiesString.h>
 #include <misc.h>
@@ -613,3 +615,5 @@ namespace PinMonitor {
     }
 
 }
+
+#endif

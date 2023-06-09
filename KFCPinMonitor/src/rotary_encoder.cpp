@@ -2,6 +2,8 @@
  * Author: sascha_lammers@gmx.de
  */
 
+#if PIN_MONITOR
+
 #include <Arduino_compat.h>
 #include <MicrosTimer.h>
 #include "pin_monitor.h"
@@ -203,3 +205,4 @@ void RotaryEncoder::processEvent(const Interrupt::Event &eventData)
     _state = newState;
 }
 
+#endif

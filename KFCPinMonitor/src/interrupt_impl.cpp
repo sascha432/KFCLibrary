@@ -2,6 +2,8 @@
   Author: sascha_lammers@gmx.de
 */
 
+#if PIN_MONITOR
+
 #include <Arduino_compat.h>
 #include <PrintString.h>
 #include <BitsToStr.h>
@@ -231,3 +233,5 @@ namespace PinMonitor {
 #endif
 
 }
+
+#endif
