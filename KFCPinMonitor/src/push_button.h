@@ -233,15 +233,7 @@ namespace PinMonitor {
         // {
         // }
 
-        PushButtonConfig(EventType subscribedEvents = EventType::NONE, uint16_t clickTime = 250, uint16_t longpressTime = 600, uint16_t repeatTime = 100, uint16_t singleClickSteps = 15, uint16_t singleClickTime = 750) :
-            _subscribedEvents(subscribedEvents),
-            _clickTime(clickTime),
-            _singleClickSteps(singleClickSteps),
-            _longPressTime(longpressTime),
-            _repeatTime(repeatTime),
-            _singleClickTime(singleClickTime)
-        {
-        }
+        PushButtonConfig(EventType subscribedEvents = EventType::NONE, uint16_t clickTime = 250, uint16_t longpressTime = 600, uint16_t repeatTime = 100, uint16_t singleClickSteps = 15, uint16_t singleClickTime = 750);
 
         bool hasEvent(EventType event) const;
 
@@ -258,6 +250,17 @@ namespace PinMonitor {
         // timeout for detecting single and repeated clkicks
         uint16_t _singleClickTime;
     };
+
+
+    inline PushButtonConfig::PushButtonConfig(EventType subscribedEvents, uint16_t clickTime, uint16_t longpressTime, uint16_t repeatTime, uint16_t singleClickSteps, uint16_t singleClickTime) :
+        _subscribedEvents(subscribedEvents),
+        _clickTime(clickTime),
+        _singleClickSteps(singleClickSteps),
+        _longPressTime(longpressTime),
+        _repeatTime(repeatTime),
+        _singleClickTime(singleClickTime)
+    {
+    }
 
     inline bool PushButtonConfig::hasEvent(EventType event) const
     {

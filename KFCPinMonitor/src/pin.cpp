@@ -4,8 +4,8 @@
 
 #if PIN_MONITOR
 
-#include "pin.h"
 #include "pin_monitor.h"
+#include "pin.h"
 #include <Arduino_compat.h>
 #if ESP8266
 #    include <Schedule.h>
