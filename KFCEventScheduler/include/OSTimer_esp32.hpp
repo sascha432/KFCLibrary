@@ -69,7 +69,7 @@ inline void ETSTimerEx::create(esp_timer_cb_t callback, void *arg)
 
     done();
     if (DEBUG_OSTIMER_VALIDATE(this, esp_timer_create(&args, &_timer)) == ESP_OK) {
-        _timers.push_back(this);
+        timer_list->push_back(this);
         _running = false;
         _locked = false;
     }
@@ -155,10 +155,10 @@ inline void ETSTimerEx::done()
         if (_running && esp_timer_is_active(_timer)) {
             DEBUG_OSTIMER_VALIDATE(this, esp_timer_stop(_timer));
         }
-        auto iterator = std::remove(_timers.begin(), _timers.end(), this);
-        if (iterator != _timers.end()) {
+        auto iterator = std::remove(timer_list->begin(), timer_list->end(), this);
+        if (iterator != timer_list->end()) {
             DEBUG_OSTIMER_VALIDATE(this, esp_timer_delete(_timer));
-            _timers.erase(iterator, _timers.end());
+            timer_list->erase(iterator, timer_list->end());
         }
     }
     clear();
@@ -191,7 +191,7 @@ inline ETSTimerEx *ETSTimerEx::find(ETSTimerEx *timer)
 
 inline void ETSTimerEx::end()
 {
-    for(auto timer: _timers) {
+    for(auto timer: *timer_list) {
         if (timer->_timer) {
             if (timer->_running) {
                 DEBUG_OSTIMER_VALIDATE(timer, esp_timer_stop(timer->_timer));
@@ -200,7 +200,7 @@ inline void ETSTimerEx::end()
             timer->clear();
         }
     }
-    _timers.clear();
+    timer_list->clear();
 }
 
 #endif

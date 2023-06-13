@@ -72,10 +72,10 @@ namespace PluginComponents {
 
 #if ESP32
 
-    using ETSTimerExTimersUninitialized = stdex::UninitializedClass<ETSTimerEx::ETSTimerExTimerVector>;
+    using ETSTimerExTimersUninitialized = stdex::UninitializedClass<ETSTimerExTimerVector>;
     static ETSTimerExTimersUninitialized timersNoInit __attribute__((section(".noinit")));
 
-    ETSTimerEx::ETSTimerExTimerVector &ETSTimerEx::_timers = timersNoInit._object;
+    ETSTimerExTimerVector *timer_list = &timersNoInit._object;
 
 #endif
 

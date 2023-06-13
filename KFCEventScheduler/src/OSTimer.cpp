@@ -98,7 +98,7 @@ void dumpTimers(Print &output)
 
 void dumpTimers(Print &output)
 {
-    for(const auto timer: ETSTimerEx::_timers) {
+    for(const auto timer: *timer_list) {
         void *callback = nullptr;
         for(const auto timer: __Scheduler.__getTimers()) {
             if (&timer->_etsTimer == reinterpret_cast<void *>(timer)) {

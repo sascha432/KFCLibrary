@@ -82,6 +82,10 @@ inline void ___DBG_printEtsTimer_E(const ETSTimerEx &timer, const String &msg)
     #include <esp_timer.h>
     #include <list>
 
+    class ETSTimerEx;
+    using ETSTimerExTimerVector = std::list<ETSTimerEx *>;
+    extern "C" ETSTimerExTimerVector *timer_list;
+
 #elif ESP8266 || _MSC_VER
 
     #if ESP8266
@@ -188,9 +192,6 @@ struct ETSTimerEx
         esp_timer_handle_t _timer;
         bool _running;
         bool _locked;
-
-        using ETSTimerExTimerVector = std::list<ETSTimerEx *>;
-        static ETSTimerExTimerVector &_timers;
 
     #elif ESP8266 || _MSC_VER
 
