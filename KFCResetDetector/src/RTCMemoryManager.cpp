@@ -157,10 +157,10 @@ uint8_t *RTCMemoryManager::_readMemory(Header_t &header, uint16_t extraSize)
             __DBG_printf("malloc failed length=%u max_size=%u", size, kMemorySize);
             break;
         }
-        //TODO buffer overflow
-        auto buf = new uint8_t[kMemorySize + 16]();
-        memset(buf + size, 0xcc, kMemorySize + 16 - size);
-        // auto buf = new uint8_t[size]();
+        // //TODO buffer overflow
+        // auto buf = new uint8_t[kMemorySize + 16]();
+        // memset(buf + size, 0xcc, kMemorySize + 16 - size);
+        auto buf = new uint8_t[size]();
         if (!buf) {
             __DBG_printf("malloc failed length=%u", size);
             break;

@@ -103,9 +103,9 @@ void reset_detector_setup_global_ctors()
         deepSleepParamNoInit.ctor();
     #endif
     rtcMemoryLockNoInit.ctor();
-    resetDetectorNoInit.ctor();
     pluginsVectorNoInit.ctor();
     pluginRegisterNoInit.ctor();
+    resetDetectorNoInit.ctor();
     resetDetector.begin();
     #if ENABLE_DEEP_SLEEP
         DeepSleep::preinit();
@@ -339,7 +339,7 @@ void ResetDetector::_readData()
 
 #include "logger.h"
 
-static ResetDetectorPlugin plugin;
+ResetDetectorPlugin plugin;
 
 PROGMEM_DEFINE_PLUGIN_OPTIONS(
     ResetDetectorPlugin,
