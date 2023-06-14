@@ -62,7 +62,7 @@ inline SemaphoreMutex::SemaphoreMutex(bool lock) :
     _lock(xSemaphoreCreateMutex())
 {
     __LDBG_assert_printf(_lock == NULL, "xSemaphoreCreateMutex() res=%p", _lock);
-    if (!lock) {
+    if (lock) {
         this->lock();
     }
 }

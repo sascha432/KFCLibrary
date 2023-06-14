@@ -11,10 +11,12 @@
 class SemaphoreMutex
 {
 public:
-    SemaphoreMutex() :
+    SemaphoreMutex(bool doLock = false) :
         _locked(0)
     {
-        lock();
+        if (doLock) {
+            lock();
+        }
     }
     ~SemaphoreMutex()
     {
