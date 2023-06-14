@@ -222,6 +222,7 @@ void ResetDetector::begin()
         // ets_timer_* seems to be ready at this point
         armTimer();
     #elif ESP32
+        // armTimer();
         // the timer must be started in setup()
         // calling it before will cause an exception
     #endif
@@ -345,8 +346,8 @@ PROGMEM_DEFINE_PLUGIN_OPTIONS(
     ResetDetectorPlugin,
     "rd",               // name
     "Reset Detector",   // friendly name
-    "safecrash",        // web_templates
-    "safecrash",        // config_forms
+    "",                 // web_templates
+    "",                 // config_forms
     "",                 // reconfigure_dependencies
     PluginComponent::PriorityType::RESET_DETECTOR,
     PluginComponent::RTCMemoryId::RESET_DETECTOR,

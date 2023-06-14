@@ -182,7 +182,6 @@ private:
     static bool _readHeader(Header_t &header);
     static uint8_t *_readMemory(Header_t &header, uint16_t extraSize);
     static uint8_t *_read(uint8_t *&data, Header_t &header, Entry_t &entry, RTCMemoryId id);
-    static void _delete(uint8_t *buffer);
 
 // methods to use the internal RTC
 public:
@@ -224,18 +223,6 @@ private:
 inline RTCMemoryManager::SyncStatus RTCMemoryManager::getSyncStatus()
 {
     return _readTime().status;
-}
-
-// inline void RTCMemoryManager::release(uint8_t *buffer)
-// {
-//     _delete(buffer);
-// }
-
-inline void RTCMemoryManager::_delete(uint8_t *buffer)
-{
-    if (buffer) {
-        delete[] buffer;
-    }
 }
 
 inline bool RTCMemoryManager::remove(RTCMemoryId id)
