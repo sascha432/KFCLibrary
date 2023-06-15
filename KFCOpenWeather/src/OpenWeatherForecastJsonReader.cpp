@@ -4,6 +4,8 @@
 
 #include "OpenWeatherForecastJsonReader.h"
 
+using namespace KFCJson;
+
 OpenWeatherForecastJsonReader::OpenWeatherForecastJsonReader(Stream * stream, OpenWeatherMapAPI::WeatherForecast & forecast) : JsonBaseReader(stream), _forecast(forecast) {
 }
 
@@ -46,7 +48,7 @@ bool OpenWeatherForecastJsonReader::processElement()
 {
     auto keyStr = getKey();
     auto key = keyStr.c_str();
-    auto pathStr = getPath(false);
+    auto pathStr = JsonBaseReader::getPath(false);
     auto path = pathStr.c_str();
 
     //Serial.printf("key %s value %s type %s path %s index %d\n", key, getValue().c_str(), jsonType2String(getType()).c_str(), path, getObjectIndex());

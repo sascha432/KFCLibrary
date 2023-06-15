@@ -9,18 +9,20 @@
 #include "KFCRestApi.h"
 
 #if DEBUG_KFC_REST_API
-#include <debug_helper_enable.h>
+#    include <debug_helper_enable.h>
 #else
-#include <debug_helper_disable.h>
+#    include <debug_helper_disable.h>
 #endif
 
 #if !KFC_REST_API_USE_HTTP_CLIENT
-#if ESP32
-#include "asyncHTTPrequest_ESP32.h"
-#else
-#include "asyncHTTPrequest.h"
+#    if ESP32
+#        include "asyncHTTPrequest_ESP32.h"
+#    else
+#        include "asyncHTTPrequest.h"
+#    endif
 #endif
-#endif
+
+using namespace KFCJson;
 
 KFCRestAPI::HttpRequest::HttpRequest(KFCRestAPI &api, JsonBaseReader *json, Callback_t callback) : _json(json), _callback(callback), _message(F("None")), _code(0), _api(api)
 {

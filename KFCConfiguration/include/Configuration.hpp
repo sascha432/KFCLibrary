@@ -134,7 +134,7 @@ inline bool Configuration::isDirty() const
 
 inline bool Configuration::importJson(Stream &stream, HandleType *handles)
 {
-    JsonConfigReader reader(&stream, *this, handles);
+    KFCJson::JsonConfigReader reader(&stream, *this, handles);
     reader.initParser();
     return reader.parseStream();
 }

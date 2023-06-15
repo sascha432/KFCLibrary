@@ -8,7 +8,7 @@
 #include <JsonBaseReader.h>
 #include "OpenWeatherMapAPI.h"
 
-class OpenWeatherForecastJsonReader : public JsonBaseReader {
+class OpenWeatherForecastJsonReader : public KFCJson::JsonBaseReader {
 public:
     OpenWeatherForecastJsonReader(Stream *stream, OpenWeatherMapAPI::WeatherForecast &forecast);
     OpenWeatherForecastJsonReader(OpenWeatherMapAPI::WeatherForecast &forecast);
@@ -16,7 +16,7 @@ public:
     virtual bool beginObject(bool isArray);
     virtual bool endObject();
     virtual bool processElement();
-    virtual bool recoverableError(JsonErrorEnum_t errorType);
+    virtual bool recoverableError(KFCJson::JsonBaseReader::JsonErrorEnum_t errorType);
 
 private:
     OpenWeatherMapAPI::WeatherForecast &_forecast;

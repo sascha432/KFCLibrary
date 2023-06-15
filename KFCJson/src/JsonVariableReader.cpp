@@ -4,6 +4,8 @@
 
 #include "JsonVariableReader.h"
 
+using namespace KFCJson;
+
 namespace JsonVariableReader {
 
     Element::Element(const JsonString &path, AssignCallback callback) : _path(path), _callback(callback)
@@ -144,7 +146,7 @@ namespace JsonVariableReader {
         //Serial.printf("key %s value %s type %s path %s index %d\n", key, getValue().c_str(), jsonType2String(getType()).c_str(), path, getObjectIndex());
 
         if (_current && !_skip) {
-            auto var = _current->findPath(getPath(false, _level));
+            auto var = _current->findPath(JsonBaseReader::getPath(false, _level));
             if (var) {
                 _skip = !var->callback(*_current->getLastResult(), *this);
             }
@@ -157,4 +159,4 @@ namespace JsonVariableReader {
         return true;
     }
 
-};
+}

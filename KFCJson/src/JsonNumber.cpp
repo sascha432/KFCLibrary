@@ -6,82 +6,86 @@
 #include "JsonVar.h"
 #include "JsonTools.h"
 
-JsonNumber::JsonNumber(double value, uint8_t decimalPlaces) : JsonString()
-{
-    if (isnan(value) || isinf(value)) {
-        invalidate();
+namespace KFCJson {
+
+    JsonNumber::JsonNumber(double value, uint8_t decimalPlaces) : JsonString()
+    {
+        if (isnan(value) || isinf(value)) {
+            invalidate();
+        }
+        else {
+            char buf[std::numeric_limits<double>::digits + 1];
+            int len = snprintf_P(buf, sizeof(buf), PSTR("%.*f"), decimalPlaces, value);
+            _init(buf, len);
+        }
     }
-    else {
-        char buf[std::numeric_limits<double>::digits + 1];
-        int len = snprintf_P(buf, sizeof(buf), PSTR("%.*f"), decimalPlaces, value);
+
+    JsonNumber::JsonNumber(uint32_t value) : JsonString()
+    {
+        char buf[12];
+        int len = snprintf_P(buf, sizeof(buf), PSTR("%u"), value);
         _init(buf, len);
     }
-}
 
-JsonNumber::JsonNumber(uint32_t value) : JsonString()
-{
-    char buf[12];
-    int len = snprintf_P(buf, sizeof(buf), PSTR("%u"), value);
-    _init(buf, len);
-}
+    JsonNumber::JsonNumber(int32_t value) : JsonString()
+    {
+        char buf[12];
+        int len = snprintf_P(buf, sizeof(buf), PSTR("%d"), value);
+        _init(buf, len);
+    }
 
-JsonNumber::JsonNumber(int32_t value) : JsonString()
-{
-    char buf[12];
-    int len = snprintf_P(buf, sizeof(buf), PSTR("%d"), value);
-    _init(buf, len);
-}
+    JsonNumber::JsonNumber(uint64_t value) : JsonString()
+    {
+        char buffer[std::numeric_limits<decltype(value)>::digits10 + 2];
+        #if ESP8266
+            char *str = ulltoa(value, buffer, sizeof(buffer), 10);
+            if (!str) {
+                _init(emptyString.c_str(), 0);
+            }
+            else {
+                _init(str, &buffer[sizeof(buffer) - 1] - str);
+            }
+        #else
+            _init(buffer, snprintf_P(buffer, sizeof(buffer), PSTR("%llu"), value));
+        #endif
+    }
 
-JsonNumber::JsonNumber(uint64_t value) : JsonString()
-{
-    char buffer[std::numeric_limits<decltype(value)>::digits10 + 2];
-    #if ESP8266
-        char *str = ulltoa(value, buffer, sizeof(buffer), 10);
-        if (!str) {
-            _init(emptyString.c_str(), 0);
+    JsonNumber::JsonNumber(int64_t value) : JsonString()
+    {
+        char buffer[std::numeric_limits<decltype(value)>::digits10 + 2];
+        #if ESP8266
+            char *str = lltoa(value, buffer, sizeof(buffer), 10);
+            if (!str) {
+                _init(emptyString.c_str(), 0);
+            }
+            else {
+                _init(str, &buffer[sizeof(buffer) - 1] - str);
+            }
+        #else
+            _init(buffer, snprintf_P(buffer, sizeof(buffer), PSTR("%lld"), value));
+        #endif
+    }
+
+    bool JsonNumber::validate()
+    {
+        bool valid;
+        if (isProgMem()) {
+            String tmp = FPSTR(getPtr());
+            valid = JsonVar::getNumberType(tmp.c_str()) != JsonVar::INVALID;
         }
         else {
-            _init(str, &buffer[sizeof(buffer) - 1] - str);
+            valid = JsonVar::getNumberType(getPtr()) != JsonVar::INVALID;
         }
-    #else
-        _init(buffer, snprintf_P(buffer, sizeof(buffer), PSTR("%llu"), value));
-    #endif
-}
-
-JsonNumber::JsonNumber(int64_t value) : JsonString()
-{
-    char buffer[std::numeric_limits<decltype(value)>::digits10 + 2];
-    #if ESP8266
-        char *str = lltoa(value, buffer, sizeof(buffer), 10);
-        if (!str) {
-            _init(emptyString.c_str(), 0);
+        if (!valid) {
+            invalidate();
         }
-        else {
-            _init(str, &buffer[sizeof(buffer) - 1] - str);
-        }
-    #else
-        _init(buffer, snprintf_P(buffer, sizeof(buffer), PSTR("%lld"), value));
-    #endif
-}
+        return valid;
+    }
 
-bool JsonNumber::validate()
-{
-    bool valid;
-    if (isProgMem()) {
-        String tmp = FPSTR(getPtr());
-        valid = JsonVar::getNumberType(tmp.c_str()) != JsonVar::INVALID;
+    void JsonNumber::invalidate()
+    {
+        _setType(STORED);
+        strcpy_P(_raw, SPGM(null));
     }
-    else {
-        valid = JsonVar::getNumberType(getPtr()) != JsonVar::INVALID;
-    }
-    if (!valid) {
-        invalidate();
-    }
-    return valid;
-}
 
-void JsonNumber::invalidate()
-{
-    _setType(STORED);
-    strcpy_P(_raw, SPGM(null));
 }

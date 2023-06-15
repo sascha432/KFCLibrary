@@ -10,28 +10,31 @@
 #include "JsonBaseReader.h"
 #include "JsonValue.h"
 
-class JsonConverter : public JsonBaseReader {
-public:
-    typedef std::vector<AbstractJsonValue *> StackVector;
-    typedef std::vector<JsonString> JsonStringVector;
+namespace KFCJson {
 
-    JsonConverter(Stream &stream);
+    class JsonConverter : public JsonBaseReader {
+    public:
+        typedef std::vector<AbstractJsonValue *> StackVector;
+        typedef std::vector<JsonString> JsonStringVector;
 
-    virtual bool beginObject(bool isArray);
-    virtual bool endObject();
-    virtual bool processElement();
-    virtual bool recoverableError(JsonErrorEnum_t errorType);
+        JsonConverter(Stream &stream);
 
-    AbstractJsonValue *getRoot() const;
-    void setIgnoreInvalid(bool ingnore);
+        virtual bool beginObject(bool isArray);
+        virtual bool endObject();
+        virtual bool processElement();
+        virtual bool recoverableError(JsonErrorEnum_t errorType);
 
-    void addFilter(const JsonString &str);
+        AbstractJsonValue *getRoot() const;
+        void setIgnoreInvalid(bool ingnore);
 
-private:
-    AbstractJsonValue *_current;
-    StackVector _stack;
-    bool _ignoreInvalid;
-    JsonStringVector _filter;
-    uint16_t _filtered;
-};
+        void addFilter(const JsonString &str);
 
+    private:
+        AbstractJsonValue *_current;
+        StackVector _stack;
+        bool _ignoreInvalid;
+        JsonStringVector _filter;
+        uint16_t _filtered;
+    };
+
+}

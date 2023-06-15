@@ -8,6 +8,8 @@
 PROGMEM_STRING_DECL(config_object_name);
 PROGMEM_STRING_DEF(config_object_name, "config");
 
+using namespace KFCJson;
+
 bool JsonConfigReader::beginObject(bool isArray)
 {
     if (_isConfigObject) {

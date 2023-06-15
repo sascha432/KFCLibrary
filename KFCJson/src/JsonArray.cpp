@@ -6,67 +6,71 @@
 #include "JsonObject.h"
 
 #if DEBUG_KFC_JSON
-#include <debug_helper_enable.h>
+#    include <debug_helper_enable.h>
 #else
-#include <debug_helper_disable.h>
+#    include <debug_helper_disable.h>
 #endif
 
-JsonUnnamedArray & JsonArrayMethods::addArray(size_t reserve)
-{
-    return reinterpret_cast<JsonUnnamedArray &>(add(new JsonUnnamedArray(reserve)));
-}
+namespace KFCJson {
 
-JsonUnnamedObject & JsonArrayMethods::addObject(size_t reserve)
-{
-    return reinterpret_cast<JsonUnnamedObject &>(add(new JsonUnnamedObject(reserve)));
-}
+    JsonUnnamedArray & JsonArrayMethods::addArray(size_t reserve)
+    {
+        return reinterpret_cast<JsonUnnamedArray &>(add(new JsonUnnamedArray(reserve)));
+    }
 
-JsonUnnamedArray::JsonUnnamedArray(size_t reserve) : JsonUnnamedVariant<AbstractJsonValue::JsonVariantVector>(nullptr, reserve)
-{
-}
+    JsonUnnamedObject & JsonArrayMethods::addObject(size_t reserve)
+    {
+        return reinterpret_cast<JsonUnnamedObject &>(add(new JsonUnnamedObject(reserve)));
+    }
 
-size_t JsonUnnamedArray::printTo(Print & output) const
-{
-    return output.write('[') + JsonUnnamedVariant<AbstractJsonValue::JsonVariantVector>::printTo(output) + output.write(']');
-}
+    JsonUnnamedArray::JsonUnnamedArray(size_t reserve) : JsonUnnamedVariant<AbstractJsonValue::JsonVariantVector>(nullptr, reserve)
+    {
+    }
 
-AbstractJsonValue::JsonVariantEnum_t JsonUnnamedArray::getType() const
-{
-    return AbstractJsonValue::JsonVariantEnum_t::JSON_UNNAMED_ARRAY;
-}
+    size_t JsonUnnamedArray::printTo(Print & output) const
+    {
+        return output.write('[') + JsonUnnamedVariant<AbstractJsonValue::JsonVariantVector>::printTo(output) + output.write(']');
+    }
 
-AbstractJsonValue & JsonUnnamedArray::add(AbstractJsonValue * value)
-{
-    _getValue().push_back(value);
-    return *_getValue().back();
-}
+    AbstractJsonValue::JsonVariantEnum_t JsonUnnamedArray::getType() const
+    {
+        return AbstractJsonValue::JsonVariantEnum_t::JSON_UNNAMED_ARRAY;
+    }
 
-AbstractJsonValue::JsonVariantVector * JsonUnnamedArray::getVector()
-{
-    return &_getValue();
-}
+    AbstractJsonValue & JsonUnnamedArray::add(AbstractJsonValue * value)
+    {
+        _getValue().push_back(value);
+        return *_getValue().back();
+    }
 
-JsonArray::JsonArray(const JsonString & name, size_t reserve) : JsonNamedVariant<AbstractJsonValue::JsonVariantVector>(name, nullptr, reserve)
-{
-}
+    AbstractJsonValue::JsonVariantVector * JsonUnnamedArray::getVector()
+    {
+        return &_getValue();
+    }
 
-size_t JsonArray::printTo(Print & output) const
-{
-    return JsonNamedVariant<AbstractJsonValue::JsonVariantVector>::_printName(output) + output.write('[') + JsonUnnamedVariant<AbstractJsonValue::JsonVariantVector>::printTo(output) + output.write(']');
-}
+    JsonArray::JsonArray(const JsonString & name, size_t reserve) : JsonNamedVariant<AbstractJsonValue::JsonVariantVector>(name, nullptr, reserve)
+    {
+    }
 
-AbstractJsonValue::JsonVariantEnum_t JsonArray::getType() const
-{
-    return AbstractJsonValue::JsonVariantEnum_t::JSON_ARRAY;
-}
+    size_t JsonArray::printTo(Print & output) const
+    {
+        return JsonNamedVariant<AbstractJsonValue::JsonVariantVector>::_printName(output) + output.write('[') + JsonUnnamedVariant<AbstractJsonValue::JsonVariantVector>::printTo(output) + output.write(']');
+    }
 
-AbstractJsonValue & JsonArray::add(AbstractJsonValue * value)
-{
-    _getValue().push_back(value);
-    return *_getValue().back();
-}
+    AbstractJsonValue::JsonVariantEnum_t JsonArray::getType() const
+    {
+        return AbstractJsonValue::JsonVariantEnum_t::JSON_ARRAY;
+    }
 
-AbstractJsonValue::JsonVariantVector * JsonArray::getVector()
-{
-    return &_getValue();
+    AbstractJsonValue & JsonArray::add(AbstractJsonValue * value)
+    {
+        _getValue().push_back(value);
+        return *_getValue().back();
+    }
+
+    AbstractJsonValue::JsonVariantVector * JsonArray::getVector()
+    {
+        return &_getValue();
+    }
+
 }

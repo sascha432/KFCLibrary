@@ -8,6 +8,8 @@
 #include <JsonBaseReader.h>
 #include "OpenWeatherMapAPI.h"
 
+using namespace KFCJson;
+
 class OpenWeatherInfoJsonReader : public JsonBaseReader {
 public:
     OpenWeatherInfoJsonReader(Stream *stream, OpenWeatherMapAPI::WeatherInfo &info);

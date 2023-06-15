@@ -8,15 +8,17 @@
 #include <JsonTools.h>
 
 #ifdef _MSC_VER
-#pragma warning(push)
-#pragma warning(disable : 26812)
+#    pragma warning(push)
+#    pragma warning(disable : 26812)
 #endif
 
 #if DEBUG_CONFIGURATION
-#include <debug_helper_enable.h>
+#    include <debug_helper_enable.h>
 #else
-#include <debug_helper_disable.h>
+#    include <debug_helper_disable.h>
 #endif
+
+using namespace KFCJson;
 
 void ConfigurationParameter::setData(Configuration &conf, const uint8_t *data, size_type length)
 {

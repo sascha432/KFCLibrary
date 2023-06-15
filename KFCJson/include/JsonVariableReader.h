@@ -44,12 +44,12 @@ namespace JsonVariableReader {
 
         Element(const Element &) = delete;
 
-        Element(const JsonString &path, AssignCallback callback = nullptr);
-        JsonString &getPath();
+        Element(const KFCJson::JsonString &path, AssignCallback callback = nullptr);
+        KFCJson::JsonString &getPath();
         bool callback(Result &result, Reader &reader);
 
     protected:
-        JsonString _path;
+        KFCJson::JsonString _path;
         AssignCallback _callback;
     };
 
@@ -61,14 +61,14 @@ namespace JsonVariableReader {
         typedef std::vector<ResultPtr> ResultsVector;
         typedef std::vector<ElementGroup> Vector;
 
-        ElementGroup(const JsonString &path);
+        ElementGroup(const KFCJson::JsonString &path);
         ~ElementGroup();
 
         ElementGroup(const ElementGroup &) = delete;
         ElementGroup(ElementGroup &&) = default;
         ElementGroup &operator=(ElementGroup &&) = default;
 
-        ElementPtr add(const JsonString &path, Element::AssignCallback callback = nullptr);
+        ElementPtr add(const KFCJson::JsonString &path, Element::AssignCallback callback = nullptr);
         ElementPtr add(Element *var);
         bool isPath(const String &path);
         ElementPtr findPath(const String &path);
@@ -106,12 +106,12 @@ namespace JsonVariableReader {
         }
 
     private:
-        JsonString _path;
+        KFCJson::JsonString _path;
         ElementsVector _elements;
         ResultsVector _results;
     };
 
-    class Reader : public JsonBaseReader {
+    class Reader : public KFCJson::JsonBaseReader {
     public:
         Reader();
         ~Reader();
@@ -121,7 +121,7 @@ namespace JsonVariableReader {
         virtual bool beginObject(bool isArray);
         virtual bool endObject();
         virtual bool processElement();
-        virtual bool recoverableError(JsonErrorEnum_t errorType);
+        virtual bool recoverableError(KFCJson::JsonBaseReader::JsonErrorEnum_t errorType);
 
     private:
         ElementGroup::Vector *_elementGroups;
@@ -129,5 +129,4 @@ namespace JsonVariableReader {
         int _level;
         bool _skip;
     };
-
 };

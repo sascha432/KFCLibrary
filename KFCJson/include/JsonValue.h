@@ -10,51 +10,55 @@
 #include "JsonTools.h"
 #include "JsonVar.h"
 
-class JsonBuffer;
-class JsonConverter;
-class JsonObjectMethods;
+namespace KFCJson {
 
-class AbstractJsonValue : public Printable {
-public:
-    typedef enum {
-        JSON_VARIANT,
-        JSON_UNNAMED_VARIANT,
-        JSON_ARRAY,
-        JSON_UNNAMED_ARRAY,
-        JSON_OBJECT,
-        JSON_UNNAMED_OBJECT,
-    } JsonVariantEnum_t;
+    class JsonBuffer;
+    class JsonConverter;
+    class JsonObjectMethods;
 
-    typedef std::vector<AbstractJsonValue *> JsonVariantVector;
-    typedef JsonVariantVector::iterator JsonVariantVectorIterator;
+    class AbstractJsonValue : public Printable {
+    public:
+        typedef enum {
+            JSON_VARIANT,
+            JSON_UNNAMED_VARIANT,
+            JSON_ARRAY,
+            JSON_UNNAMED_ARRAY,
+            JSON_OBJECT,
+            JSON_UNNAMED_OBJECT,
+        } JsonVariantEnum_t;
 
-    virtual ~AbstractJsonValue();
+        typedef std::vector<AbstractJsonValue *> JsonVariantVector;
+        typedef JsonVariantVector::iterator JsonVariantVectorIterator;
 
-    // length of converted JSON data
-    virtual size_t length() const = 0;
+        virtual ~AbstractJsonValue();
 
-    virtual JsonVariantEnum_t getType() const = 0;
+        // length of converted JSON data
+        virtual size_t length() const = 0;
 
-    String toString() const {
-        PrintString str;
-        str.reserve(length());
-        printTo(str);
-        return str;
-    }
+        virtual JsonVariantEnum_t getType() const = 0;
 
-    //void dump();
+        String toString() const {
+            PrintString str;
+            str.reserve(length());
+            printTo(str);
+            return str;
+        }
 
-protected:
-    friend JsonBuffer;
-    friend JsonConverter;
-    friend JsonObjectMethods;
+        //void dump();
 
-    // add is public for JsonArray/JsonObject
-    virtual AbstractJsonValue &add(AbstractJsonValue *value);
+    protected:
+        friend JsonBuffer;
+        friend JsonConverter;
+        friend JsonObjectMethods;
 
-    virtual JsonVariantVector *getVector();
-    virtual const JsonString *getName() const;
-    virtual bool hasName() const;
-    virtual bool hasChildName() const;
-    virtual bool isObject() const;
-};
+        // add is public for JsonArray/JsonObject
+        virtual AbstractJsonValue &add(AbstractJsonValue *value);
+
+        virtual JsonVariantVector *getVector();
+        virtual const JsonString *getName() const;
+        virtual bool hasName() const;
+        virtual bool hasChildName() const;
+        virtual bool isObject() const;
+    };
+
+}

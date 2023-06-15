@@ -159,8 +159,8 @@ public:
     bool parseForecastData(const String &data);
     bool parseForecastData(Stream &stream);
 
-    JsonBaseReader *getWeatherInfoParser();
-    JsonBaseReader *getWeatherForecastParser();
+    KFCJson::JsonBaseReader *getWeatherInfoParser();
+    KFCJson::JsonBaseReader *getWeatherForecastParser();
 
     WeatherInfo &getWeatherInfo();
     WeatherForecast &getWeatherForecast();

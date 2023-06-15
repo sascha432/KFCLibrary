@@ -15,6 +15,7 @@
 #include "Utility/Debug.h"
 
 using namespace FormUI;
+using namespace KFCJson;
 
 WebUI::Config &Field::BaseField::getWebUIConfig()
 {

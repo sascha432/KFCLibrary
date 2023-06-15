@@ -11,25 +11,26 @@
 #include <HeapStream.h>
 
 #ifndef DEBUG_KFC_REST_API
-#define DEBUG_KFC_REST_API                                  0
+#    define DEBUG_KFC_REST_API 0
 #endif
 
 #ifndef KFC_REST_API_USE_HTTP_CLIENT
-#define KFC_REST_API_USE_HTTP_CLIENT				        0
+#    define KFC_REST_API_USE_HTTP_CLIENT 0
 #endif
 
 #if DEBUG_KFC_REST_API
-#include <debug_helper_enable.h>
+#    include <debug_helper_enable.h>
 #else
-#include <debug_helper_disable.h>
+#    include <debug_helper_disable.h>
 #endif
 
 #if KFC_REST_API_USE_HTTP_CLIENT
-#include "ESP8266HttpClient.h"
+#    include "ESP8266HttpClient.h"
 #else
 class asyncHTTPrequest;
 #endif
 
+using namespace KFCJson;
 
 class KFCRestAPI {
 public:

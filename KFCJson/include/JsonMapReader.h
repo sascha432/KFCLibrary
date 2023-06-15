@@ -8,25 +8,29 @@
 #include "JsonBaseReader.h"
 #include "JsonVar.h"
 
-// read (and filter) JSON into key/value pairs
+namespace KFCJson {
 
-typedef std::map<String, JsonVar> JsonMemoryMap;
+    // read (and filter) JSON into key/value pairs
 
-class JsonMapReader : public JsonBaseReader {
-public:
-    typedef std::function<bool(const String &path, const String &value, JsonBaseReader::JsonType_t type, JsonMapReader &reader)> FilterCallback_t;
+    typedef std::map<String, JsonVar> JsonMemoryMap;
 
-    JsonMapReader(Stream &stream);
+    class JsonMapReader : public JsonBaseReader {
+    public:
+        typedef std::function<bool(const String &path, const String &value, JsonBaseReader::JsonType_t type, JsonMapReader &reader)> FilterCallback_t;
 
-    void setFilter(FilterCallback_t filter);
+        JsonMapReader(Stream &stream);
 
-	virtual bool processElement() override;
+        void setFilter(FilterCallback_t filter);
 
-    JsonVar get(const String &path) const;
+        virtual bool processElement() override;
 
-    void dump(Print &out);
+        JsonVar get(const String &path) const;
 
-private:
-    FilterCallback_t _filter;
-	JsonMemoryMap _map;
-};
+        void dump(Print &out);
+
+    private:
+        FilterCallback_t _filter;
+        JsonMemoryMap _map;
+    };
+
+}
