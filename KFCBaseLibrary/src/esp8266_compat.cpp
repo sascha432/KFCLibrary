@@ -2,11 +2,40 @@
  * Author: sascha_lammers@gmx.de
  */
 
-#if defined(ESP8266)
+#if ESP8266
 
 #include <Arduino.h>
 #include "global.h"
 #include "esp8266_compat.h"
+
+String ESPGetFlashChipSpeedAndModeStr()
+{
+    PrintString str;
+    auto speed = ESP.getFlashChipSpeed() / 1000000;
+    if (speed) {
+        str.printf_P(PSTR("%uMHz@"), speed);
+    }
+    auto mode = ESP.getFlashChipMode();
+    switch(mode) {
+        case FM_DIO:
+            str.print(F("DIO"));
+            break;
+        case FM_DOUT:
+            str.print(F("DOUT"));
+            break;
+        case FM_QIO:
+            str.print(F("QIO"));
+            break;
+        case FM_QOUT:
+            str.print(F("QOUT"));
+            break;
+        case FM_UNKNOWN:
+        default:
+            str.printf_P(PSTR("MODE#%u"), mode);
+            break;
+    }
+    return str;
+}
 
 #if ARDUINO_ESP8266_MAJOR == 2 && ARDUINO_ESP8266_MINOR == 6
 

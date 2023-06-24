@@ -26,7 +26,7 @@ namespace FormUI {
                 return AsyncWebServerRequest::hasArg(name);
             }
             bool hasArg(const String &name) const {
-                return AsyncWebServerRequest::hasArg(name);
+                return AsyncWebServerRequest::hasArg(name.c_str());
             }
             bool hasArg(PGM_P name) const {
                 return AsyncWebServerRequest::hasArg(name);

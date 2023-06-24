@@ -71,6 +71,7 @@ inline void *memmove_P(void *dst, const void *src, size_t len)
     return memmove(dst, src, len);
 }
 
+String ESPGetFlashChipSpeedAndModeStr();
 
 struct esp_timer {
     uint64_t alarm;
@@ -379,6 +380,8 @@ inline void settimeofday_cb(settimeofday_cb_t cb)
 }
 
 extern "C" {
+
+    float esp32TemperatureRead();
 
     uint32_t crc32_le(uint32_t crc, uint8_t const *buf, uint32_t len);
 

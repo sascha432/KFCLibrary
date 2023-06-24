@@ -17,6 +17,8 @@
 using settimeofday_cb_t = BoolCB;
 using settimeofday_cb_args_t = void;
 
+String ESPGetFlashChipSpeedAndModeStr();
+
 extern "C" {
 
     bool can_yield();

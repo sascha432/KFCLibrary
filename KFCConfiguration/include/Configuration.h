@@ -1,39 +1,44 @@
 /**
-* Author: sascha_lammers@gmx.de
-*/
+ * Author: sascha_lammers@gmx.de
+ */
 
 #pragma once
 
 #include <Arduino_compat.h>
-#include <PrintString.h>
-#include <crc16.h>
 #include <Buffer.h>
 #include <DumpBinary.h>
 #include <JsonTools.h>
-#include <type_traits>
+#include <PrintString.h>
+#include <crc16.h>
 #include <list>
-#include <vector>
 #include <stl_ext/chunked_list.h>
 #include <stl_ext/is_trivially_copyable.h>
+#include <type_traits>
+#include <vector>
 #if ESP8266
-#include <coredecls.h>
+#    include <coredecls.h>
 #endif
-#if ESP32 || HAVE_NVS_FLASH
-#include <nvs.h>
+#if HAVE_NVS_FLASH
+#    include <nvs.h>
+#    define KFC_CFG_NVS_PARTITION_NAME "kfcfw"
+// missing externals
+extern "C" esp_err_t nvs_flash_init_partition(const char *partition_label);
+extern "C" esp_err_t nvs_flash_deinit_partition(const char *partition_label);
+extern "C" esp_err_t nvs_flash_erase_partition(const char *partition_label);
 #endif
 
 #include "ConfigurationHelper.h"
 #include "ConfigurationParameter.h"
 
 #if DEBUG_CONFIGURATION
-#include <debug_helper_enable.h>
+#    include <debug_helper_enable.h>
 #else
-#include <debug_helper_disable.h>
+#    include <debug_helper_disable.h>
 #endif
 
 #if _MSC_VER
-#pragma warning(push)
-#pragma warning(disable : 26812)
+#    pragma warning(push)
+#    pragma warning(disable : 26812)
 #endif
 
 namespace ConfigurationHelper {
@@ -204,7 +209,7 @@ public:
 
     static constexpr uint16_t kHeaderOffset = CONFIGURATION_HEADER_OFFSET;
     static_assert((kHeaderOffset & 3) == 0, "not dword aligned");
-    #if ESP32 || HAVE_NVS_FLASH
+    #if HAVE_NVS_FLASH
         static_assert(kHeaderOffset == 0, "offset not supported");
     #endif
 
@@ -227,7 +232,7 @@ public:
             FLASH_ERASE_ERROR,
             FLASH_WRITE_ERROR,
         #endif
-        #if ESP32 || HAVE_NVS_FLASH
+        #if HAVE_NVS_FLASH
             NVS_COMMIT_ERROR,
             NVS_SET_BLOB_ERROR,
             NVS_ERASE_ALL,
@@ -256,7 +261,7 @@ public:
                 case WriteResultType::FLASH_WRITE_ERROR:
                     return F("FLASH_WRITE_ERROR");
             #endif
-            #if ESP32 || HAVE_NVS_FLASH
+            #if HAVE_NVS_FLASH
                 case WriteResultType::NVS_COMMIT_ERROR:
                     return F("NVS_COMMIT_ERROR");
                 case WriteResultType::NVS_SET_BLOB_ERROR:
@@ -487,38 +492,34 @@ private:
             return ESP.flashEraseSector(sector);
         }
 
-    #elif ESP32 || HAVE_NVS_FLASH
+    #elif HAVE_NVS_FLASH
 
-        // NVS implementation
-        static uint32_t _nvs_key_handle(ConfigurationParameter::TypeEnum_t type, HandleType handle) {
-            return (static_cast<uint32_t>(type) << 16) | handle;
-        }
+    // NVS implementation
+    protected:
+        friend ConfigurationParameter;
 
-        static char *_nvs_key_handle_name(ConfigurationParameter::TypeEnum_t type, HandleType handle) {
-            static char buffer[9];
-            snprintf_P(buffer, sizeof(buffer), PSTR("%08x"), _nvs_key_handle(type, handle));
-            return buffer;
-        }
+        static uint32_t _nvs_key_handle(ConfigurationParameter::TypeEnum_t type, HandleType handle);
+        String _nvs_key_handle_name(ConfigurationParameter::TypeEnum_t type, HandleType handle) const;
 
-        void _nvs_open() {
-            if (_handle) {
-                return;
-            }
-            esp_err_t err = nvs_open(_name, NVS_READWRITE, &_handle);
-            if (err != ESP_OK) {
-                __DBG_printf_E("cannot open NVS name=%s err=%08x", _name, err);
-            }
-            else {
-                __LDBG_printf_N("NVS name=%s handle=%08x", _name, _handle);
-            }
-        }
+        esp_err_t _nvs_open(bool readWrite);
+        esp_err_t _nvs_commit();
+        void _nvs_close();
 
-        nvs_handle _handle; // NV handle
-        const char *_name; // NVS namespace
+
+        esp_err_t _nvs_get_blob_with_open(const String &keyStr, void *out_value, size_t *length);
+        esp_err_t _nvs_get_blob(const String &keyStr, void *out_value, size_t *length);
+        esp_err_t _nvs_set_blob(const String &keyStr, const void *value, size_t length);
+
+    private:
+        nvs_handle_t _nvsHandle;
+        nvs_open_mode_t _nvsOpenMode;
+        bool _nvsHavePartition;
+        const char *_nvsNamespace;
 
     #endif
 
 protected:
+    SemaphoreMutex _writeLock;
     ParameterList _params;
     uint32_t _readAccess;
     uint16_t _size;
@@ -548,7 +549,7 @@ public:
 };
 
 #if _MSC_VER
-#pragma warning(pop)
+#    pragma warning(pop)
 #endif
 
 #include <debug_helper_disable.h>

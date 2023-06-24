@@ -103,6 +103,8 @@ class __FlashStringHelper;
 #include <FS.h>
 #include <LittleFS.h>
 
+#define HAVE_NVS_FLASH 1
+
 class __FlashStringHelper;
 
 #    if USE_LITTLEFS

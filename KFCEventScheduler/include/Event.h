@@ -32,7 +32,7 @@
 
 #ifndef EVENT_SCHEDULER_ASSERT
 // #define EVENT_SCHEDULER_ASSERT(cond)                    assert(cond)
-#    define EVENT_SCHEDULER_ASSERT(cond) __DBG_assert(cond)
+#    define EVENT_SCHEDULER_ASSERT(cond) __LDBG_assert(cond)
 #endif
 
 #if DEBUG_EVENT_SCHEDULER || DEBUG_OSTIMER

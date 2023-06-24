@@ -189,7 +189,7 @@ bool ConfigurationParameter::hasDataChanged(Configuration &conf) const
     }
     __LDBG_assert_panic(static_cast<const void *>(&(*iterator)) == static_cast<const void *>(this), "*iterator=%p this=%p", &(*iterator), this);
 
-    #if ESP32 || HAVE_NVS_FLASH
+    #if HAVE_NVS_FLASH
 
         size_t requiredSize = _param.length();
         auto tmp = std::unique_ptr<uint8_t[]>(::new uint8_t[requiredSize]);
@@ -198,9 +198,9 @@ bool ConfigurationParameter::hasDataChanged(Configuration &conf) const
             return true;
         }
 
-        esp_err_t err;
         size_t size;
-        if ((err = nvs_get_blob(conf._handle, Configuration::_nvs_key_handle_name(_param.type(), _param.getHandle()), tmp.get(), &requiredSize)) != ESP_OK) {
+        esp_err_t err;
+        if ((err = conf._nvs_get_blob_with_open(conf._nvs_key_handle_name(_param.type(), _param.getHandle()), tmp.get(), &requiredSize)) != ESP_OK) {
             return true;
         }
         else if (size != requiredSize) {
@@ -243,10 +243,11 @@ bool ConfigurationParameter::_readData(Configuration &conf, uint16_t offset)
     ConfigurationHelper::allocate(_param.size(), *this);
     conf.setLastReadAccess();
 
-    #if ESP32 || HAVE_NVS_FLASH
-        esp_err_t err;
+    #if HAVE_NVS_FLASH
+
         size_t size = _param.length();
-        if ((err = nvs_get_blob(conf._handle, conf._nvs_key_handle_name(_param.type(), _param.getHandle()), _param._readable, &size)) != ESP_OK) {
+        esp_err_t err;
+        if ((err = conf._nvs_get_blob_with_open(conf._nvs_key_handle_name(_param.type(), _param.getHandle()), _param._readable, &size)) != ESP_OK) {
             __DBG_printf_E("cannot read data handle=%04x size=%u err=%u", _param.getHandle(), _param.size(), err);
             return false;
         }
@@ -254,10 +255,13 @@ bool ConfigurationParameter::_readData(Configuration &conf, uint16_t offset)
             __DBG_printf_E("cannot read data handle=%04x size=%u read=%u", _param.getHandle(), _param.length(), size);
             return false;
         }
+
     #else
+
         if (!_readDataTo(conf, offset, _param.data())) {
             return false;
         }
+
     #endif
     __LDBG_assert_printf(_param.isString() == false || _param.string()[_param.length()] == 0, "%s NUL byte missing", toString().c_str());
     return true;

@@ -7,41 +7,165 @@
 
 #include <Buffer.h>
 #if ESP8266
-#include <interrupts.h>
+#    include <interrupts.h>
 #endif
-#if ESP32 || HAVE_NVS_FLASH
-#include <nvs.h>
-#define NVS_PARTITION_NAME "nvs"
+#if HAVE_NVS_FLASH
+#    include <nvs.h>
 #endif
-#include "misc.h"
 #include "DumpBinary.h"
+#include "misc.h"
 
-#include "ConfigurationHelper.h"
 #include "Configuration.h"
+#include "ConfigurationHelper.h"
 
 #if DEBUG_CONFIGURATION
-#include <debug_helper_enable.h>
+#    include <debug_helper_enable.h>
 #else
-#include <debug_helper_disable.h>
+#    include <debug_helper_disable.h>
 #endif
 
-#include "DebugHandle.h"
 #include "Configuration.hpp"
+#include "DebugHandle.h"
 
 #ifdef _MSC_VER
-#pragma warning(push)
-#pragma warning(disable : 26812)
+#    pragma warning(push)
+#    pragma warning(disable : 26812)
 #endif
 
 Configuration::Configuration(uint16_t size) :
-    #if ESP32 || HAVE_NVS_FLASH
-        _handle(0),
-        _name("kfcfw_config"),
+    #if HAVE_NVS_FLASH
+        _nvsHandle(0),
+        _nvsOpenMode(NVS_READONLY),
+        _nvsHavePartition(false),
+        _nvsNamespace("kfcfw_config"),
     #endif
     _readAccess(0),
     _size(size)
 {
 }
+
+#if HAVE_NVS_FLASH
+
+#    include "logger.h"
+
+    uint32_t Configuration::_nvs_key_handle(ConfigurationParameter::TypeEnum_t type, HandleType handle)
+    {
+        return (static_cast<uint32_t>(type) << 16) | handle;
+    }
+
+    String Configuration::_nvs_key_handle_name(ConfigurationParameter::TypeEnum_t type, HandleType handle) const
+    {
+        return PrintString(F("%08x"), _nvs_key_handle(type, handle));
+    }
+
+    esp_err_t Configuration::_nvs_get_blob_with_open(const String &keyStr, void *out_value, size_t *length)
+    {
+        bool closePartition = (_nvsHandle == 0);
+        esp_err_t err = _nvs_open(false);
+        err = _nvs_get_blob(keyStr, out_value, length);
+        if (closePartition) {
+            _nvs_close();
+        }
+        return err;
+    }
+
+    esp_err_t Configuration::_nvs_get_blob(const String &keyStr, void *out_value, size_t *length)
+    {
+        return nvs_get_blob(_nvsHandle, keyStr.c_str(), out_value, length);
+    }
+
+    esp_err_t Configuration::_nvs_set_blob(const String &keyStr, const void *value, size_t length)
+    {
+        auto key = keyStr.c_str();
+        esp_err_t err = ESP_OK;
+        uint8_t count = 10;
+        while(count--) {
+            err = nvs_set_blob(_nvsHandle, key, value, length);
+            if (err == ESP_OK) {
+                return err;
+            }
+            Logger_error(F("nvs_set_blob failed: key=%s value=%p size=%u err=%08x"), key, value, length, err);
+            delay(100);
+        }
+        Logger_error(F("FATAL nvs_set_blob key=%s"), key);
+        delay(100);
+        return err;
+    }
+
+    esp_err_t Configuration::_nvs_commit()
+    {
+        esp_err_t err = ESP_OK;
+        uint8_t count = 10;
+        while(count--) {
+            err = nvs_commit(_nvsHandle);
+            if (err == ESP_OK) {
+                return err;
+            }
+            Logger_error(F("nvs_commit failed"));
+            delay(100);
+        }
+        Logger_error(F("FATAL nvs_commit"));
+        delay(100);
+        return err;
+    }
+
+    esp_err_t Configuration::_nvs_open(bool readWrite)
+    {
+        // runs one time
+        if (!_nvsHavePartition) {
+            esp_err_t err = nvs_flash_init_partition(KFC_CFG_NVS_PARTITION_NAME);
+            if (err == ESP_OK) {
+                _nvsHavePartition = true;
+            }
+            else {
+                // cannot init partition, erase it
+                __DBG_printf_E("cannot init NVS partition=%s err=%08x, erasing it", KFC_CFG_NVS_PARTITION_NAME, err);
+                err = nvs_flash_erase_partition(KFC_CFG_NVS_PARTITION_NAME);
+                if (err != ESP_OK) {
+                    __DBG_printf_E("cannot erase NVS partition=%s err=%08x", KFC_CFG_NVS_PARTITION_NAME, err);
+                }
+                // try init again
+                err = nvs_flash_init_partition(KFC_CFG_NVS_PARTITION_NAME);
+                if (err != ESP_OK) {
+                    __DBG_panic("cannot init NVS partition=%s err=%08x", KFC_CFG_NVS_PARTITION_NAME, err);
+                }
+                else {
+                    _nvsHavePartition = true;
+                }
+            }
+        }
+
+        // check if we have an open partition and the proper read/write mode
+        if (_nvsHandle) {
+            if (readWrite && _nvsOpenMode == NVS_READWRITE) {
+                return ESP_OK;
+            }
+            // readonly, we can just close it and re-open in READWRITE
+            _nvs_close();
+        }
+        // store open mode
+        _nvsOpenMode = readWrite ? NVS_READWRITE : NVS_READONLY;
+
+        // open custom partition with namespace
+        esp_err_t err = nvs_open_from_partition(KFC_CFG_NVS_PARTITION_NAME, _nvsNamespace, _nvsOpenMode, &_nvsHandle);
+        if (err != ESP_OK) {
+            __DBG_printf_E("cannot open NVS namespace=%s err=%08x", _nvsNamespace, err);
+        }
+        else {
+            __LDBG_printf_N("NVS namespace=%s handle=%08x", _nvsNamespace, _nvsHandle);
+        }
+        return err;
+    }
+
+    void Configuration::_nvs_close()
+    {
+        if (_nvsHandle) {
+            nvs_close(_nvsHandle);
+            _nvsHandle = 0;
+        }
+    }
+
+#endif
 
 void Configuration::release()
 {
@@ -65,293 +189,298 @@ void Configuration::release()
 
 Configuration::WriteResultType Configuration::erase()
 {
-    #if ESP8266
-        #if CONFIGURATION_HEADER_OFFSET
-            #error not implemented
-        #endif
-        auto address = ConfigurationHelper::getFlashAddress(kHeaderOffset);
-        if (!flashEraseSector(address / SPI_FLASH_SEC_SIZE)) {
-            __DBG_printf("failed to erase configuration");
-            return WriteResultType::FLASH_ERASE_ERROR;
-        }
-    #elif ESP32 || HAVE_NVS_FLASH
-        _nvs_open();
-        // clear previous configuration
-        esp_err_t err;
-        if ((err = nvs_erase_all(_handle)) != ESP_OK) {
-            __DBG_printf_E("failed to erase NVS name=%s err=%08x", _name, err);
-            return WriteResultType::NVS_ERASE_ALL;
-        }
+    // protected the entire erase cycle from write attempts
+    MUTEX_LOCK_BLOCK(_writeLock) {
+        #if ESP8266
+            #if CONFIGURATION_HEADER_OFFSET
+                #error not implemented
+            #endif
+            auto address = ConfigurationHelper::getFlashAddress(kHeaderOffset);
+            if (!flashEraseSector(address / SPI_FLASH_SEC_SIZE)) {
+                __DBG_printf("failed to erase configuration");
+                return WriteResultType::FLASH_ERASE_ERROR;
+            }
+        #elif HAVE_NVS_FLASH
 
-        #if DEBUG_CONFIGURATION || 1
-            nvs_stats_t stats;
-            if ((err = nvs_get_stats(NVS_PARTITION_NAME, &stats)) == ESP_OK) {
-                __DBG_printf_N("NVS stats free=%u ns_count=%u total=%u used=%u", stats.free_entries, stats.namespace_count, stats.total_entries, stats.used_entries);
+            esp_err_t err = _nvs_open(true);
+
+            // clear previous configuration
+            if ((err = nvs_erase_all(_nvsHandle)) != ESP_OK) {
+                __DBG_printf_E("failed to erase NVS name=%s err=%08x", _nvsNamespace, err);
+                return WriteResultType::NVS_ERASE_ALL;
             }
-            else {
-                __DBG_printf_E("failed to get stats name=%s err=%08x", NVS_PARTITION_NAME, err);
+
+            // commit pending data
+            if ((err = _nvs_commit()) != ESP_OK) {
+                __DBG_printf_E("failed to commit NVS name=%s err=%08x", _nvsNamespace, err);
+                return WriteResultType::NVS_COMMIT_ERROR;
             }
+
+            _nvs_close();
+
         #endif
-    #endif
+    }
     return WriteResultType::SUCCESS;
 }
 
 Configuration::WriteResultType Configuration::write()
 {
-    __LDBG_printf("params=%u", _params.size());
+    // protected the entire writing and committing all data from concurrent write attempts
+    MUTEX_LOCK_BLOCK(_writeLock) {
+        __LDBG_printf("params=%u", _params.size());
 
-    #if ESP32 || HAVE_NVS_FLASH
-        _nvs_open();
-        Header header;
-        esp_err_t err;
+        #if HAVE_NVS_FLASH
+            esp_err_t err = _nvs_open(true);
+            Header header;
 
-        size_t size = sizeof(header);
-        if ((err = nvs_get_blob(_handle, "header", header, &size)) != ESP_OK) {
-            __DBG_printf("cannot read header err=%08x", err);
-            header = Header();
-        }
-        else if (size != sizeof(header)) {
-            __DBG_printf("cannot read header size=%u stored=%u", sizeof(header), size);
-            header = Header();
-        }
-
-        // update header
-        header.update(header.version() + 1, _params.size(), Header::getParamsLength(_params.size()));
-        Buffer buffer;
-
-        // write new data and create params
-        for (auto &parameter : _params) {
-            auto param = parameter._getParam();
-            if (parameter._getParam().isWriteable()) {
-                param._length = param._writeable->length();
-                param._is_writeable = false;
-                if ((err = nvs_set_blob(_handle, _nvs_key_handle_name(param.type(), param.getHandle()), param._writeable->begin(), param._writeable->length())) != ESP_OK) {
-                    __DBG_printf_E("failed to write data handle=%04x size=%u err=%08x", param.getHandle(), param._writeable->length(), err);
-                    return WriteResultType::NVS_SET_BLOB_ERROR;
-                }
+            size_t size = sizeof(header);
+            if ((err = _nvs_get_blob(F("header"), header, &size)) != ESP_OK) {
+                __DBG_printf("cannot read header err=%08x", err);
+                header = Header();
             }
-            // write parameter headers
-            __LDBG_printf("write_header: %s ofs=%d", parameter.toString().c_str(), buffer.length() + kParamsOffset);
-            buffer.push_back(param._header);
-        }
-
-        // write header
-        if ((err = nvs_set_blob(_handle, "header", header, sizeof(header))) != ESP_OK) {
-            __DBG_printf_E("failed to write header size=%u err=%08x", sizeof(header), err);
-            return WriteResultType::NVS_SET_BLOB_ERROR;
-        }
-
-        // write params
-        if ((err = nvs_set_blob(_handle, "params", buffer.begin(), buffer.length())) != ESP_OK) {
-            __DBG_printf_E("failed to write params size=%u err=%08x", buffer.length(), err);
-            return WriteResultType::NVS_SET_BLOB_ERROR;
-        }
-
-        // commit pending data
-        if ((err = nvs_commit(_handle)) != ESP_OK) {
-            __DBG_printf_E("failed to commit NVS name=%s err=%08x", _name, err);
-            return WriteResultType::NVS_COMMIT_ERROR;
-        }
-
-        #if DEBUG_CONFIGURATION || 1
-            nvs_stats_t stats;
-            if ((err = nvs_get_stats(NVS_PARTITION_NAME, &stats)) == ESP_OK) {
-                __DBG_printf_N("NVS stats free=%u ns_count=%u total=%u used=%u", stats.free_entries, stats.namespace_count, stats.total_entries, stats.used_entries);
-            }
-            else {
-                __DBG_printf_E("failed to get stats name=%s err=%08x", NVS_PARTITION_NAME, err);
-            }
-            dump(DEBUG_OUTPUT);
-        #endif
-
-        return WriteResultType::SUCCESS;
-
-    #else
-
-        Header header;
-        auto address = ConfigurationHelper::getFlashAddress(kHeaderOffset);
-
-        // get header
-        if (!flashRead(address, header, sizeof(header))) {
-            __DBG_printf("cannot read header offset=%u address=0x%08x aligned=%u", ConfigurationHelper::getOffsetFromFlashAddress(address), address, (address % sizeof(uint32_t)) == 0);
-            header = Header();
-            // return WriteResultType::READING_HEADER_FAILED;
-        }
-
-        if (header) {
-            __LDBG_printf("copying existing data");
-            // check dirty data for changes
-            bool dirty = false;
-            for (const auto &parameter : _params) {
-                if (parameter.hasDataChanged(*this)) {
-                    dirty = true;
-                    break;
-                }
-            }
-            if (dirty == false) {
-                __LDBG_printf("configuration did not change");
-                return read() ? WriteResultType::SUCCESS : WriteResultType::READING_CONF_FAILED;
-            }
-        }
-
-        // create new configuration in memory
-        {
-            // locked scope
-            InterruptLock lock;
-            Buffer buffer;
-
-            for (const auto &parameter : _params) {
-                // create copy
-                auto param = parameter._getParam();
-                if (parameter._getParam().isWriteable()) {
-                    // update length and remove writeable flag
-                    __LDBG_printf("writable: len=%u size=%u old_next_ofs=%u data=%s",
-                        param._writeable->length(),
-                        param._writeable->size(),
-                        parameter._getParam().next_offset(),
-                        printable_string(parameter._param.data(), param._writeable->length(), 32).c_str()
-                    );
-                    param._length = param._writeable->length();
-                    param._is_writeable = false;
-                }
-                // write parameter headers
-                __LDBG_printf("write_header: %s ofs=%d buflen=%u", parameter.toString().c_str(), kParamsOffset, buffer.length());
-                buffer.push_back(param._header);
-            }
-
-            #if DEBUG_CONFIGURATION
-                if ((buffer.length() & 3) != 0) {
-                    __DBG_panic("buffer=%u not aligned", buffer.length());
-                }
-            #endif
-
-            // get offset of stored data
-            uint32_t oldAddress = ConfigurationHelper::getFlashAddress(getDataOffset(header.numParams()));
-
-            // write data
-            for (auto &parameter : _params) {
-                const auto &param = parameter._getParam();
-                __LDBG_printf("write_data: %s ofs=%d %s", parameter.toString().c_str(), buffer.length() + kParamsOffset, __debugDumper(parameter, parameter._getParam().data(), parameter._param.length()).c_str());
-                if (param.isWriteable()) {
-                    // write new data
-                    auto len = param._writeable->length();
-                    buffer.write(param._writeable->begin(), len);
-                    // fill up to size
-                    auto size = param._writeable->size();
-                    while (len < size) {
-                        buffer.write(0);
-                        len++;
-                    }
-                    // align to match param.next_offset()
-                    while((len & 3) != 0) {
-                        buffer.write(0);
-                        len++;
-                    }
-                    __LDBG_printf("len=%u next_ofs=%u old_next_ofs=%u", len, param.next_offset(), param.old_next_offset());
-                    // update old address for the next parameter
-                    oldAddress += param.old_next_offset();
-                }
-                else {
-                    // data did not change
-                    // reserve memory and read from flash
-                    auto len = param.next_offset();
-                    if (!buffer.reserve(buffer.length() + len)) {
-                        __DBG_printf("out of memory: buffer=%u size=%u", buffer.length(), _size);
-                        return WriteResultType::OUT_OF_MEMORY;
-                    }
-                    auto ptr = buffer.end();
-                    buffer.setLength(buffer.length() + len);
-                    if (!flashRead(oldAddress, ptr, len)) {
-                        __DBG_panic("failed to read flash address=%u len=%u", oldAddress, len);
-                        return WriteResultType::READING_PREV_CONF_FAILED;
-                    }
-                    __LDBG_printf("oldAddress=%u data=%s len=%u", oldAddress, printable_string(ptr, len, 32).c_str(), len);
-                    // next_offset() returns the offset of the data stored in the flash memory, not the current data in param
-                    oldAddress += param.next_offset();
-                }
-                ConfigurationHelper::deallocate(parameter);
-                parameter._getParam() = ConfigurationHelper::ParameterInfo();
-            }
-
-            if (buffer.length() > _size) {
-                __DBG_printf("size exceeded: %u > %u", buffer.length(), _size);
-                return WriteResultType::MAX_SIZE_EXCEEDED;
+            else if (size != sizeof(header)) {
+                __DBG_printf("cannot read header size=%u stored=%u", sizeof(header), size);
+                header = Header();
             }
 
             // update header
-            header = Header(header.version() + 1, buffer.length(), _params.size());
-            header.calcCrc(buffer.get(), buffer.length());
+            header.update(header.version() + 1, _params.size(), Header::getParamsLength(_params.size()));
+            Buffer buffer;
 
-            // format flash and copy stored data
-            address = ConfigurationHelper::getFlashAddress();
-
-            #if CONFIGURATION_HEADER_OFFSET
-                std::unique_ptr<uint8_t[]> data;
-                if __CONSTEXPR17 (kHeaderOffset != 0) {
-                    // load data before the offset
-                    data.reset(new uint8_t[kHeaderOffset]); // copying the previous data could be done before allocating "buffer" after the interrupt lock
-                    if (!data) {
-                        __DBG_printf("failed to allocate memory=%u (preoffset data)", kHeaderOffset);
-                        return WriteResultType::OUT_OF_MEMORY;
-                    }
-                    if (!flashRead(address, data.get(), kHeaderOffset)) {
-                        __DBG_printf("failed to read flash (preoffset data, address=0x%08x size=%u)", address, kHeaderOffset);
-                        return WriteResultType::FLASH_READ_ERROR;
+            // write new data and create params
+            for (auto &parameter : _params) {
+                auto param = parameter._getParam();
+                if (parameter._getParam().isWriteable()) {
+                    param._length = param._writeable->length();
+                    param._is_writeable = false;
+                    if ((err = _nvs_set_blob(_nvs_key_handle_name(param.type(), param.getHandle()), param._writeable->begin(), param._writeable->length())) != ESP_OK) {
+                        __DBG_printf_E("failed to write data handle=%04x size=%u err=%08x", param.getHandle(), param._writeable->length(), err);
+                        return WriteResultType::NVS_SET_BLOB_ERROR;
                     }
                 }
-            #endif
-
-            __LDBG_printf("flash write %08x sector %u", address, address / SPI_FLASH_SEC_SIZE);
-
-            // erase sector
-            // TODO if something goes wrong here, all data is lost
-            // add redundancy writing to multiple sectors, the header has an incremental version number
-            // append mode can be used to fill the sector before erasing
-            if (!flashEraseSector(address / SPI_FLASH_SEC_SIZE)) {
-                __DBG_printf("failed to write configuration (erase)");
-                return WriteResultType::FLASH_ERASE_ERROR;
+                // write parameter headers
+                __LDBG_printf("write_header: %s ofs=%d", parameter.toString().c_str(), buffer.length() + kParamsOffset);
+                buffer.push_back(param._header);
             }
 
-            #if CONFIGURATION_HEADER_OFFSET
-                if __CONSTEXPR17 (kHeaderOffset != 0) {
-                    // restore data before the offset
-                    flashWrite(address, data.get(), kHeaderOffset);
-                    // if this fails, we cannot do anything anymore
-                    // the sector has been erased already
-                    data.reset();
+            // write header
+            if ((err = _nvs_set_blob(F("header"), header, sizeof(header))) != ESP_OK) {
+                __DBG_printf_E("failed to write header size=%u err=%08x", sizeof(header), err);
+                return WriteResultType::NVS_SET_BLOB_ERROR;
+            }
 
-                    // move header offset
-                    address += kHeaderOffset;
+            // write params
+            if ((err = _nvs_set_blob(F("params"), buffer.begin(), buffer.length())) != ESP_OK) {
+                __DBG_printf_E("failed to write params size=%u err=%08x", buffer.length(), err);
+                return WriteResultType::NVS_SET_BLOB_ERROR;
+            }
+
+            // commit pending data
+            if ((err = _nvs_commit()) != ESP_OK) {
+                __DBG_printf_E("failed to commit NVS name=%s err=%08x", _nvsNamespace, err);
+                return WriteResultType::NVS_COMMIT_ERROR;
+            }
+
+            _nvs_close();
+
+            #if DEBUG_CONFIGURATION || 1
+                nvs_stats_t stats;
+                if ((err = nvs_get_stats(KFC_CFG_NVS_PARTITION_NAME, &stats)) == ESP_OK) {
+                    __DBG_printf_N("NVS part=%s namespace=%s stats free=%u ns_count=%u total=%u used=%u", KFC_CFG_NVS_PARTITION_NAME, _nvsNamespace, stats.free_entries, stats.namespace_count, stats.total_entries, stats.used_entries);
                 }
+                else {
+                    __DBG_printf_E("failed to get stats name=%s err=%08x", KFC_CFG_NVS_PARTITION_NAME, err);
+                }
+                // dump(DEBUG_OUTPUT);
             #endif
 
-            if (!flashWrite(address, header, sizeof(header))) {
-                __DBG_printf("failed to write configuration (write header, address=0x%08x, size=%u, aligned=%u)", address, sizeof(header), (address % sizeof(uint32_t)) == 0);
-                return WriteResultType::FLASH_WRITE_ERROR;
+        #else
+
+            Header header;
+            auto address = ConfigurationHelper::getFlashAddress(kHeaderOffset);
+
+            // get header
+            if (!flashRead(address, header, sizeof(header))) {
+                __DBG_printf("cannot read header offset=%u address=0x%08x aligned=%u", ConfigurationHelper::getOffsetFromFlashAddress(address), address, (address % sizeof(uint32_t)) == 0);
+                header = Header();
+                // return WriteResultType::READING_HEADER_FAILED;
             }
-            // params and data
-            address += sizeof(header);
-            if (!flashWrite(address, buffer.get(), buffer.length())) {
-                __DBG_printf("failed to write configuration (write buffer, address=0x%08x, size=%u)", address, buffer.length());
-                return WriteResultType::FLASH_WRITE_ERROR;
+
+            if (header) {
+                __LDBG_printf("copying existing data");
+                // check dirty data for changes
+                bool dirty = false;
+                for (const auto &parameter : _params) {
+                    if (parameter.hasDataChanged(*this)) {
+                        dirty = true;
+                        break;
+                    }
+                }
+                if (dirty == false) {
+                    __LDBG_printf("configuration did not change");
+                    return read() ? WriteResultType::SUCCESS : WriteResultType::READING_CONF_FAILED;
+                }
             }
 
-        }
+            // create new configuration in memory
+            {
+                // locked scope
+                InterruptLock lock;
+                Buffer buffer;
 
-        #if DEBUG_CONFIGURATION_GETHANDLE
-            ConfigurationHelper::writeHandles();
-        #endif
+                for (const auto &parameter : _params) {
+                    // create copy
+                    auto param = parameter._getParam();
+                    if (parameter._getParam().isWriteable()) {
+                        // update length and remove writeable flag
+                        __LDBG_printf("writable: len=%u size=%u old_next_ofs=%u data=%s",
+                            param._writeable->length(),
+                            param._writeable->size(),
+                            parameter._getParam().next_offset(),
+                            printable_string(parameter._param.data(), param._writeable->length(), 32).c_str()
+                        );
+                        param._length = param._writeable->length();
+                        param._is_writeable = false;
+                    }
+                    // write parameter headers
+                    __LDBG_printf("write_header: %s ofs=%d buflen=%u", parameter.toString().c_str(), kParamsOffset, buffer.length());
+                    buffer.push_back(param._header);
+                }
 
-        // re-read parameters
-        _params.clear();
-        auto result = _readParams();
-        if (!result) {
+                #if DEBUG_CONFIGURATION
+                    if ((buffer.length() & 3) != 0) {
+                        __DBG_panic("buffer=%u not aligned", buffer.length());
+                    }
+                #endif
+
+                // get offset of stored data
+                uint32_t oldAddress = ConfigurationHelper::getFlashAddress(getDataOffset(header.numParams()));
+
+                // write data
+                for (auto &parameter : _params) {
+                    const auto &param = parameter._getParam();
+                    __LDBG_printf("write_data: %s ofs=%d %s", parameter.toString().c_str(), buffer.length() + kParamsOffset, __debugDumper(parameter, parameter._getParam().data(), parameter._param.length()).c_str());
+                    if (param.isWriteable()) {
+                        // write new data
+                        auto len = param._writeable->length();
+                        buffer.write(param._writeable->begin(), len);
+                        // fill up to size
+                        auto size = param._writeable->size();
+                        while (len < size) {
+                            buffer.write(0);
+                            len++;
+                        }
+                        // align to match param.next_offset()
+                        while((len & 3) != 0) {
+                            buffer.write(0);
+                            len++;
+                        }
+                        __LDBG_printf("len=%u next_ofs=%u old_next_ofs=%u", len, param.next_offset(), param.old_next_offset());
+                        // update old address for the next parameter
+                        oldAddress += param.old_next_offset();
+                    }
+                    else {
+                        // data did not change
+                        // reserve memory and read from flash
+                        auto len = param.next_offset();
+                        if (!buffer.reserve(buffer.length() + len)) {
+                            __DBG_printf("out of memory: buffer=%u size=%u", buffer.length(), _size);
+                            return WriteResultType::OUT_OF_MEMORY;
+                        }
+                        auto ptr = buffer.end();
+                        buffer.setLength(buffer.length() + len);
+                        if (!flashRead(oldAddress, ptr, len)) {
+                            __DBG_panic("failed to read flash address=%u len=%u", oldAddress, len);
+                            return WriteResultType::READING_PREV_CONF_FAILED;
+                        }
+                        __LDBG_printf("oldAddress=%u data=%s len=%u", oldAddress, printable_string(ptr, len, 32).c_str(), len);
+                        // next_offset() returns the offset of the data stored in the flash memory, not the current data in param
+                        oldAddress += param.next_offset();
+                    }
+                    ConfigurationHelper::deallocate(parameter);
+                    parameter._getParam() = ConfigurationHelper::ParameterInfo();
+                }
+
+                if (buffer.length() > _size) {
+                    __DBG_printf("size exceeded: %u > %u", buffer.length(), _size);
+                    return WriteResultType::MAX_SIZE_EXCEEDED;
+                }
+
+                // update header
+                header = Header(header.version() + 1, buffer.length(), _params.size());
+                header.calcCrc(buffer.get(), buffer.length());
+
+                // format flash and copy stored data
+                address = ConfigurationHelper::getFlashAddress();
+
+                #if CONFIGURATION_HEADER_OFFSET
+                    std::unique_ptr<uint8_t[]> data;
+                    if __CONSTEXPR17 (kHeaderOffset != 0) {
+                        // load data before the offset
+                        data.reset(new uint8_t[kHeaderOffset]); // copying the previous data could be done before allocating "buffer" after the interrupt lock
+                        if (!data) {
+                            __DBG_printf("failed to allocate memory=%u (preoffset data)", kHeaderOffset);
+                            return WriteResultType::OUT_OF_MEMORY;
+                        }
+                        if (!flashRead(address, data.get(), kHeaderOffset)) {
+                            __DBG_printf("failed to read flash (preoffset data, address=0x%08x size=%u)", address, kHeaderOffset);
+                            return WriteResultType::FLASH_READ_ERROR;
+                        }
+                    }
+                #endif
+
+                __LDBG_printf("flash write %08x sector %u", address, address / SPI_FLASH_SEC_SIZE);
+
+                // erase sector
+                // TODO if something goes wrong here, all data is lost
+                // add redundancy writing to multiple sectors, the header has an incremental version number
+                // append mode can be used to fill the sector before erasing
+                if (!flashEraseSector(address / SPI_FLASH_SEC_SIZE)) {
+                    __DBG_printf("failed to write configuration (erase)");
+                    return WriteResultType::FLASH_ERASE_ERROR;
+                }
+
+                #if CONFIGURATION_HEADER_OFFSET
+                    if __CONSTEXPR17 (kHeaderOffset != 0) {
+                        // restore data before the offset
+                        flashWrite(address, data.get(), kHeaderOffset);
+                        // if this fails, we cannot do anything anymore
+                        // the sector has been erased already
+                        data.reset();
+
+                        // move header offset
+                        address += kHeaderOffset;
+                    }
+                #endif
+
+                if (!flashWrite(address, header, sizeof(header))) {
+                    __DBG_printf("failed to write configuration (write header, address=0x%08x, size=%u, aligned=%u)", address, sizeof(header), (address % sizeof(uint32_t)) == 0);
+                    return WriteResultType::FLASH_WRITE_ERROR;
+                }
+                // params and data
+                address += sizeof(header);
+                if (!flashWrite(address, buffer.get(), buffer.length())) {
+                    __DBG_printf("failed to write configuration (write buffer, address=0x%08x, size=%u)", address, buffer.length());
+                    return WriteResultType::FLASH_WRITE_ERROR;
+                }
+
+            }
+
+            #if DEBUG_CONFIGURATION_GETHANDLE
+                ConfigurationHelper::writeHandles();
+            #endif
+
+            // re-read parameters
             _params.clear();
-            return WriteResultType::READING_CONF_FAILED;
-        }
-        return WriteResultType::SUCCESS;
+            auto result = _readParams();
+            if (!result) {
+                _params.clear();
+                return WriteResultType::READING_CONF_FAILED;
+            }
 
-    #endif
+        #endif
+    }
+    return WriteResultType::SUCCESS;
 }
 
 void Configuration::dump(Print &output, bool dirty, const String &name)
@@ -359,12 +488,13 @@ void Configuration::dump(Print &output, bool dirty, const String &name)
     Header header;
     auto address = ConfigurationHelper::getFlashAddress(kHeaderOffset);
 
-    #if ESP32 || HAVE_NVS_FLASH
+    #if HAVE_NVS_FLASH
+
+        esp_err_t err = _nvs_open(false);
 
         // read header to display details
         size_t size = sizeof(header);
-        esp_err_t err;
-        if ((err = nvs_get_blob(_handle, "header", header, &size)) != ESP_OK) {
+        if ((err = _nvs_get_blob(F("header"), header, &size)) != ESP_OK) {
             __DBG_printf_E("failed to read header size=%u err=%08x", sizeof(header), err);
             return;
         }
@@ -427,66 +557,80 @@ void Configuration::dump(Print &output, bool dirty, const String &name)
         }
         dataOffset += param.next_offset();
     }
+
+    #if HAVE_NVS_FLASH
+        _nvs_close();
+    #endif
 }
 
 void Configuration::exportAsJson(Print &output, const String &version)
 {
-    output.printf_P(PSTR(
-        "{\n"
-        "\t\"magic\": \"%#08x\",\n"
-        "\t\"version\": \"%s\",\n"
-        "\t\"config\": {\n"
-    ), CONFIG_MAGIC_DWORD, version.c_str());
-
-    uint16_t dataOffset = getDataOffset(_params.size());
-    bool n = false;
-    for (auto &parameter : _params) {
-
-        if (n) {
-            output.print(F(",\n"));
-        }
-        else {
-            n = true;
-        }
-
-        auto &param = parameter._param;
-        output.printf_P(PSTR("\t\t\"%#04x\": {\n"), param.getHandle());
-        #if DEBUG_CONFIGURATION_GETHANDLE
-            output.print(F("\t\t\t\"name\": \""));
-            auto name = ConfigurationHelper::getHandleName(param.getHandle());
-            JsonTools::printToEscaped(output, name, strlen(name));
-            output.print(F("\",\n"));
+    // protected exporting all data without writes in between
+    MUTEX_LOCK_BLOCK(_writeLock) {
+        #if HAVE_NVS_FLASH
+            _nvs_open(false);
         #endif
 
-        auto length = parameter.read(*this, dataOffset);
         output.printf_P(PSTR(
-            "\t\t\t\"type\": %d,\n"
-            "\t\t\t\"type_name\": \"%s\",\n"
-            "\t\t\t\"length\": %d,\n"
-            "\t\t\t\"data\": "
-        ), parameter.getType(), parameter.getTypeString(parameter.getType()), length);
-        parameter.exportAsJson(output);
-        output.print('\n');
-        dataOffset += param.next_offset();
+            "{\n"
+            "\t\"magic\": \"%#08x\",\n"
+            "\t\"version\": \"%s\",\n"
+            "\t\"config\": {\n"
+        ), CONFIG_MAGIC_DWORD, version.c_str());
 
-        output.print(F("\t\t}"));
+        uint16_t dataOffset = getDataOffset(_params.size());
+        bool n = false;
+        for (auto &parameter : _params) {
+
+            if (n) {
+                output.print(F(",\n"));
+            }
+            else {
+                n = true;
+            }
+
+            auto &param = parameter._param;
+            output.printf_P(PSTR("\t\t\"%#04x\": {\n"), param.getHandle());
+            #if DEBUG_CONFIGURATION_GETHANDLE
+                output.print(F("\t\t\t\"name\": \""));
+                auto name = ConfigurationHelper::getHandleName(param.getHandle());
+                JsonTools::printToEscaped(output, name, strlen(name));
+                output.print(F("\",\n"));
+            #endif
+
+            auto length = parameter.read(*this, dataOffset);
+            output.printf_P(PSTR(
+                "\t\t\t\"type\": %d,\n"
+                "\t\t\t\"type_name\": \"%s\",\n"
+                "\t\t\t\"length\": %d,\n"
+                "\t\t\t\"data\": "
+            ), parameter.getType(), parameter.getTypeString(parameter.getType()), length);
+            parameter.exportAsJson(output);
+            output.print('\n');
+            dataOffset += param.next_offset();
+
+            output.print(F("\t\t}"));
+        }
+
+        output.print(F("\n\t}\n}\n"));
+
+        #if HAVE_NVS_FLASH
+            _nvs_close();
+        #endif
     }
-
-    output.print(F("\n\t}\n}\n"));
 }
 
 bool Configuration::_readParams()
 {
     Header header;
 
-    #if ESP32 || HAVE_NVS_FLASH
+    #if HAVE_NVS_FLASH
 
-        _nvs_open();
+        esp_err_t err = _nvs_open(false);
 
         // read header
-        esp_err_t err;
         size_t size = sizeof(header);
-        if ((err = nvs_get_blob(_handle, "header", header, &size)) != ESP_OK) {
+        if ((err = _nvs_get_blob(F("header"), header, &size)) != ESP_OK) {
             __DBG_printf_E("failed to read header size=%u err=%08x", sizeof(header), err);
             return false;
         }
@@ -503,7 +647,7 @@ bool Configuration::_readParams()
             return false;
         }
         size = header.getParamsLength();
-        if ((err = nvs_get_blob(_handle, "params", params.data(), &size)) != ESP_OK) {
+        if ((err = _nvs_get_blob(F("params"), params.data(), &size)) != ESP_OK) {
             __DBG_printf_E("cannot read params size=%u err=%u", header.getParamsLength(), err);
             return false;
         }
@@ -524,6 +668,8 @@ bool Configuration::_readParams()
             DumpBinary dump(F("Header:"), DEBUG_OUTPUT);
             dump.dump(header, sizeof(header));
         #endif
+
+        _nvs_close();
 
         return true;
 

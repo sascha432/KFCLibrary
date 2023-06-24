@@ -10,9 +10,14 @@
 inline Configuration::~Configuration()
 {
     clear();
-    #if ESP32 || HAVE_NVS_FLASH
-        nvs_close(_handle);
-        _handle = 0;
+    #if HAVE_NVS_FLASH
+        _nvs_close();
+        if (_nvsHavePartition) {
+            esp_err_t err = nvs_flash_deinit_partition(KFC_CFG_NVS_PARTITION_NAME);
+            if (err != ESP_OK) {
+                __DBG_printf_E("failed to deinit NVS partition=%s err=%08x", KFC_CFG_NVS_PARTITION_NAME, err);
+            }
+        }
     #endif
 }
 
@@ -24,24 +29,36 @@ inline void Configuration::clear()
 
 inline void Configuration::discard()
 {
-    __LDBG_printf("discard params=%u", _params.size());
-    for(auto &parameter: _params) {
-        ConfigurationHelper::deallocate(parameter);
+    // do not allow writes during discard
+    MUTEX_LOCK_BLOCK(_writeLock) {
+
+        __LDBG_printf("discard params=%u", _params.size());
+        for(auto &parameter: _params) {
+            ConfigurationHelper::deallocate(parameter);
+        }
+        _readAccess = 0;
+
+        #if HAVE_NVS_FLASH
+            _nvs_close();
+        #endif
     }
-    _readAccess = 0;
 }
 
 inline bool Configuration::read()
 {
-    __LDBG_printf("params=%u", _params.size());
-    clear();
-    #if DEBUG_CONFIGURATION_GETHANDLE
-        ConfigurationHelper::readHandles();
-    #endif
-    if (!_readParams()) {
-        __LDBG_printf("readParams()=false");
+    // do not allow writes during read
+    MUTEX_LOCK_BLOCK(_writeLock) {
+
+        __LDBG_printf("params=%u", _params.size());
         clear();
-        return false;
+        #if DEBUG_CONFIGURATION_GETHANDLE
+            ConfigurationHelper::readHandles();
+        #endif
+        if (!_readParams()) {
+            __LDBG_printf("readParams()=false");
+            clear();
+            return false;
+        }
     }
     return true;
 }

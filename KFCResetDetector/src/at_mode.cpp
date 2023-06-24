@@ -81,7 +81,7 @@ bool ResetDetectorPlugin::atModeHandler(AtModeArgs &args)
                 args.print(F("SaveCrash log have been cleared"));
             }
             else {
-                args.print(F("while clearing SaveCrash logs, one or more errors occured"));
+                args.print(F("while clearing SaveCrash logs, one or more errors occurred"));
             }
 
         } break;
