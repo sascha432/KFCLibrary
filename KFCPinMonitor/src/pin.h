@@ -10,6 +10,8 @@
 namespace PinMonitor {
 
     #if ESP8266
+        using GPIOValueType = uint32_t;
+        using GPIOMaskType = uint32_t;
 
         struct GPIO16 {
             using type = uint16_t;
@@ -19,15 +21,18 @@ namespace PinMonitor {
         };
 
         struct GPIO32 {
-            using type = uint32_t;
-            static uint32_t read() {
+            using type = GPIOValueType;
+            static GPIOValueType read() {
                 return GPI | ((GP16I & 0x01) ? 1 << 16 : 0);
             }
         };
 
-        using GPIO = GPIO16;
+        using GPIO = GPIO32;
 
     #elif ESP32
+
+        using GPIOValueType = uint64_t;
+        using GPIOMaskType = uint64_t;
 
         #include <soc/soc.h>
 
@@ -39,15 +44,20 @@ namespace PinMonitor {
         };
 
         struct GPIO64 {
-            using type = uint64_t;
-            static uint64_t read() {
-                return (::GPIO.in | (static_cast<uint64_t>(::GPIO.in1.data) << 32));
+            using type = GPIOValueType;
+            static GPIOValueType read() {
+                GPIOValueType data = ::GPIO.in1.data;
+                data <<= 32;
+                data |= ::GPIO.in;
+                return data;
             }
         };
 
-        using GPIO = GPIO32;
+        using GPIO = GPIO64;
 
     #endif
+
+    #define GPIO_PIN_TO_MASK(pin) (static_cast<GPIOMaskType>(1) << pin)
 
     // --------------------------------------------------------------------
     // PinMonitor::Pin
@@ -132,16 +142,16 @@ namespace PinMonitor {
             return ((uint8_t)tmp & (uint8_t)StateType::DOWN) != (uint8_t)StateType::NONE;
         }
 
-#if DEBUG_PIN_MONITOR
-        char *name() {
-            snprintf_P(name_buffer, sizeof(name_buffer), PSTR("btn pin=%u"), _pin);
-            return name_buffer;
-        }
+        #if DEBUG_PIN_MONITOR
+            char *name() {
+                snprintf_P(name_buffer, sizeof(name_buffer), PSTR("btn pin=%u"), _pin);
+                return name_buffer;
+            }
 
-        virtual const char *name() const {
-            return const_cast<Pin *>(this)->name();
-        }
-#endif
+            virtual const char *name() const {
+                return const_cast<Pin *>(this)->name();
+            }
+        #endif
 
     public:
 
@@ -200,14 +210,30 @@ namespace PinMonitor {
             return PinMonitor::getHardwarePinTypeStr(_type);
         }
 
-    // protected:
     public:
 
-#if PIN_MONITOR_USE_POLLING == 1
-        static void callback(void *arg, GPIO::type _GPI, uint32_t mask);
-#elif PIN_MONITOR_USE_GPIO_INTERRUPT == 0
-        static void IRAM_ATTR callback(void *arg);
-#endif
+        #if PIN_MONITOR_USE_GPIO_INTERRUPT == 0
+
+            // always inline this method to be in IRAM
+            // since we do not need two calls, IRAM_ATTR would create an extra call
+            #define INNER_CALLBACK_ATTR __attribute__((__always_inline__))
+            #define INNER_CALLBACK_ATTR_CLASS \
+                private: \
+                    inline INNER_CALLBACK_ATTR
+
+            static void IRAM_ATTR callback(void *arg);
+
+        #else
+
+            #define INNER_CALLBACK_ATTR
+            #define INNER_CALLBACK_ATTR_CLASS
+
+        #endif
+
+        INNER_CALLBACK_ATTR_CLASS
+        static void callback(void *arg, GPIOValueType GPIOValues, GPIOMaskType GPIOMask);
+
+    public:
 
         operator bool() const;
         uint8_t getCount() const;

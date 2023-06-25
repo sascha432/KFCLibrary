@@ -36,9 +36,9 @@ namespace PinMonitor {
         {
         }
 
-        inline uint32_t PollingTimer::_getGPIOStates() const
+        inline GPIOValueType PollingTimer::_getGPIOStates() const
         {
-            return GPI | ((GP16I & 0x01) << 16);
+            return GPIO::read();
         }
 
     #endif

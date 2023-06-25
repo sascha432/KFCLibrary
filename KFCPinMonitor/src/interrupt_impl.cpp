@@ -56,13 +56,17 @@ namespace PinMonitor {
     #if PIN_MONITOR_ROTARY_ENCODER_SUPPORT
         void IRAM_ATTR pin_monitor_interrupt_handler(void *ptr)
         {
-            uint32_t status32 = GPIE;
-            GPIEC = status32;
-            uint16_t status = static_cast<uint16_t>(status32);
-            auto levels = static_cast<uint16_t>(GPI); // we skip GPIO16 since it cannot handle interrupts anyway
+            #if ESP8266
+                uint32_t status32 = GPIE;
+                GPIEC = status32;
+                uint16_t status = static_cast<uint16_t>(status32);
+                auto levels = static_cast<uint16_t>(GPI); // we skip GPIO16 since it cannot handle interrupts anyway
+            #else
+                #error ESP32 implementation required
+            #endif
             ETS_GPIO_INTR_DISABLE();
             for(const auto pinNum: PinMonitor::Interrupt::kRotaryPins) {
-                if ((interrupt_levels ^ levels) & status & _BV(pinNum)) {
+                if ((interrupt_levels ^ levels) & status & GPIO_PIN_TO_MASK(pinNum)) {
                     PinMonitor::eventBuffer.emplace_back(micros(), pinNum, levels);
                 }
             }
@@ -117,7 +121,7 @@ namespace PinMonitor {
         for(const auto &pinPtr: pinMonitor.getPins()) {
             const auto pin = pinPtr.get();
             auto pinNum = pin->getPin();
-            uint16_t mask = _BV(pinNum);
+            GPIOMaskType mask = GPIO_PIN_TO_MASK(pinNum);
 
             // if (!((status & mask) && (static_cast<bool>(PinMonitor::interrupt_levels & mask) != static_cast<bool>(levels & mask)))) {
             if (!((interrupt_levels ^ levels) & status & mask)) {

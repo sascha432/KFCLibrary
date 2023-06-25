@@ -43,27 +43,33 @@ namespace PinMonitor {
         ANY                    = 0xff
     };
 
-    inline static bool operator&(StateType state, StateType bit) {
+    static inline bool operator&(StateType state, StateType bit)
+    {
         return static_cast<std::underlying_type<StateType>::type>(state) & static_cast<std::underlying_type<StateType>::type>(bit);
     }
 
-    static inline bool isPressed(StateType state) {
+    static inline bool isPressed(StateType state)
+    {
         return state == StateType::PRESSED;
     }
 
-    static inline bool isReleased(StateType state) {
+    static inline bool isReleased(StateType state)
+    {
         return state == StateType::RELEASED;
     }
 
-    static inline bool isStable(StateType state) {
+    static inline bool isStable(StateType state)
+    {
         return (static_cast<uint8_t>(state) & static_cast<uint8_t>(StateType::UNSTABLE)) == static_cast<uint8_t>(StateType::NONE);
     }
 
-    static inline bool isUnstable(StateType state) {
+    static inline bool isUnstable(StateType state)
+    {
         return !isStable(state);
     }
 
-    static inline StateType getInvertedState(StateType state) {
+    static inline StateType getInvertedState(StateType state)
+    {
         auto tmp = static_cast<uint8_t>(state);
         // swap pairs of bits
         return static_cast<StateType>(((tmp & 0xaa) >> 1) | ((tmp & 0x55) << 1));

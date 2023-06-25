@@ -49,11 +49,11 @@ StateType Debounce::_debounce(bool lastValue, uint16_t interruptCount, uint32_t 
         return StateType::NONE;
     }
 
-#if DEBUG_PIN_MONITOR_DEBOUNCE
-    if (_debounceTimerRunning) {
-        __DBG_printf("interruptCount==0: debounce timer running=%u timeout=%u/%u", _debounceTimerRunning, get_time_diff(_debounceTimer, now), pinMonitor.getDebounceTime());
-    }
-#endif
+    #if DEBUG_PIN_MONITOR_DEBOUNCE
+        if (_debounceTimerRunning) {
+            __DBG_printf("interruptCount==0: debounce timer running=%u timeout=%u/%u", _debounceTimerRunning, get_time_diff(_debounceTimer, now), pinMonitor.getDebounceTime());
+        }
+    #endif
 
     if (_debounceTimerRunning && get_time_diff(_debounceTimer, now) >= pinMonitor.getDebounceTime()) {
 

@@ -8,9 +8,9 @@
 #include <MicrosTimer.h>
 
 #if DEBUG_PIN_MONITOR
-#include <debug_helper_enable.h>
+#    include <debug_helper_enable.h>
 #else
-#include <debug_helper_disable.h>
+#    include <debug_helper_disable.h>
 #endif
 
 namespace PinMonitor {
@@ -67,13 +67,13 @@ namespace PinMonitor {
         friend HardwarePin;
 
         ActiveStateType _activeState;
-        uint16_t _mask1;
-        uint16_t _mask2;
+        GPIOMaskType _mask1;
+        GPIOMaskType _mask2;
         uint8_t _state;
     };
 
 }
 
 #if DEBUG_PIN_MONITOR
-#include <debug_helper_disable.h>
+#    include <debug_helper_disable.h>
 #endif

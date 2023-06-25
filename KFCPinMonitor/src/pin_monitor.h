@@ -40,9 +40,8 @@
 // pins can be configured active low or active high globally, or set individually
 // see PIN_MONITOR_ACTIVE_STATE
 
-
 #ifndef DEBUG_PIN_MONITOR
-#   define DEBUG_PIN_MONITOR (0 || defined(DEBUG_ALL))
+#    define DEBUG_PIN_MONITOR (0 || defined(DEBUG_ALL))
 #endif
 
 // use custom interrupt handler for push buttons and rotary encoder
@@ -54,34 +53,34 @@
 // it does not share any code with the arduino implementation
 // ---------------------------------------------------------------------------------------------
 #ifndef PIN_MONITOR_USE_GPIO_INTERRUPT
-#   define PIN_MONITOR_USE_GPIO_INTERRUPT 0
+#    define PIN_MONITOR_USE_GPIO_INTERRUPT 0
 #endif
 
 // polling key events with no interrupts to save IRAM
 // rotary encoders require interrupts, but with polling enable the IRAM usage is very small
 #ifndef PIN_MONITOR_USE_POLLING
-#   define PIN_MONITOR_USE_POLLING 0
+#    define PIN_MONITOR_USE_POLLING 0
 #endif
 
 // interval for the polling timer
 // >= 5ms
 #ifndef PIN_MONITOR_USE_POLLING_INTERVAL
-#   define PIN_MONITOR_USE_POLLING_INTERVAL 5
+#    define PIN_MONITOR_USE_POLLING_INTERVAL 5
 #endif
 
 // support for GPIO expanders and polling
 #ifndef PIN_MONITOR_POLLING_GPIO_EXPANDER_SUPPORT
-#   define PIN_MONITOR_POLLING_GPIO_EXPANDER_SUPPORT 0
+#    define PIN_MONITOR_POLLING_GPIO_EXPANDER_SUPPORT 0
 #endif
 
 #if PIN_MONITOR_USE_POLLING == 0 && PIN_MONITOR_POLLING_GPIO_EXPANDER_SUPPORT
-#   error GPIO expander pins only supported with polling
+#    error GPIO expander pins only supported with polling
 #endif
 
 // up to 16 IO expander pins can be used with digitalRead()
 // the pins must be added to PIN_MONITOR_POLLING_GPIO_EXPANDER_PINS_TO_USE
 #if !defined(PIN_MONITOR_POLLING_GPIO_EXPANDER_PINS_TO_USE) && PIN_MONITOR_POLLING_GPIO_EXPANDER_SUPPORT
-#   error PIN_MONITOR_POLLING_GPIO_EXPANDER_PINS_TO_USE must be defined
+#    error PIN_MONITOR_POLLING_GPIO_EXPANDER_PINS_TO_USE must be defined
 #endif
 
 // use attachInterruptArg()/detachInterrupt() for interrupt callbacks
@@ -102,11 +101,11 @@
 #endif
 
 #if IOT_SENSOR_HAVE_HLW8012 && PIN_MONITOR_USE_FUNCTIONAL_INTERRUPTS == 0
-#   error PIN_MONITOR_USE_FUNCTIONAL_INTERRUPTS=0 is not compatible with IOT_SENSOR_HAVE_HLW8012=1
+#    error PIN_MONITOR_USE_FUNCTIONAL_INTERRUPTS=0 is not compatible with IOT_SENSOR_HAVE_HLW8012=1
 #endif
 
 #if IOT_SENSOR_HAVE_HLW8032 && PIN_MONITOR_USE_FUNCTIONAL_INTERRUPTS == 0
-#   error PIN_MONITOR_USE_FUNCTIONAL_INTERRUPTS=0 is not compatible with IOT_SENSOR_HAVE_HLW8032=1
+#    error PIN_MONITOR_USE_FUNCTIONAL_INTERRUPTS=0 is not compatible with IOT_SENSOR_HAVE_HLW8032=1
 #endif
 
 #if PIN_MONITOR_USE_GPIO_INTERRUPT && PIN_MONITOR_USE_FUNCTIONAL_INTERRUPTS
@@ -217,13 +216,13 @@ namespace PinMonitor {
     };
 
     enum class RotaryEncoderEventType : uint8_t {
-        NONE                            = 0,
-        RIGHT                           = 0x10,
-        CLOCK_WISE                      = RIGHT,
-        LEFT                            = 0x20,
-        COUNTER_CLOCK_WISE              = LEFT,
-        ANY                             = 0xff,
-        MAX_BITS                        = 8
+        NONE = 0,
+        RIGHT = 0x10,
+        CLOCK_WISE = RIGHT,
+        LEFT = 0x20,
+        COUNTER_CLOCK_WISE = LEFT,
+        ANY = 0xff,
+        MAX_BITS = 8
     };
 
     enum class RotaryEncoderDirection : uint8_t {
@@ -233,12 +232,12 @@ namespace PinMonitor {
     };
 
     enum class ActiveStateType : bool {
-        ACTIVE_HIGH             = true,
-        ACTIVE_LOW              = false,
-        PRESSED_WHEN_HIGH       = ACTIVE_HIGH,
-        PRESSED_WHEN_LOW        = ACTIVE_LOW,
-        NON_INVERTED            = ACTIVE_HIGH,
-        INVERTED                = ACTIVE_LOW,
+        ACTIVE_HIGH = true,
+        ACTIVE_LOW = false,
+        PRESSED_WHEN_HIGH = ACTIVE_HIGH,
+        PRESSED_WHEN_LOW = ACTIVE_LOW,
+        NON_INVERTED = ACTIVE_HIGH,
+        INVERTED = ACTIVE_LOW,
     };
 
     const __FlashStringHelper *getActiveStateTypeStr(ActiveStateType type);
@@ -247,9 +246,19 @@ namespace PinMonitor {
 
 }
 
-#include "interrupt_impl.h"
 #include "debounce.h"
+#include "interrupt_impl.h"
+#include "monitor.h"
 #include "pin.h"
 #include "push_button.h"
-#include "monitor.h"
 #include "rotary_encoder.h"
+
+#if !ESP8266
+#    if PIN_MONITOR_USE_POLLING
+#        error only ESP8266 is supported
+#    endif
+
+#    if PIN_MONITOR_USE_GPIO_INTERRUPT
+#        error only ESP8266 is supported
+#    endif
+#endif

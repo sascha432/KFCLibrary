@@ -9,9 +9,9 @@
 #include "pin_monitor.h"
 
 #if DEBUG_PIN_MONITOR
-#include <debug_helper_enable.h>
+#    include <debug_helper_enable.h>
 #else
-#include <debug_helper_disable.h>
+#    include <debug_helper_disable.h>
 #endif
 
 using namespace PinMonitor;
@@ -41,8 +41,8 @@ void RotaryEncoder::attachPins(uint8_t pin1, uint8_t pin2)
     pinMonitor.attachPinType<RotaryEncoderPin>(HardwarePinType::ROTARY, pin1, RotaryEncoderDirection::LEFT, this, _activeState);
     pinMonitor.attachPinType<RotaryEncoderPin>(HardwarePinType::ROTARY, pin2, RotaryEncoderDirection::RIGHT, this, _activeState);
     static_assert(RotaryEncoderDirection::RIGHT == RotaryEncoderDirection::LAST, "LAST must be added last");
-    _mask1 = _BV(pin1);
-    _mask2 = _BV(pin2);
+    _mask1 = GPIO_PIN_TO_MASK(pin1);
+    _mask2 = GPIO_PIN_TO_MASK(pin2);
     pinMode(pin1, PinMonitor::pinMonitor.getPinMode());
     pinMode(pin2, PinMonitor::pinMonitor.getPinMode());
 }

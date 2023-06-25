@@ -63,7 +63,7 @@ namespace PinMonitor {
                 uint8_t maskBit = 0;
                 uint16_t states = 0;
                 for(const auto pin: PinMonitor::Interrupt::kIOExpanderPins) {
-                    uint32_t pinMask = _BV(maskBit);
+                    GPIOMaskType pinMask = GPIO_PIN_TO_MASK(maskBit);
                     if (IOExpander::config.digitalRead(pin)) {
                         states |= pinMask;
                     }
@@ -96,7 +96,7 @@ namespace PinMonitor {
                 #endif
                 auto pin = pinPtr->getPin();
                 if (pin < NUM_DIGITAL_PINS) {
-                    uint32_t pinMask = _BV(pin);
+                    GPIOMaskType pinMask = GPIO_PIN_TO_MASK(pin);
                     if ((_states & pinMask) != (newStates & pinMask)) {
                         __DBG_printf("GPIO pin=%u state=%u", pin, (newStates & pinMask) != 0);
                         InterruptLock lock;
@@ -108,7 +108,7 @@ namespace PinMonitor {
                         uint8_t maskBit = 0;
                         for(const auto expanderPin: PinMonitor::Interrupt::kIOExpanderPins) {
                             if (expanderPin == pin) {
-                                uint16_t pinMask = _BV(maskBit);
+                                GPIOMaskType pinMask = GPIO_PIN_TO_MASK(maskBit);
                                 if ((_expanderStates & pinMask) != (newExpanderStates & pinMask)) {
                                     __LDBG_printf("GPIO(Expander) pin=%u state=%u", pin, (newExpanderStates & pinMask) != 0);
                                     InterruptLock lock;
@@ -544,7 +544,7 @@ namespace PinMonitor {
                     auto debounce = pinPtr->getDebounce();
                     if (debounce) {
                         auto pinNum = pinPtr->getPin();
-                        _event(pinNum, debounce->debounce(GPIO::read() & _BV(pinNum), 0, time, now), now);
+                        _event(pinNum, debounce->debounce(GPIO::read() & GPIO_PIN_TO_MASK(pinNum), 0, time, now), now);
                     }
                 }
             #endif

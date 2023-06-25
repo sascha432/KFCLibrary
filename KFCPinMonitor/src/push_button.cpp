@@ -9,9 +9,9 @@
 #include "pin_monitor.h"
 
 #if DEBUG_PIN_MONITOR
-#include <debug_helper_enable.h>
+#    include <debug_helper_enable.h>
 #else
-#include <debug_helper_disable.h>
+#    include <debug_helper_disable.h>
 #endif
 
 using namespace PinMonitor;
@@ -25,12 +25,12 @@ void PushButton::event(StateType state, uint32_t now)
         _startTimerRunning = true;
         _repeatCount = 0;
 
-#if PIN_MONITOR_BUTTON_GROUPS
-        _singleClickGroup->pressed();
-        __LDBG_printf("%s PRESSED sp_timer=%u sp_count=%u", name(), _singleClickGroup->isTimerRunning(this), _singleClickGroup->getRepeatCount());
-#else
-        __LDBG_printf("%s PRESSED", name());
-#endif
+        #if PIN_MONITOR_BUTTON_GROUPS
+            _singleClickGroup->pressed();
+            __LDBG_printf("%s PRESSED sp_timer=%u sp_count=%u", name(), _singleClickGroup->isTimerRunning(this), _singleClickGroup->getRepeatCount());
+        #else
+            __LDBG_printf("%s PRESSED", name());
+        #endif
 
         _fireEvent(EventType::DOWN);
         return;
@@ -73,24 +73,24 @@ void PushButton::loop()
             }
         }
     }
-#if PIN_MONITOR_BUTTON_GROUPS
-    else if (_singleClickGroup->isTimerRunning(this)) {
-        // after up and next down
-        uint16_t duration = _singleClickGroup->getDuration();
-        if (duration > _singleClickGroup->getTimeout()) {
-            __LDBG_printf("%s duration=%u sp_timeout=%u sp_count=%u", name(), duration, _singleClickGroup->getTimeout(), _singleClickGroup->getRepeatCount());
+    #if PIN_MONITOR_BUTTON_GROUPS
+        else if (_singleClickGroup->isTimerRunning(this)) {
+            // after up and next down
+            uint16_t duration = _singleClickGroup->getDuration();
+            if (duration > _singleClickGroup->getTimeout()) {
+                __LDBG_printf("%s duration=%u sp_timeout=%u sp_count=%u", name(), duration, _singleClickGroup->getTimeout(), _singleClickGroup->getRepeatCount());
 
-            if (!(
-                (_singleClickGroup->getRepeatCount() == 1 && _fireEvent(EventType::SINGLE_CLICK)) ||
-                (_singleClickGroup->getRepeatCount() == 2 && _fireEvent(EventType::DOUBLE_CLICK))
-            )) {
-                _repeatCount = _singleClickGroup->getRepeatCount();
-                _fireEvent(EventType::REPEATED_CLICK);
+                if (!(
+                    (_singleClickGroup->getRepeatCount() == 1 && _fireEvent(EventType::SINGLE_CLICK)) ||
+                    (_singleClickGroup->getRepeatCount() == 2 && _fireEvent(EventType::DOUBLE_CLICK))
+                )) {
+                    _repeatCount = _singleClickGroup->getRepeatCount();
+                    _fireEvent(EventType::REPEATED_CLICK);
+                }
+                _singleClickGroup->stopTimer(this);
             }
-            _singleClickGroup->stopTimer(this);
         }
-    }
-#endif
+    #endif
 }
 
 void PushButton::_buttonReleased()
@@ -98,10 +98,10 @@ void PushButton::_buttonReleased()
     uint32_t ms = millis();
     _duration = get_time_diff(_startTimer, ms);
 
-#if PIN_MONITOR_BUTTON_GROUPS
-    _singleClickGroup->released(this, ms);
-    __LDBG_printf("%s sp_timer=%u sp_count=%u", name(), _singleClickGroup->isTimerRunning(this), _singleClickGroup->getRepeatCount());
-#endif
+    #if PIN_MONITOR_BUTTON_GROUPS
+        _singleClickGroup->released(this, ms);
+        __LDBG_printf("%s sp_timer=%u sp_count=%u", name(), _singleClickGroup->isTimerRunning(this), _singleClickGroup->getRepeatCount());
+    #endif
 
     if (_duration < _clickTime) {
         __LDBG_printf("%s CLICK=%u duration=%u repeat=%u", name(), _clickTime, _duration, _repeatCount);
@@ -109,10 +109,10 @@ void PushButton::_buttonReleased()
         return;
 
     }
-#if PIN_MONITOR_BUTTON_GROUPS
-    // reset click counter and timer after _clickTime is over
-    _singleClickGroup->stopTimer(this);
-#endif
+    #if PIN_MONITOR_BUTTON_GROUPS
+        // reset click counter and timer after _clickTime is over
+        _singleClickGroup->stopTimer(this);
+    #endif
 
     if (_duration < _longPressTime) {
         __LDBG_printf("%s LONG_CLICK=%u duration=%u", name(), _longPressTime, _duration);

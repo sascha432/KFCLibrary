@@ -8,7 +8,7 @@
 #include <stl_ext/array.h>
 #include <stl_ext/type_traits.h>
 #if ESP8266
-#include <interrupts.h>
+#    include <interrupts.h>
 #endif
 #include "interrupt_event.h"
 

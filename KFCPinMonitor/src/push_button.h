@@ -12,9 +12,9 @@
 // #define DEBUG_PIN_MONITOR 1
 
 #if DEBUG_PIN_MONITOR
-#include <debug_helper_enable.h>
+#    include <debug_helper_enable.h>
 #else
-#include <debug_helper_disable.h>
+#    include <debug_helper_disable.h>
 #endif
 
 namespace PinMonitor {
@@ -392,5 +392,5 @@ namespace PinMonitor {
 }
 
 #if DEBUG_PIN_MONITOR
-#include <debug_helper_disable.h>
+#    include <debug_helper_disable.h>
 #endif
