@@ -18,6 +18,10 @@ using settimeofday_cb_t = BoolCB;
 using settimeofday_cb_args_t = void;
 
 String ESPGetFlashChipSpeedAndModeStr();
+inline uint32_t ESPGetChipCores()
+{
+    return 1;
+}
 
 extern "C" {
 

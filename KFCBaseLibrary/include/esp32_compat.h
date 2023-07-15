@@ -72,6 +72,10 @@ inline void *memmove_P(void *dst, const void *src, size_t len)
 }
 
 String ESPGetFlashChipSpeedAndModeStr();
+inline uint32_t ESPGetChipCores()
+{
+    return ESP.getChipCores();
+}
 
 struct esp_timer {
     uint64_t alarm;
