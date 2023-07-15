@@ -20,7 +20,7 @@ public:
     }
     ~SemaphoreMutex()
     {
-        if (_locked) {
+        while(_locked > 0) {
             unlock();
         }
     }
