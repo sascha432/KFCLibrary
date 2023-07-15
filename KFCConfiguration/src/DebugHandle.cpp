@@ -106,7 +106,7 @@ void DebugHandle::init()
 {
     if (!_handles) {
         _handles = new DebugHandleVector();
-        _handles->emplace_back(PSTR("<EEPROM>"), 0);
+        _handles->emplace_back(PSTR("<NVS>"), 0);
         _handles->emplace_back(PSTR("<INVALID>"), ~0);
 
 #if DEBUG_CONFIGURATION_GETHANDLE_LOG_INTERVAL && !_MSC_VER

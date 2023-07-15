@@ -77,7 +77,7 @@ inline const uint8_t *ConfigurationParameter::getBinary(Configuration &conf, siz
     return _param.data();
 }
 
-#if !HAVE_NVS_FLASH
+#if !defined(HAVE_NVS_FLASH)
 
 inline bool ConfigurationParameter::_readDataTo(Configuration &conf, uint16_t offset, uint8_t *ptr) const
 {
@@ -89,3 +89,48 @@ inline bool ConfigurationParameter::_readDataTo(Configuration &conf, uint16_t of
 }
 
 #endif
+
+inline ConfigurationParameter::Handle_t ConfigurationParameter::getHandle() const
+{
+    return _param.getHandle();
+}
+
+inline ConfigurationParameter::ParameterType ConfigurationParameter::getType() const
+{
+    return _param.type();
+}
+
+inline bool ConfigurationParameter::isString() const
+{
+    return _param.type() == ParameterType::STRING;
+}
+
+inline uint16_t ConfigurationParameter::getLength() const
+{
+    return _param.length();
+}
+
+inline bool ConfigurationParameter::hasData() const
+{
+    return _param.hasData();
+}
+
+inline bool ConfigurationParameter::isWriteable() const
+{
+    return _param.isWriteable();
+}
+
+inline PGM_P ConfigurationParameter::getTypeString_P(ParameterType type)
+{
+    return reinterpret_cast<PGM_P>(getTypeString(type));
+}
+
+inline ConfigurationParameter::ParameterInfo &ConfigurationParameter::_getParam()
+{
+    return _param;
+}
+
+inline ConfigurationParameter::ParameterInfo ConfigurationParameter::_getParam() const
+{
+    return _param;
+}

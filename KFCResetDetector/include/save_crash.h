@@ -6,7 +6,6 @@
 
 #include <Arduino_compat.h>
 #include <EventScheduler.h>
-#include <EEPROM.h>
 #include "SPIFlash.h"
 #if ESP8266
 #include <coredecls.h>

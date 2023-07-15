@@ -5,7 +5,6 @@
 #pragma once
 
 #include <Arduino_compat.h>
-#include <EEPROM.h>
 
 #ifndef DEBUG_CONFIGURATION
 #    define DEBUG_CONFIGURATION 0
@@ -18,7 +17,7 @@
 /*
 http://192.168.0.10/file_manager/view?filename=%2F%2Epvt%2Fcfg%5Fhandles
 
-<EEPROM>
+<NVS>
 <INVALID>
 MainConfig().system.device.cfg
 MainConfig().system.webserver.cfg

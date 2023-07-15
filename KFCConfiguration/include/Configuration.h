@@ -50,17 +50,24 @@
 
 namespace ConfigurationHelper {
 
-    inline uint32_t getFlashAddress() {
-        return SECTION_EEPROM_START_ADDRESS - SECTION_FLASH_START_ADDRESS;
-    }
+    #if !defined(HAVE_NVS_FLASH)
 
-    inline uint32_t getFlashAddress(size_t offset) {
-        return getFlashAddress() + offset;
-    }
+        inline uint32_t getFlashAddress()
+        {
+            return SECTION_EEPROM_START_ADDRESS - SECTION_FLASH_START_ADDRESS;
+        }
 
-    inline uint32_t getOffsetFromFlashAddress(uint32_t address) {
-        return address - getFlashAddress();
-    }
+        inline uint32_t getFlashAddress(size_t offset)
+        {
+            return getFlashAddress() + offset;
+        }
+
+        inline uint32_t getOffsetFromFlashAddress(uint32_t address)
+        {
+            return address - getFlashAddress();
+        }
+
+    #endif
 
     struct Header {
         Header() :
@@ -223,7 +230,8 @@ public:
     static constexpr uint16_t kParamsOffset = kHeaderOffset + sizeof(Header);
     static_assert((kParamsOffset & 3) == 0, "not dword aligned");
 
-    static constexpr uint16_t getDataOffset(uint16_t numParams) {
+    static constexpr uint16_t getDataOffset(uint16_t numParams)
+    {
         return kParamsOffset + (sizeof(ParameterHeaderType) * numParams);
     }
 
@@ -234,19 +242,19 @@ public:
         OUT_OF_MEMORY,
         READING_PREV_CONF_FAILED,
         MAX_SIZE_EXCEEDED,
-        #if ESP8266
-            FLASH_READ_ERROR,
-            FLASH_ERASE_ERROR,
-            FLASH_WRITE_ERROR,
-        #endif
         #if defined(HAVE_NVS_FLASH)
             NVS_COMMIT_ERROR,
             NVS_SET_BLOB_ERROR,
             NVS_ERASE_ALL,
+        #else
+            FLASH_READ_ERROR,
+            FLASH_ERASE_ERROR,
+            FLASH_WRITE_ERROR,
         #endif
     };
 
-    static const __FlashStringHelper *getWriteResultTypeStr(WriteResultType result) {
+    static const __FlashStringHelper *getWriteResultTypeStr(WriteResultType result)
+    {
         switch(result) {
             case WriteResultType::SUCCESS:
                 return F("SUCCESS");
@@ -260,14 +268,6 @@ public:
                 return F("READING_PREV_CONF_FAILED");
             case WriteResultType::MAX_SIZE_EXCEEDED:
                 return F("MAX_SIZE_EXCEEDED");
-            #if ESP8266
-                case WriteResultType::FLASH_READ_ERROR:
-                    return F("FLASH_READ_ERROR");
-                case WriteResultType::FLASH_ERASE_ERROR:
-                    return F("FLASH_ERASE_ERROR");
-                case WriteResultType::FLASH_WRITE_ERROR:
-                    return F("FLASH_WRITE_ERROR");
-            #endif
             #if defined(HAVE_NVS_FLASH)
                 case WriteResultType::NVS_COMMIT_ERROR:
                     return F("NVS_COMMIT_ERROR");
@@ -275,6 +275,13 @@ public:
                     return F("NVS_SET_BLOB_ERROR");
                 case WriteResultType::NVS_ERASE_ALL:
                     return F("NVS_ERASE_ALL");
+            #else
+                case WriteResultType::FLASH_READ_ERROR:
+                    return F("FLASH_READ_ERROR");
+                case WriteResultType::FLASH_ERASE_ERROR:
+                    return F("FLASH_ERASE_ERROR");
+                case WriteResultType::FLASH_WRITE_ERROR:
+                    return F("FLASH_WRITE_ERROR");
             #endif
             // default:
             //     break;
@@ -300,13 +307,13 @@ public:
     // free data and keep modifications
     void release();
 
-    // read data from EEPROM
+    // read data from NVS
     bool read();
 
-    // erase NVS data or EEPROM
+    // erase NVS
     WriteResultType erase();
 
-    // write data to EEPROM
+    // write data to NVS
     WriteResultType write();
 
     template <typename _Ta>
@@ -401,23 +408,27 @@ public:
     // PROGMEM safe
     void setBinary(HandleType handle, const void *data, size_type length);
 
-    bool getBool(HandleType handle) {
+    inline bool getBool(HandleType handle)
+    {
         return get<uint8_t>(handle) ? true : false;
     }
 
-    void setBool(HandleType handle, const bool flag) {
+    inline void setBool(HandleType handle, const bool flag)
+    {
         set<bool>(handle, flag ? true : false);
     }
 
     template <typename _Ta>
-    bool exists(HandleType handle) {
+    bool exists(HandleType handle)
+    {
         uint16_t offset;
         return _findParam(ConfigurationParameter::getType<_Ta>(), handle, offset) != _params.end();
     }
 
     template <typename _Ta>
     // static_assert(std::is_<>);
-    const _Ta get(HandleType handle) {
+    const _Ta get(HandleType handle)
+    {
         __LDBG_printf("handle=%04x", handle);
         uint16_t offset;
         auto param = _findParam(ConfigurationParameter::getType<_Ta>(), handle, offset);
@@ -442,14 +453,16 @@ public:
     }
 
     template <typename _Ta>
-    _Ta &getWriteable(HandleType handle) {
+    _Ta &getWriteable(HandleType handle)
+    {
         __LDBG_printf("handle=%04x", handle);
         auto &param = getWritableParameter<_Ta>(handle);
         return *reinterpret_cast<_Ta *>(param._getParam().data());
     }
 
     template <typename _Ta>
-    const _Ta &set(HandleType handle, const _Ta &data) {
+    const _Ta &set(HandleType handle, const _Ta &data)
+    {
         __LDBG_printf("handle=%04x data=%p len=%u", handle, std::addressof(data), sizeof(_Ta));
         uint16_t offset;
         auto &param = _getOrCreateParam(ConfigurationParameter::getType<_Ta>(), handle, offset);
@@ -478,11 +491,11 @@ private:
     bool _readParams();
 
     // ------------------------------------------------------------------------
-    // EEPROM
+    // data storage
 
     #if !HAVE_NVS_FLASH
 
-        // Flash implementation
+        // Single sector flash implementation
 
         bool flashWrite(uint32_t offset, const uint8_t *data, size_t size)
         {
@@ -509,7 +522,7 @@ private:
             return ESP.flashEraseSector(sector);
         }
 
-    #elif HAVE_NVS_FLASH
+    #elif defined(HAVE_NVS_FLASH)
 
     // NVS implementation
     protected:

@@ -5,7 +5,6 @@
 #pragma once
 
 #include <Arduino_compat.h>
-#include <EEPROM.h>
 #include <MicrosTimer.h>
 #include <PrintString.h>
 #include <type_traits>
@@ -17,9 +16,9 @@
 #include "WriteableData.h"
 
 #if DEBUG_CONFIGURATION
-#include <debug_helper_enable.h>
+#    include <debug_helper_enable.h>
 #else
-#include <debug_helper_disable.h>
+#    include <debug_helper_disable.h>
 #endif
 
 class Buffer;
@@ -117,7 +116,7 @@ namespace ConfigurationHelper {
             return isString() ? (length + 1) : length;
         };
 
-        // return length of data stored in eeprom
+        // return length of data stored in nvs
         // 32 bit aligned
         inline size_type next_offset() const {
             return (size() + 3) & ~3;
@@ -151,7 +150,7 @@ namespace ConfigurationHelper {
                     HandleType _handle;
                     // type of data
                     uint16_t _type : 4;
-                    // stores the length of the data currently stored in the EEPROM
+                    // stores the length of the data currently stored in the NVS
                     uint16_t _length : 11;
                     // indicates that the parameter is writeable using the _writeable object
                     uint16_t _is_writeable: 1;
@@ -194,7 +193,8 @@ public:
 
     ConfigurationParameter(ParameterHeaderType header) : _param(header) {}
 
-    ~ConfigurationParameter() {
+    ~ConfigurationParameter()
+    {
         if (_param.isWriteable()) {
             free(_param._writeable);
         }
@@ -203,12 +203,14 @@ public:
         }
     }
 
-    bool operator==(const HandleType handle) const {
+    bool operator==(const HandleType handle) const
+    {
         return _param.getHandle() == handle;
     }
 
     template <typename _Ta>
-    static ParameterType constexpr getType() {
+    static ParameterType constexpr getType()
+    {
         return
             (std::is_same<_Ta, char *>::value ? ParameterType::STRING :
                 ((std::is_same<_Ta, uint8_t *>::value || std::is_same<_Ta, void *>::value) ? ParameterType::BINARY :
@@ -226,7 +228,6 @@ public:
     void setData(Configuration &conf, const uint8_t *data, size_type length);
 
     const char *getString(Configuration &conf, uint16_t offset);
-
     const uint8_t *getBinary(Configuration &conf, size_type &length, uint16_t offset);
 
     void dump(Print &output);
@@ -234,39 +235,18 @@ public:
 
     String toString() const;
 
-    inline Handle_t getHandle() const {
-        return _param.getHandle();
-    }
+    Handle_t getHandle() const;
+    ParameterType getType() const;
+    bool isString() const;
+    uint16_t getLength() const;
+    bool hasData() const;
+    bool isWriteable() const;
 
-    inline ParameterType getType() const {
-        return _param.type();
-    }
-
-    inline bool isString() const {
-        return _param.type() == ParameterType::STRING;
-    }
-
-    inline uint16_t getLength() const {
-        return _param.length();
-    }
-
-    inline bool hasData() const {
-        return _param.hasData();
-    }
-
-    inline bool isWriteable() const {
-        return _param.isWriteable();
-    }
-
-    // compare data with EEPROM content if isWriteable()
+    // compare data with NVS content if isWriteable()
     bool hasDataChanged(Configuration &conf) const;
 
     static const __FlashStringHelper *getTypeString(ParameterType type);
-
-    inline static PGM_P getTypeString_P(ParameterType type) {
-        return reinterpret_cast<PGM_P>(getTypeString(type));
-    }
-
+    static PGM_P getTypeString_P(ParameterType type);
 
 private:
     friend Configuration;
@@ -287,13 +267,8 @@ protected:
     ParameterInfo _param;
 
 public:
-    inline ParameterInfo &_getParam() {
-        return _param;
-    }
-
-    inline ParameterInfo _getParam() const {
-        return _param;
-    }
+    ParameterInfo &_getParam();
+    ParameterInfo _getParam() const;
 };
 
 namespace ConfigurationHelper {
