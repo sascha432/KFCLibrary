@@ -25,6 +25,7 @@
 #include <debug_helper_disable.h>
 #endif
 
+// crc32 that PHP uses
 uint32_t crc32b(const void *message, size_t length, uint32_t crc)
 {
     uint32_t byte, mask;
