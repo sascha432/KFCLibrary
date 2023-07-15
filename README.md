@@ -42,7 +42,9 @@ include ``Arduino_combat.h``, which provides ``KFCFS_begin()`` and the ``KFCFS``
 
 Classes to create complex dynamic HTML forms (using bootstrap 4.5), server side validation of posted forms, dynamic menus, support for authenticated sessions and http headers
 
-![Web Frontend Example 1](examples/pics/web_frontend1.png){width=150px} ![Web Frontend Example 2](examples/pics/web_frontend2.png){width=500px}
+Examples:
+
+[<img src="examples/pics/web_frontend1_tn.png">](examples/pics/web_frontend1.png?raw=true) [<img src="examples/pics/web_frontend2_tn.png">](examples/pics/web_frontend2.png?raw=true)
 
 ### KFCSyslog
 
