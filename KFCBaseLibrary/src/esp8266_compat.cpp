@@ -5,6 +5,7 @@
 #if ESP8266
 
 #include <Arduino.h>
+#include <PrintString.h>
 #include "global.h"
 #include "esp8266_compat.h"
 
