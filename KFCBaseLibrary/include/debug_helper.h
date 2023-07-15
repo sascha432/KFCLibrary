@@ -384,4 +384,16 @@ static inline int DEBUG_OUTPUT_flush() {
 
 #endif
 
+// measure time and print duration when the scope is exited
+struct DebugMeasureTimer {
+    DebugMeasureTimer(PGM_P name) : _name(name), _start(micros()) {
+    }
+    ~DebugMeasureTimer() {
+        uint32_t dur = micros() - _start;
+        DEBUG_OUTPUT.printf_P(PSTR("D%09u %s: %uus\n"), millis(), _name, dur);
+    }
+    PGM_P _name;
+    uint32_t _start;
+};
+
 #include "debug_helper_enable.h"
