@@ -44,7 +44,7 @@ Classes to create complex dynamic HTML forms (using bootstrap 4.5), server side 
 
 Examples:
 
-[<img src="examples/pics/web_frontend1_tn.png">](examples/pics/web_frontend1.png?raw=true) [<img src="examples/pics/web_frontend2_tn.png">](examples/pics/web_frontend2.png?raw=true)
+[<img src="examples/pics/web_frontend1_tn.png?raw=true">](examples/pics/web_frontend1.png?raw=true) [<img src="examples/pics/web_frontend2_tn.png?raw=true">](examples/pics/web_frontend2.png?raw=true) [<img src="examples/pics/web_frontend3_tn.png?raw=true">](examples/pics/web_frontend3.png?raw=true)  [<img src="examples/pics/web_frontend4_tn.png?raw=true">](examples/pics/web_frontend4.png?raw=true)
 
 ### KFCSyslog
 
