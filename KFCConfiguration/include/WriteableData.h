@@ -20,6 +20,7 @@ namespace ConfigurationHelper {
         size_type length() const;
         uint8_t *data();
         const uint8_t *data() const;
+        const char *c_str() const;
         const uint8_t *begin() const;
         uint8_t *begin();
         const uint8_t *end() const;

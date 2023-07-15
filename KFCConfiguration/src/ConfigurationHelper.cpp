@@ -9,13 +9,13 @@
 #include <ConfigurationParameter.h>
 
 #if DEBUG_CONFIGURATION
-#include <debug_helper_enable.h>
+#    include <debug_helper_enable.h>
 #else
-#include <debug_helper_disable.h>
+#    include <debug_helper_disable.h>
 #endif
 
 #if defined(ESP8266) || defined(_MSC_VER)
-#include "spi_flash.h"
+#    include "spi_flash.h"
 #endif
 
 namespace ConfigurationHelper {
@@ -101,7 +101,7 @@ namespace ConfigurationHelper {
             while (file.available()) {
                 auto line = file.readStringUntil('\n');
                 if (line.trim().length()) {
-                    ConfigurationHelper::registerHandleName(line.c_str(), __DBG__TYPE_NONE);
+                    ConfigurationHelper::registerHandleName(line.c_str() + 5/* skip crc16 hash */, __DBG__TYPE_NONE);
                     count++;
                 }
             }
@@ -119,7 +119,7 @@ namespace ConfigurationHelper {
         auto file = KFCFS.open(FSPGM(__DBG_config_handle_storage), fs::FileOpenMode::write);
         if (file) {
             for (const auto &handle : DebugHandle::getHandles()) {
-                file.printf_P(PSTR("%s\n"), handle.getName());
+                file.printf_P(PSTR("%04x %s\n"), handle.getHandle(), handle.getName());
             }
             file.close();
         }

@@ -13,16 +13,11 @@ void WriteableData::resize(size_type newLength, ConfigurationParameter &paramete
     }
 
     auto &param = parameter._getParam();
-    // update string length
-    if (param.isString()) {
-        __LDBG_printf("len=%u strlen=%u writeable_length=%u", param._length, strlen(param.string()), length());
-        param._length = strlen(param.string());
-        _length = param._length;
-    }
     __LDBG_printf("new_length=%u length=%u data=%p", newLength, length(), data());
 
+    // does data fit into _buffer?
     size_t newSize = param.sizeOf(newLength);
-    if (newLength > _buffer_length()) {
+    if (newSize > _buffer_size()) {
         // allocate new block
         size_t realSize;
         auto ptr = allocate(newSize + 4, &realSize);
@@ -34,11 +29,11 @@ void WriteableData::resize(size_type newLength, ConfigurationParameter &paramete
         return;
     }
 
-    // data fits into _buffer
+    // data fits into _buffer but is stored in an allocated block?
     if (_is_allocated) {
         // we need to create a copy of the _data pointer since it is sharing _buffer
         auto ptr = _data;
-        // copy existing data and zero fill
+        // copy previous data and zero fill
         std::fill(std::copy_n(ptr, std::min(length(), newLength), _buffer_begin()), _buffer_end(), 0);
         _length = newLength;
         // free saved pointer
@@ -50,5 +45,6 @@ void WriteableData::resize(size_type newLength, ConfigurationParameter &paramete
     // the data is already in _buffer
     // fill it with 0 after newLength
     std::fill(_buffer_begin() + newLength, _buffer_end(), 0);
+    _length = newLength;
 }
 

@@ -36,7 +36,7 @@ namespace ConfigurationHelper {
 
     inline size_type WriteableData::size() const
     {
-        return _length + (_is_string ? 1 : 0);
+        return length() + (_is_string ? 1 : 0);
     }
 
     inline size_type WriteableData::length() const
@@ -44,6 +44,7 @@ namespace ConfigurationHelper {
         return _length;
     }
 
+    // return internal buffer if the data fits or the allocated pointer
     inline uint8_t *WriteableData::data()
     {
         return _length <= _buffer_length() ? _buffer_begin() : _data;
@@ -51,7 +52,12 @@ namespace ConfigurationHelper {
 
     inline const uint8_t *WriteableData::data() const
     {
-        return _length <= _buffer_length() ? _buffer_begin() : _data;
+        return const_cast<WriteableData *>(this)->data();
+    }
+
+    inline const char *WriteableData::c_str() const
+    {
+        return reinterpret_cast<const char *>(data());
     }
 
     inline const uint8_t *WriteableData::begin() const

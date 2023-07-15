@@ -28,18 +28,20 @@ void ConfigurationParameter::setData(Configuration &conf, const uint8_t *data, s
         return;
     }
     if (_param.isString() && length == 0) {
-        // we have an empty string, set length to 2 and fill with NUL bytes
-        // otherwise the string will not be stored and created in write mode each time being accessed, using 24 bytes instead of 8
+        // we have an empty string, set length to 1 and fill with NUL byte
+        // otherwise the string will not be stored and created in write mode each time being accessed
         length = 1;
         _makeWriteable(conf, length);
-        __LDBG_printf("empty string fill=%u sizeof=%u len=%u", _param._length, _param.sizeOf(length), length);
-        std::fill_n(_param.data(), length + 1, 0);
+        *_param.data() = 0;
     }
     else {
         _makeWriteable(conf, length);
-        memmove_P(_param.data(), data, length); // for strings, we do not copy trailing NUL byte if length != 0
+        memmove_P(_param.data(), data, length); // for strings, we do not copy trailing NUL byte
+        if (_param.isString()) {
+            _param.data()[length] = 0;
+        }
     }
-    // __LDBG_assert_printf(_param.isString() == false || _param.string()[length] == 0, "%s NUL byte missing", toString().c_str());
+    _param._length = length;
 }
 
 void ConfigurationParameter::dump(Print &output)
@@ -51,6 +53,17 @@ void ConfigurationParameter::dump(Print &output)
         switch (_param.type()) {
         case ParameterType::STRING:
             output.printf_P(PSTR("'%s'\n"), _param.string());
+            if (strlen(_param.string()) != _param.length()) {
+                DumpBinary dumper(output, DumpBinary::kGroupBytesDefault, 32);
+                dumper.setNewLine(F("\n      "));
+                if (_param.length()) {
+                    dumper.dump(_param.data(), _param.length());
+                    output.print('\r');
+                }
+                else {
+                    output.println();
+                }
+            }
             break;
         case ParameterType::BINARY: {
                 DumpBinary dumper(output, DumpBinary::kGroupBytesDefault, 32);
@@ -189,16 +202,16 @@ bool ConfigurationParameter::hasDataChanged(Configuration &conf) const
     }
     __LDBG_assert_panic(static_cast<const void *>(&(*iterator)) == static_cast<const void *>(this), "*iterator=%p this=%p", &(*iterator), this);
 
-    #if HAVE_NVS_FLASH
+    #if defined(HAVE_NVS_FLASH)
 
         size_t requiredSize = _param.length();
-        auto tmp = std::unique_ptr<uint8_t[]>(::new uint8_t[requiredSize]);
+        auto tmp = std::unique_ptr<uint8_t[]>(::new uint8_t[requiredSize]());
         if (!tmp) {
-            __LDBG_assert_panic(tmp.get(), "allocate returned nullptr");
+            __DBG_assert_panic(tmp.get(), "allocate returned nullptr");
             return true;
         }
 
-        size_t size;
+        size_t size = requiredSize;
         esp_err_t err;
         if ((err = conf._nvs_get_blob_with_open(conf._nvs_key_handle_name(_param.type(), _param.getHandle()), tmp.get(), &requiredSize)) != ESP_OK) {
             return true;
@@ -243,12 +256,12 @@ bool ConfigurationParameter::_readData(Configuration &conf, uint16_t offset)
     ConfigurationHelper::allocate(_param.size(), *this);
     conf.setLastReadAccess();
 
-    #if HAVE_NVS_FLASH
+    #if defined(HAVE_NVS_FLASH)
 
         size_t size = _param.length();
         esp_err_t err;
         if ((err = conf._nvs_get_blob_with_open(conf._nvs_key_handle_name(_param.type(), _param.getHandle()), _param._readable, &size)) != ESP_OK) {
-            __DBG_printf_E("cannot read data handle=%04x size=%u err=%u", _param.getHandle(), _param.size(), err);
+            __DBG_printf_E("cannot read data handle=%04x size=%u read=%u err=%x", _param.getHandle(), _param.length(), size, err);
             return false;
         }
         else if (size != _param.length()) {

@@ -275,7 +275,7 @@ private:
     uint16_t read(Configuration &conf, uint16_t offset);
 
     bool _readData(Configuration &conf, uint16_t offset);
-    #if ESP8266
+    #if !HAVE_NVS_FLASH
         bool _readDataTo(Configuration &conf, uint16_t offset, uint8_t *ptr) const;
     #endif
     void _makeWriteable(Configuration &conf, size_type length);

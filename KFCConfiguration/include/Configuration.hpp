@@ -10,14 +10,16 @@
 inline Configuration::~Configuration()
 {
     clear();
-    #if HAVE_NVS_FLASH
+    #if defined(HAVE_NVS_FLASH)
         _nvs_close();
-        if (_nvsHavePartition) {
-            esp_err_t err = nvs_flash_deinit_partition(KFC_CFG_NVS_PARTITION_NAME);
-            if (err != ESP_OK) {
-                __DBG_printf_E("failed to deinit NVS partition=%s err=%08x", KFC_CFG_NVS_PARTITION_NAME, err);
+        #ifdef KFC_CFG_NVS_PARTITION_NAME
+            if (_nvsHavePartitionInitialized) {
+                esp_err_t err = nvs_flash_deinit_partition(KFC_CFG_NVS_PARTITION_NAME);
+                if (err != ESP_OK) {
+                    __DBG_printf_E("failed to deinit NVS partition=%s err=%08x", KFC_CFG_NVS_PARTITION_NAME, err);
+                }
             }
-        }
+        #endif
     #endif
 }
 
@@ -31,14 +33,13 @@ inline void Configuration::discard()
 {
     // do not allow writes during discard
     MUTEX_LOCK_BLOCK(_writeLock) {
-
         __LDBG_printf("discard params=%u", _params.size());
         for(auto &parameter: _params) {
             ConfigurationHelper::deallocate(parameter);
         }
         _readAccess = 0;
 
-        #if HAVE_NVS_FLASH
+        #if defined(HAVE_NVS_FLASH)
             _nvs_close();
         #endif
     }
@@ -48,7 +49,6 @@ inline bool Configuration::read()
 {
     // do not allow writes during read
     MUTEX_LOCK_BLOCK(_writeLock) {
-
         __LDBG_printf("params=%u", _params.size());
         clear();
         #if DEBUG_CONFIGURATION_GETHANDLE
@@ -125,10 +125,23 @@ inline void Configuration::_setString(HandleType handle, const char *string, siz
 
 inline void Configuration::_setString(HandleType handle, const char *string, size_type length)
 {
-    __LDBG_printf("handle=%04x length=%u", handle, length);
+    __LDBG_printf("handle=%04x length=%u str='%s'#%u", handle, length, string, strlen_P(string));
     uint16_t offset;
     auto &param = _getOrCreateParam(ParameterType::STRING, handle, offset);
-    param.setData(*this, (const uint8_t *)string, length);
+
+    #if DEBUG
+        // TODO debug code, this should not happen
+        auto len = strlen_P(string);
+        if (length == 1 && len == 0) {
+            // this is allowed for empty strings
+        }
+        else if (len < length) {
+            __DBG_printf_E("handle=%04x str size changed %u!=%u", handle, length, len);
+            length = len;
+        }
+    #endif
+
+    param.setData(*this, reinterpret_cast<const uint8_t *>(string), length);
 }
 
 inline void Configuration::setBinary(HandleType handle, const void *data, size_type length)
@@ -136,7 +149,7 @@ inline void Configuration::setBinary(HandleType handle, const void *data, size_t
     __LDBG_printf("handle=%04x data=%p length=%u", handle, data, length);
     uint16_t offset;
     auto &param = _getOrCreateParam(ParameterType::BINARY, handle, offset);
-    param.setData(*this, (const uint8_t *)data, length);
+    param.setData(*this, reinterpret_cast<const uint8_t *>(data), length);
 }
 
 inline bool Configuration::isDirty() const

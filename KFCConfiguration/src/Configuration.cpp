@@ -9,9 +9,6 @@
 #if ESP8266
 #    include <interrupts.h>
 #endif
-#if HAVE_NVS_FLASH
-#    include <nvs.h>
-#endif
 #include "DumpBinary.h"
 #include "misc.h"
 
@@ -33,18 +30,19 @@
 #endif
 
 Configuration::Configuration(uint16_t size) :
-    #if HAVE_NVS_FLASH
+    #if defined(HAVE_NVS_FLASH)
         _nvsHandle(0),
         _nvsOpenMode(NVS_READONLY),
-        _nvsHavePartition(false),
+        _nvsHavePartitionInitialized(false),
         _nvsNamespace("kfcfw_config"),
+        _nvsHeapUsage(1024),
     #endif
     _readAccess(0),
     _size(size)
 {
 }
 
-#if HAVE_NVS_FLASH
+#if defined(HAVE_NVS_FLASH)
 
 #    include "logger.h"
 
@@ -111,29 +109,10 @@ Configuration::Configuration(uint16_t size) :
 
     esp_err_t Configuration::_nvs_open(bool readWrite)
     {
-        // runs one time
-        if (!_nvsHavePartition) {
-            esp_err_t err = nvs_flash_init_partition(KFC_CFG_NVS_PARTITION_NAME);
-            if (err == ESP_OK) {
-                _nvsHavePartition = true;
-            }
-            else {
-                // cannot init partition, erase it
-                __DBG_printf_E("cannot init NVS partition=%s err=%08x, erasing it", KFC_CFG_NVS_PARTITION_NAME, err);
-                err = nvs_flash_erase_partition(KFC_CFG_NVS_PARTITION_NAME);
-                if (err != ESP_OK) {
-                    __DBG_printf_E("cannot erase NVS partition=%s err=%08x", KFC_CFG_NVS_PARTITION_NAME, err);
-                }
-                // try init again
-                err = nvs_flash_init_partition(KFC_CFG_NVS_PARTITION_NAME);
-                if (err != ESP_OK) {
-                    __DBG_panic("cannot init NVS partition=%s err=%08x", KFC_CFG_NVS_PARTITION_NAME, err);
-                }
-                else {
-                    _nvsHavePartition = true;
-                }
-            }
-        }
+        // check if the partition needs to be initialized
+        _nvs_init();
+
+        // DebugMeasureTimer __mt(PSTR("_nvs_open"));
 
         // check if we have an open partition and the proper read/write mode
         if (_nvsHandle) {
@@ -146,8 +125,13 @@ Configuration::Configuration(uint16_t size) :
         // store open mode
         _nvsOpenMode = readWrite ? NVS_READWRITE : NVS_READONLY;
 
-        // open custom partition with namespace
-        esp_err_t err = nvs_open_from_partition(KFC_CFG_NVS_PARTITION_NAME, _nvsNamespace, _nvsOpenMode, &_nvsHandle);
+        // open is pretty fast <200us
+        #ifdef KFC_CFG_NVS_PARTITION_NAME
+            // open custom partition with namespace
+            esp_err_t err = nvs_open_from_partition(KFC_CFG_NVS_PARTITION_NAME, _nvsNamespace, _nvsOpenMode, &_nvsHandle);
+        #else
+            esp_err_t err = nvs_open(_nvsNamespace, _nvsOpenMode, &_nvsHandle);
+        #endif
         if (err != ESP_OK) {
             __DBG_printf_E("cannot open NVS namespace=%s err=%08x", _nvsNamespace, err);
         }
@@ -159,9 +143,71 @@ Configuration::Configuration(uint16_t size) :
 
     void Configuration::_nvs_close()
     {
+        // DebugMeasureTimer __mt(PSTR("_nvs_close"));
+
         if (_nvsHandle) {
             nvs_close(_nvsHandle);
             _nvsHandle = 0;
+        }
+        #if NVS_DEINIT_PARTITION_ON_CLOSE
+            _nvs_deinit();
+        #endif
+    }
+
+    void Configuration::_nvs_init()
+    {
+        // init takes about 16ms (ESP8266 160MHz/80MHz flash) with 32KB and a freshly formatted partition. 32ms if the flash is running on 40MHz. Interrupts are locked during the operation
+
+        #if ESP32 && !defined(KFC_CFG_NVS_PARTITION_NAME)
+            // nvs_flash_init() is called automatically
+        #else
+            if (!_nvsHavePartitionInitialized) {
+                // DebugMeasureTimer __mt(PSTR("_nvs_init"));
+
+                auto before = ESP.getFreeHeap();
+                #ifdef KFC_CFG_NVS_PARTITION_NAME
+                    esp_err_t err = nvs_flash_init_partition(KFC_CFG_NVS_PARTITION_NAME);
+                    if (err == ESP_OK) {
+                        _nvsHavePartitionInitialized = true;
+                    }
+                    else {
+                        // cannot init partition, erase it
+                        __DBG_printf_E("cannot init NVS partition=%s err=%08x, erasing it", KFC_CFG_NVS_PARTITION_NAME, err);
+                        err = nvs_flash_erase_partition(KFC_CFG_NVS_PARTITION_NAME);
+                        if (err != ESP_OK) {
+                            __DBG_printf_E("cannot erase NVS partition=%s err=%08x", KFC_CFG_NVS_PARTITION_NAME, err);
+                        }
+                        // try init again
+                        err = nvs_flash_init_partition(KFC_CFG_NVS_PARTITION_NAME);
+                        if (err != ESP_OK) {
+                            __DBG_panic("cannot init NVS partition=%s err=%08x", KFC_CFG_NVS_PARTITION_NAME, err);
+                        }
+                        else {
+                            _nvsHavePartitionInitialized = true;
+                        }
+                    }
+                #elif ESP8266
+                    nvs_flash_init();
+                    _nvsHavePartitionInitialized = true;
+                #endif
+                _nvsHeapUsage = before - ESP.getFreeHeap();
+            }
+        #endif
+    }
+
+    void Configuration::_nvs_deinit()
+    {
+        if (_nvsHavePartitionInitialized) {
+            // DebugMeasureTimer __mt(PSTR("_nvs_deinit"));
+
+            auto before = ESP.getFreeHeap();
+            #ifdef KFC_CFG_NVS_PARTITION_NAME
+                nvs_flash_deinit_partition(KFC_CFG_NVS_PARTITION_NAME);
+            #else
+                nvs_flash_deinit();
+            #endif
+            _nvsHeapUsage = ESP.getFreeHeap() - before;
+            _nvsHavePartitionInitialized = false;
         }
     }
 
@@ -171,13 +217,34 @@ void Configuration::release()
 {
     __LDBG_printf("params=%u last_read=%d dirty=%d", _params.size(), (int)(_readAccess == 0 ? -1 : millis() - _readAccess), isDirty());
     for(auto &parameter: _params) {
+        switch(parameter.getHandle()) {
+            // do not release those to avoid reading the configuration all the time
+            case 0x6f10:
+            case 0x2531:
+            case 0x7ff7:
+                continue;
+            default:
+                break;
+        }
         if (!parameter.isWriteable()) {
+            #if 0
+                if (_readAccess) {
+                    auto &param = parameter._getParam();
+                    if (param._readable) __DBG_printf("h=%04x l=%u", parameter.getHandle(), parameter.getLength());
+                }
+            #endif
             ConfigurationHelper::deallocate(parameter);
             // if (_readAccess) {
             //     parameter._getParam()._usage._counter2 += (millis() - _readAccess) / 1000;
             // }
         }
         else if (parameter.hasDataChanged(*this) == false) {
+            #if 0
+                if (_readAccess) {
+                    auto &param = parameter._getParam();
+                    if (param._readable) __DBG_printf("h=%04x l=%u", parameter.getHandle(), parameter.getLength());
+                }
+            #endif
             ConfigurationHelper::deallocate(parameter);
             // if (_readAccess) {
             //     parameter._getParam()._usage._counter2 += (millis() - _readAccess) / 1000;
@@ -191,7 +258,8 @@ Configuration::WriteResultType Configuration::erase()
 {
     // protected the entire erase cycle from write attempts
     MUTEX_LOCK_BLOCK(_writeLock) {
-        #if ESP8266
+        #if !HAVE_NVS_FLASH
+
             #if CONFIGURATION_HEADER_OFFSET
                 #error not implemented
             #endif
@@ -229,7 +297,7 @@ Configuration::WriteResultType Configuration::write()
     MUTEX_LOCK_BLOCK(_writeLock) {
         __LDBG_printf("params=%u", _params.size());
 
-        #if HAVE_NVS_FLASH
+        #if defined(HAVE_NVS_FLASH)
             esp_err_t err = _nvs_open(true);
             Header header;
 
@@ -249,7 +317,7 @@ Configuration::WriteResultType Configuration::write()
 
             // write new data and create params
             for (auto &parameter : _params) {
-                auto param = parameter._getParam();
+                auto param = parameter._getParam(); // copy of param
                 if (parameter._getParam().isWriteable()) {
                     param._length = param._writeable->length();
                     param._is_writeable = false;
@@ -257,6 +325,8 @@ Configuration::WriteResultType Configuration::write()
                         __DBG_printf_E("failed to write data handle=%04x size=%u err=%08x", param.getHandle(), param._writeable->length(), err);
                         return WriteResultType::NVS_SET_BLOB_ERROR;
                     }
+                    ConfigurationHelper::deallocate(parameter); // clear dirty state
+                    parameter._getParam()._length = param._length; // update length of parameter in RAM
                 }
                 // write parameter headers
                 __LDBG_printf("write_header: %s ofs=%d", parameter.toString().c_str(), buffer.length() + kParamsOffset);
@@ -281,17 +351,29 @@ Configuration::WriteResultType Configuration::write()
                 return WriteResultType::NVS_COMMIT_ERROR;
             }
 
-            _nvs_close();
-
             #if DEBUG_CONFIGURATION || 1
                 nvs_stats_t stats;
-                if ((err = nvs_get_stats(KFC_CFG_NVS_PARTITION_NAME, &stats)) == ESP_OK) {
-                    __DBG_printf_N("NVS part=%s namespace=%s stats free=%u ns_count=%u total=%u used=%u", KFC_CFG_NVS_PARTITION_NAME, _nvsNamespace, stats.free_entries, stats.namespace_count, stats.total_entries, stats.used_entries);
-                }
-                else {
-                    __DBG_printf_E("failed to get stats name=%s err=%08x", KFC_CFG_NVS_PARTITION_NAME, err);
-                }
-                // dump(DEBUG_OUTPUT);
+                #ifdef KFC_CFG_NVS_PARTITION_NAME
+                    if ((err = nvs_get_stats(KFC_CFG_NVS_PARTITION_NAME, &stats)) == ESP_OK) {
+                        __DBG_printf_N("NVS part=%s namespace=%s stats free=%u ns_count=%u total=%u used=%u", PSTR(KFC_CFG_NVS_PARTITION_NAME), _nvsNamespace, stats.free_entries, stats.namespace_count, stats.total_entries, stats.used_entries);
+                    }
+                    else {
+                        __DBG_printf_E("failed to get stats part=%s name=%s err=%08x", PSTR(KFC_CFG_NVS_PARTITION_NAME), _nvsNamespace, err);
+                    }
+                #else
+                    if ((err = nvs_get_stats(NULL, &stats)) == ESP_OK) {
+                        __DBG_printf_N("NVS namespace=%s stats free=%u ns_count=%u total=%u used=%u", _nvsNamespace, stats.free_entries, stats.namespace_count, stats.total_entries, stats.used_entries);
+                    }
+                    else {
+                        __DBG_printf_E("failed to get stats name=%s err=%08x", _nvsNamespace, err);
+                    }
+                #endif
+            #endif
+
+            _nvs_close();
+
+            #if DEBUG_CONFIGURATION_GETHANDLE
+                ConfigurationHelper::writeHandles();
             #endif
 
         #else
@@ -486,9 +568,8 @@ Configuration::WriteResultType Configuration::write()
 void Configuration::dump(Print &output, bool dirty, const String &name)
 {
     Header header;
-    auto address = ConfigurationHelper::getFlashAddress(kHeaderOffset);
 
-    #if HAVE_NVS_FLASH
+    #if defined(HAVE_NVS_FLASH)
 
         esp_err_t err = _nvs_open(false);
 
@@ -504,6 +585,8 @@ void Configuration::dump(Print &output, bool dirty, const String &name)
         }
 
     #else
+
+        auto address = ConfigurationHelper::getFlashAddress(kHeaderOffset);
 
         // read header to display details
         if (!flashRead(address, header, sizeof(header)) || !header) {
@@ -558,7 +641,7 @@ void Configuration::dump(Print &output, bool dirty, const String &name)
         dataOffset += param.next_offset();
     }
 
-    #if HAVE_NVS_FLASH
+    #if defined(HAVE_NVS_FLASH)
         _nvs_close();
     #endif
 }
@@ -567,7 +650,7 @@ void Configuration::exportAsJson(Print &output, const String &version)
 {
     // protected exporting all data without writes in between
     MUTEX_LOCK_BLOCK(_writeLock) {
-        #if HAVE_NVS_FLASH
+        #if defined(HAVE_NVS_FLASH)
             _nvs_open(false);
         #endif
 
@@ -594,7 +677,7 @@ void Configuration::exportAsJson(Print &output, const String &version)
             #if DEBUG_CONFIGURATION_GETHANDLE
                 output.print(F("\t\t\t\"name\": \""));
                 auto name = ConfigurationHelper::getHandleName(param.getHandle());
-                JsonTools::printToEscaped(output, name, strlen(name));
+                KFCJson::JsonTools::printToEscaped(output, name, strlen(name));
                 output.print(F("\",\n"));
             #endif
 
@@ -614,7 +697,7 @@ void Configuration::exportAsJson(Print &output, const String &version)
 
         output.print(F("\n\t}\n}\n"));
 
-        #if HAVE_NVS_FLASH
+        #if defined(HAVE_NVS_FLASH)
             _nvs_close();
         #endif
     }
@@ -624,7 +707,7 @@ bool Configuration::_readParams()
 {
     Header header;
 
-    #if HAVE_NVS_FLASH
+    #if defined(HAVE_NVS_FLASH)
 
         esp_err_t err = _nvs_open(false);
 

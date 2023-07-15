@@ -77,7 +77,7 @@ inline const uint8_t *ConfigurationParameter::getBinary(Configuration &conf, siz
     return _param.data();
 }
 
-#if ESP8266
+#if !HAVE_NVS_FLASH
 
 inline bool ConfigurationParameter::_readDataTo(Configuration &conf, uint16_t offset, uint8_t *ptr) const
 {

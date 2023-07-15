@@ -13,16 +13,16 @@ namespace ConfigurationHelper {
     {
         __LDBG_assert_printf(size != 0, "allocating size=%u", size);
         size = std::max(1U, size);
-        size = (size + 7) & ~7;
+        size = (size + 7) & ~7; // align to 8 bytes
         if (realSize) {
             *realSize = size;
         }
-        auto ptr = calloc(size, 1);
+        auto ptr = reinterpret_cast<uint8_t *>(calloc(size, 1));
         if (!ptr) {
             __DBG_printf_E("allocate %u(%u) bytes failed", realSize, size);
             return nullptr;
         }
-        return (uint8_t *)ptr;
+        return ptr;
     }
 
     inline void allocate(size_t size, ConfigurationParameter &parameter)

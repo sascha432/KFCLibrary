@@ -18,13 +18,12 @@
 #if ESP8266
 #    include <coredecls.h>
 #endif
-#if HAVE_NVS_FLASH
+#if defined(HAVE_NVS_FLASH)
 #    include <nvs.h>
-#    define KFC_CFG_NVS_PARTITION_NAME "kfcfw"
-// missing externals
-extern "C" esp_err_t nvs_flash_init_partition(const char *partition_label);
-extern "C" esp_err_t nvs_flash_deinit_partition(const char *partition_label);
-extern "C" esp_err_t nvs_flash_erase_partition(const char *partition_label);
+#    include <nvs_flash.h>
+#    if ESP32
+#        define KFC_CFG_NVS_PARTITION_NAME "nvs2" // use different partition
+#    endif
 #endif
 
 #include "ConfigurationHelper.h"
@@ -39,6 +38,14 @@ extern "C" esp_err_t nvs_flash_erase_partition(const char *partition_label);
 #if _MSC_VER
 #    pragma warning(push)
 #    pragma warning(disable : 26812)
+#endif
+
+#ifndef NVS_DEINIT_PARTITION_ON_CLOSE
+#    if ESP8266
+#        define NVS_DEINIT_PARTITION_ON_CLOSE 1     // release all memory used by the partition. requires to reinitialize the partition for each read/write, which is pretty slow
+#    else
+#        define NVS_DEINIT_PARTITION_ON_CLOSE 0
+#    endif
 #endif
 
 namespace ConfigurationHelper {
@@ -209,7 +216,7 @@ public:
 
     static constexpr uint16_t kHeaderOffset = CONFIGURATION_HEADER_OFFSET;
     static_assert((kHeaderOffset & 3) == 0, "not dword aligned");
-    #if HAVE_NVS_FLASH
+    #if defined(HAVE_NVS_FLASH)
         static_assert(kHeaderOffset == 0, "offset not supported");
     #endif
 
@@ -232,7 +239,7 @@ public:
             FLASH_ERASE_ERROR,
             FLASH_WRITE_ERROR,
         #endif
-        #if HAVE_NVS_FLASH
+        #if defined(HAVE_NVS_FLASH)
             NVS_COMMIT_ERROR,
             NVS_SET_BLOB_ERROR,
             NVS_ERASE_ALL,
@@ -261,7 +268,7 @@ public:
                 case WriteResultType::FLASH_WRITE_ERROR:
                     return F("FLASH_WRITE_ERROR");
             #endif
-            #if HAVE_NVS_FLASH
+            #if defined(HAVE_NVS_FLASH)
                 case WriteResultType::NVS_COMMIT_ERROR:
                     return F("NVS_COMMIT_ERROR");
                 case WriteResultType::NVS_SET_BLOB_ERROR:
@@ -303,7 +310,8 @@ public:
     WriteResultType write();
 
     template <typename _Ta>
-    ConfigurationParameter &getWritableParameter(HandleType handle, size_type maxLength = sizeof(_Ta)) {
+    ConfigurationParameter &getWritableParameter(HandleType handle, size_type maxLength = sizeof(_Ta))
+    {
         __LDBG_printf("handle=%04x max_len=%u", handle, maxLength);
         uint16_t offset;
         auto &param = _getOrCreateParam(ConfigurationParameter::getType<_Ta>(), handle, offset);
@@ -322,7 +330,8 @@ public:
     }
 
     template <typename _Ta>
-    ConfigurationParameter *getParameter(HandleType handle) {
+    ConfigurationParameter *getParameter(HandleType handle)
+    {
         __LDBG_printf("handle=%04x", handle);
         size_type offset;
         auto iterator = _findParam(ConfigurationParameter::getType<_Ta>(), handle, offset);
@@ -339,17 +348,20 @@ public:
 
     // uint8_t for compatibility
     const uint8_t *getBinary(HandleType handle, size_type &length);
-    const void *getBinaryV(HandleType handle, size_type &length) {
+    const void *getBinaryV(HandleType handle, size_type &length)
+    {
         return reinterpret_cast<const void *>(getBinary(handle, length));
     }
     void *getWriteableBinary(HandleType handle, size_type length);
 
     // PROGMEM safe
-    inline void setString(HandleType handle, const char *str, size_type length, size_type maxLength) {
+    inline void setString(HandleType handle, const char *str, size_type length, size_type maxLength)
+    {
         _setString(handle, str, length, maxLength);
     }
 
-    inline void setString(HandleType handle, const char *str, size_type maxLength) {
+    inline void setString(HandleType handle, const char *str, size_type maxLength)
+    {
         if (!str) {
             _setString(handle, emptyString.c_str(), 0);
             return;
@@ -357,7 +369,8 @@ public:
         _setString(handle, str, (size_type)strlen_P(str), maxLength);
     }
 
-    inline void setString(HandleType handle, const char *str) {
+    inline void setString(HandleType handle, const char *str)
+    {
         if (!str) {
             _setString(handle, emptyString.c_str(), 0);
             return;
@@ -365,19 +378,23 @@ public:
         _setString(handle, str, (size_type)strlen_P(str));
     }
 
-    inline void setString(HandleType handle, const __FlashStringHelper *fstr, size_type maxLength) {
+    inline void setString(HandleType handle, const __FlashStringHelper *fstr, size_type maxLength)
+    {
         setString(handle, RFPSTR(fstr), maxLength);
     }
 
-    inline void setString(HandleType handle, const __FlashStringHelper *fstr) {
+    inline void setString(HandleType handle, const __FlashStringHelper *fstr)
+    {
         setString(handle, RFPSTR(fstr));
     }
 
-    inline void setString(HandleType handle, const String &str, size_type maxLength) {
+    inline void setString(HandleType handle, const String &str, size_type maxLength)
+    {
         _setString(handle, str.c_str(), (size_type)str.length(), maxLength);
     }
 
-    inline void setString(HandleType handle, const String &str) {
+    inline void setString(HandleType handle, const String &str)
+    {
         _setString(handle, str.c_str(), (size_type)str.length());
     }
 
@@ -463,7 +480,7 @@ private:
     // ------------------------------------------------------------------------
     // EEPROM
 
-    #if ESP8266
+    #if !HAVE_NVS_FLASH
 
         // Flash implementation
 
@@ -505,6 +522,8 @@ private:
         esp_err_t _nvs_commit();
         void _nvs_close();
 
+        void _nvs_init(); // must be called before any other method is used
+        void _nvs_deinit(); // the nvs namespace must be closed before called deinit
 
         esp_err_t _nvs_get_blob_with_open(const String &keyStr, void *out_value, size_t *length);
         esp_err_t _nvs_get_blob(const String &keyStr, void *out_value, size_t *length);
@@ -513,8 +532,9 @@ private:
     private:
         nvs_handle_t _nvsHandle;
         nvs_open_mode_t _nvsOpenMode;
-        bool _nvsHavePartition;
+        bool _nvsHavePartitionInitialized;
         const char *_nvsNamespace;
+        uint32_t _nvsHeapUsage;
 
     #endif
 
@@ -536,6 +556,59 @@ public:
     void setLastReadAccess() {
         _readAccess = millis();
     }
+
+// ------------------------------------------------------------------------
+// statistics
+
+public:
+    uint32_t getConfigItemNum() const
+    {
+        return _params.size();
+    }
+
+    size_t getConfigItemSize() const
+    {
+        size_t size = 0;
+        for(const auto &param: _params) {
+            size += param._getParam().size();
+        }
+        return size;
+    }
+
+    #if defined(HAVE_NVS_FLASH)
+
+        uint32_t getNVSInitMemoryUsage() const
+        {
+            return _nvsHeapUsage;
+        }
+
+        size_t getNVSFlashSize() const
+        {
+            #ifdef SECTION_NVS2_START_ADDRESS
+                return SECTION_NVS2_END_ADDRESS - SECTION_NVS2_START_ADDRESS + 4096;
+            #else
+                return SECTION_NVS_END_ADDRESS - SECTION_NVS_START_ADDRESS + 4096;
+            #endif
+        }
+
+        nvs_stats_t getNVSStats()
+        {
+            _nvs_open(false);
+            nvs_stats_t stats;
+            esp_err_t err;
+            #ifdef KFC_CFG_NVS_PARTITION_NAME
+                err = nvs_get_stats(KFC_CFG_NVS_PARTITION_NAME, &stats);
+            #else
+                err = nvs_get_stats(NULL, &stats);
+            #endif
+            if (err != ESP_OK) {
+                stats = {};
+            }
+            _nvs_close();
+            return stats;
+        }
+
+    #endif
 
 // ------------------------------------------------------------------------
 // DEBUG
