@@ -2,14 +2,13 @@
  * Author: sascha_lammers@gmx.de
  */
 
+#if AT_MODE_SUPPORTED
+
 #include <Arduino_compat.h>
 #include <PrintString.h>
 #include "plugins.h"
 #include "reset_detector.h"
 #include "save_crash.h"
-
-#if AT_MODE_SUPPORTED
-
 #include "at_mode.h"
 
 #define LIST_SAVE_CASH_COMMANDS "info|list|print|clear|format"
@@ -18,7 +17,6 @@ PROGMEM_AT_MODE_HELP_COMMAND_DEF_PNPP(RD, "RD", "Reset detector clear counter", 
 PROGMEM_AT_MODE_HELP_COMMAND_DEF_PPPN(SAVECRASH, "SAVECRASH", "<" LIST_SAVE_CASH_COMMANDS ">[,<number>|<clear-type=erase,shrink,magic,version>]", "Manage SaveCrash");
 
 #if AT_MODE_HELP_SUPPORTED
-
 
 ATModeCommandHelpArrayPtr ResetDetectorPlugin::atModeCommandHelp(size_t &size) const
 {
@@ -144,3 +142,4 @@ bool ResetDetectorPlugin::atModeHandler(AtModeArgs &args)
 }
 
 #endif
+
