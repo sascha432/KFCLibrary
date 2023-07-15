@@ -1,5 +1,9 @@
 # Changelog
 
+## Version 0.1.6
+
+- Current master
+
 ## Version 0.1.5
 
 - Removed EEPROM support from configuration. A single flash sector can be used instead of NVS, but the code is not maintained anymore
