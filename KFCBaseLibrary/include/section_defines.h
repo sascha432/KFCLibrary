@@ -44,8 +44,12 @@ EAGLE_SOC_ADDRESS(uint32_t, _irom0_text_end);
 EAGLE_SOC_ADDRESS(char, _heap_start);
 EAGLE_SOC_ADDRESS(uint32_t, _FS_start);
 EAGLE_SOC_ADDRESS(uint32_t, _FS_end);
-EAGLE_SOC_ADDRESS(uint32_t, _KFCFW_start);
-EAGLE_SOC_ADDRESS(uint32_t, _KFCFW_end);
+EAGLE_SOC_ADDRESS(uint32_t, _NVS_start);
+EAGLE_SOC_ADDRESS(uint32_t, _NVS_end);
+#if ESP32
+    EAGLE_SOC_ADDRESS(uint32_t, _NVS2_start);
+    EAGLE_SOC_ADDRESS(uint32_t, _NVS2_end);
+#endif
 EAGLE_SOC_ADDRESS(uint32_t, _SAVECRASH_start);
 EAGLE_SOC_ADDRESS(uint32_t, _SAVECRASH_end);
 EAGLE_SOC_ADDRESS(uint32_t, _EEPROM_start);
@@ -66,8 +70,10 @@ EAGLE_SOC_ADDRESS(uint32_t, _EEPROM_end);
 #    define SECTION_EEPROM_END_ADDRESS       ((uint32_t)&_EEPROM_end)
 #    define SECTION_SAVECRASH_START_ADDRESS  ((uint32_t)&_SAVECRASH_start)
 #    define SECTION_SAVECRASH_END_ADDRESS    ((uint32_t)&_SAVECRASH_end)
-#    define SECTION_KFCFW_START_ADDRESS      ((uint32_t)&_KFCFW_start)
-#    define SECTION_KFCFW_END_ADDRESS        ((uint32_t)&_KFCFW_end)
+#    define SECTION_NVS_START_ADDRESS        ((uint32_t)&_NVS_start)
+#    define SECTION_NVS_END_ADDRESS          ((uint32_t)&_NVS_end)
+#    define SECTION_NVS2_START_ADDRESS       ((uint32_t)&_NVS2_start)
+#    define SECTION_NVS2_END_ADDRESS         ((uint32_t)&_NVS2_end)
 #    define SECTION_FS_START_ADDRESS         ((uint32_t)&_FS_start)
 #    define SECTION_FS_END_ADDRESS           ((uint32_t)&_FS_start)
 
@@ -86,8 +92,8 @@ EAGLE_SOC_ADDRESS(uint32_t, _EEPROM_end);
 #    define SECTION_EEPROM_END_ADDRESS       ((uint32_t)&_EEPROM_end)
 #    define SECTION_SAVECRASH_START_ADDRESS  ((uint32_t)&_SAVECRASH_start)
 #    define SECTION_SAVECRASH_END_ADDRESS    ((uint32_t)&_SAVECRASH_end)
-#    define SECTION_KFCFW_START_ADDRESS      ((uint32_t)&_KFCFW_start)
-#    define SECTION_KFCFW_END_ADDRESS        ((uint32_t)&_KFCFW_end)
+#    define SECTION_NVS_START_ADDRESS        ((uint32_t)&_NVS_start)
+#    define SECTION_NVS_END_ADDRESS          ((uint32_t)&_NVS_end)
 #    define SECTION_FS_START_ADDRESS         ((uint32_t)&_FS_start)
 #    define SECTION_FS_END_ADDRESS           ((uint32_t)&_FS_start)
 

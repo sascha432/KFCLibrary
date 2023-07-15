@@ -23,7 +23,7 @@ PartitionAddress get_partition_address_start(const char *label)
     if (!part) {
         __DBG_panic("data partition label=%s not found", label);
     }
-    __DBG_printf_E("partition name=%s address=%08x end=%08x", part->address, (part->address + part->size - 1));
+    __LDBG_printf_E("partition name=%s address=%08x end=%08x", part->address, (part->address + part->size - 1));
     return PartitionAddress(part->address + SECTION_FLASH_START_ADDRESS, part->address + part->size + (SECTION_FLASH_START_ADDRESS - 1));
 }
 
@@ -32,12 +32,15 @@ PartitionAddress get_partition_address_start(const char *label)
 // char &_heap_start[];
 // uint32_t &_FS_start;
 // uint32_t &_FS_end;
-static auto P_KFCFW = get_partition_address_start("kfcfw");
+static auto P_NVS = get_partition_address_start("nvs");
+static auto P_NVS2 = get_partition_address_start("nvs2");
 static auto P_SAVECRASH = get_partition_address_start("savecrash");
 static auto P_EEPROM = get_partition_address_start("eeprom");
 
-uint32_t &_KFCFW_start = *P_KFCFW._start;
-uint32_t &_KFCFW_end = *P_KFCFW._end;
+uint32_t &_NVS_start = *P_NVS._start;
+uint32_t &_NVS_end = *P_NVS._end;
+uint32_t &_NVS2_start = *P_NVS2._start;
+uint32_t &_NVS2_end = *P_NVS2._end;
 uint32_t &_SAVECRASH_start = *P_SAVECRASH._start;
 uint32_t &_SAVECRASH_end = *P_SAVECRASH._end;
 uint32_t &_EEPROM_start = *P_EEPROM._start;
