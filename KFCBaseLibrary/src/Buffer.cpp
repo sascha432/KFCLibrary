@@ -24,14 +24,14 @@ bool Buffer::_changeBuffer(size_t newSize)
             if (!_buffer) {
                 _buffer = reinterpret_cast<uint8_t *>(malloc(resize));
                 if (!_buffer) {
-                    // __LDBG_printf("alloc failed");
+                    __DBG_panic("alloc failed size=%u", resize);
                     return false;
                 }
             }
             else {
                 _buffer = reinterpret_cast<uint8_t *>(realloc(_buffer, resize));
                 if (!_buffer) {
-                    // __LDBG_printf("alloc failed");
+                    __DBG_panic("realloc failed size=%u", resize);
                     _size = 0;
                     _length = 0;
                     return false;
