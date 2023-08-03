@@ -74,17 +74,11 @@ Configuration::Configuration(uint16_t size) :
     esp_err_t Configuration::_nvs_set_blob(const String &keyStr, const void *value, size_t length)
     {
         auto key = keyStr.c_str();
-        esp_err_t err = ESP_OK;
-        uint8_t count = 10;
-        while(count--) {
-            err = nvs_set_blob(_nvsHandle, key, value, length);
-            if (err == ESP_OK) {
-                return err;
-            }
-            Logger_error(F("nvs_set_blob failed: key=%s value=%p size=%u err=%08x"), key, value, length, err);
-            delay(100);
+        auto err = nvs_set_blob(_nvsHandle, key, value, length);
+        if (err == ESP_OK) {
+            return err;
         }
-        Logger_error(F("FATAL nvs_set_blob key=%s"), key);
+        Logger_error(F("nvs_set_blob failed: key=%s value=%p size=%u err=%08x"), key, value, length, err);
         delay(100);
         return err;
     }
@@ -131,6 +125,7 @@ Configuration::Configuration(uint16_t size) :
         #else
             esp_err_t err = nvs_open(_nvsNamespace, _nvsOpenMode, &_nvsHandle);
         #endif
+
         if (err != ESP_OK) {
             __DBG_printf_E("cannot open NVS namespace=%s err=%08x", _nvsNamespace, err);
         }
@@ -155,7 +150,7 @@ Configuration::Configuration(uint16_t size) :
 
     void Configuration::_nvs_init()
     {
-        // init takes about 16ms (ESP8266 160MHz/80MHz flash) with 32KB and a freshly formatted partition. 32ms if the flash is running on 40MHz. Interrupts are locked during the operation
+        // init takes about 16ms (ESP8266 160MHz/80MHz flash) with 32KB and a freshly formatted partition. 32ms if the flash is running on 40MHz
 
         #if ESP32 && !defined(KFC_CFG_NVS_PARTITION_NAME)
             // nvs_flash_init() is called automatically
@@ -186,8 +181,8 @@ Configuration::Configuration(uint16_t size) :
                         }
                     }
                 #elif ESP8266
-                    nvs_flash_init();
-                    _nvsHavePartitionInitialized = true;
+                    esp_err_t err = nvs_flash_init();
+                    _nvsHavePartitionInitialized = (err == ESP_OK);
                 #endif
                 _nvsHeapUsage = before - ESP.getFreeHeap();
             }
