@@ -564,6 +564,34 @@ Configuration::WriteResultType Configuration::write()
     return WriteResultType::SUCCESS;
 }
 
+uint32_t Configuration::getVersion()
+{
+    Header header;
+
+    #if defined(HAVE_NVS_FLASH)
+
+        esp_err_t err = _nvs_open(false);
+
+        size_t size = sizeof(header);
+        if ((err = _nvs_get_blob(F("header"), header, &size)) != ESP_OK) {
+            return 0;
+        }
+        else if (size != sizeof(header)) {
+            return 0;
+        }
+
+    #else
+
+        auto address = ConfigurationHelper::getFlashAddress(kHeaderOffset);
+        if (!flashRead(address, header, sizeof(header)) || !header) {
+            return 0;
+        }
+
+    #endif
+
+    return header.version();
+}
+
 void Configuration::dump(Print &output, bool dirty, const String &name)
 {
     Header header;
@@ -620,9 +648,7 @@ void Configuration::dump(Print &output, bool dirty, const String &name)
             }
         }
         else if (dirty) {
-            if (!parameter.isWriteable()) {
-                display = false;
-            }
+            display = parameter.isWriteable() && parameter.hasDataChanged(*this);
         }
         parameter.read(*this, dataOffset);
         DEBUG_HELPER_INIT();
@@ -633,7 +659,7 @@ void Configuration::dump(Print &output, bool dirty, const String &name)
                 output.printf_P(PSTR("%04x: "), param.getHandle());
             #endif
             output.printf_P(PSTR("type=%s ofs=%d[+%u] size=%d dirty=%u value: "), (const char *)parameter.getTypeString(parameter.getType()),
-                dataOffset, param.next_offset(), parameter._param.size(), parameter.isWriteable()
+                dataOffset, param.next_offset(), parameter._param.size(), parameter.isWriteable() && parameter.hasDataChanged(*this)
             );
             parameter.dump(output);
         }
