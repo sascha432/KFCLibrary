@@ -163,7 +163,9 @@ public:
     ResetDetectorPlugin();
 
     virtual void getStatus(Print &output) override;
-    virtual void createMenu() override; // in web_server.cpp
+    #if ESP8266
+        virtual void createMenu() override; // in web_server.cpp
+    #endif
 
 #    if AT_MODE_SUPPORTED
 #        if AT_MODE_HELP_SUPPORTED
