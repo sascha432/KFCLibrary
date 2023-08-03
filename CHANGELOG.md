@@ -2,7 +2,8 @@
 
 ## Version 0.1.6
 
-- ESP8266 PIO_FRAMEWORK_ARDUINO_MMU_CACHE16_IRAM48_SECHEAP_SHARED support for form rendering using free IRAM instead of the regular heap
+- Generic API to access IRAM and DRAM (requires `PIO_FRAMEWORK_ARDUINO_MMU_CACHE16_IRAM48_SECHEAP_SHARED` for the ESP8266)
+- Rendering forms uses IRAM if available
 
 ## Version 0.1.5
 

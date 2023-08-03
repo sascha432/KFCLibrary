@@ -179,6 +179,7 @@ inline _Ta *__validatePointer(const _Ta *ptr, ValidatePointerType type, const ch
 #define ___IsValidStackPointer(ptr)                         ((uint32_t)ptr >= SECTION_HEAP_END_ADDRESS && (uint32_t)ptr <= SECTION_STACK_END_ADDRESS)
 #define ___IsValidHeapPointer(ptr)                          ((uint32_t)ptr >= SECTION_HEAP_START_ADDRESS && (uint32_t)ptr < SECTION_DRAM_END_ADDRESS)
 #define ___IsValidDRAMPointer(ptr)                          ((uint32_t)ptr >= SECTION_DRAM_START_ADDRESS && (uint32_t)ptr < SECTION_HEAP_END_ADDRESS)
+#define ___IsValidIRAMPointer(ptr)                          ((uint32_t)ptr >= 0x40100000 && (uint32_t)ptr < 0x40110000)
 #define ___IsValidPROGMEMPointer(ptr)                       ((uint32_t)ptr >= SECTION_IROM0_TEXT_START_ADDRESS && (uint32_t)ptr < SECTION_IROM0_TEXT_END_ADDRESS)
 #define ___IsValidPointer(ptr)                              (___IsValidHeapPointer(ptr) || ___IsValidPROGMEMPointer(ptr))
 #define ___isValidPointerAlignment(ptr)                     (((uint32_t)ptr & 0x03) == 0)
@@ -188,6 +189,7 @@ inline _Ta *__validatePointer(const _Ta *ptr, ValidatePointerType type, const ch
 #define ___IsValidStackPointer(ptr)                         true
 #define ___IsValidHeapPointer(ptr)                          true
 #define ___IsValidDRAMPointer(ptr)                          true
+#define ___IsValidIRAMPointer(ptr)                          true
 #define ___IsValidPROGMEMPointer(ptr)                       true
 #define ___IsValidPointer(ptr)                              true
 #define ___isValidPointerAlignment(ptr)                     true

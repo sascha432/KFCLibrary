@@ -31,7 +31,6 @@ inline size_t StringBuffer::space() const
 
 inline const char *StringBuffer::addString(const char *str, size_t len)
 {
-    SELECT_HEAP();
     __DBG_validatePointerCheck(str, VP_HPS);
     if (len + 1 > size()) {
         return nullptr;
@@ -88,7 +87,6 @@ inline size_t StringBufferPool::size() const
 
 inline const char *StringDeduplicator::isAttached(const char *str, size_t *len)
 {
-    SELECT_HEAP();
     __DBG_validatePointerCheck(str, VP_HPS);
     if (is_PGM_P(str)) {
         _fpStrCount++;
@@ -134,7 +132,6 @@ inline const char *StringDeduplicator::isAttached(const String &str)
 
 inline const char *StringDeduplicator::attachString(const char *str)
 {
-    SELECT_HEAP();
     __DBG_validatePointerCheck(str, VP_HPS);
     size_t len = ~0U;
     const char *ptr = isAttached(str, &len);

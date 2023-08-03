@@ -39,14 +39,14 @@ void *__validatePointer(const void *ptr, ValidatePointerType type, const char *f
         }
     }
     if (static_cast<int>(type) & static_cast<int>(ValidatePointerType::P_HEAP)) {
-        if (___IsValidHeapPointer(ptr)) {
+        if (___IsValidHeapPointer(ptr) || ___IsValidIRAMPointer(ptr)) {
             return const_cast<void *>(ptr);
         }
     }
     __DBG_printf(_VT100(bold_red) "INVALID POINTER %p(%u) FILE=%s LINE=%u FUNC=%s" _VT100(reset), ptr, type, file, line, func);
     __dump_binary_to(DEBUG_OUTPUT, ptr, 16, 16);
     // check if the pointer is in DRAM (compiled in data in RAM, outside the HEAP)
-    if (!___IsValidDRAMPointer(ptr)) {
+    if (!___IsValidDRAMPointer(ptr) && !___IsValidIRAMPointer(ptr)) {
         #if 1
             if (static_cast<int>(type) & static_cast<int>(ValidatePointerType::P_NOSTRING)) {
                 __DBG_panic();
@@ -160,18 +160,18 @@ bool DebugContext::reportAssert(const DebugContext &ctx, const __FlashStringHelp
         file.printf_P(PSTR(" assert(%s)\n"), FPSTR(message));
         file.close();
 
-#if LOGGER
-        Logger_error(F("%sassert(%s) failed"), str.c_str(), FPSTR(message));
-#endif
+        #if LOGGER
+            Logger_error(F("%sassert(%s) failed"), str.c_str(), FPSTR(message));
+        #endif
 
     }
     return true;
 }
 
 #if DEBUG_INCLUDE_SOURCE_INFO
-const char ___debugPrefix[] PROGMEM = "D%08lu (%s:%u <%d:%u> %s): ";
+    const char ___debugPrefix[] PROGMEM = "D%08lu (%s:%u <%d:%u> %s): ";
 #else
-const char ___debugPrefix[] PROGMEM = "DBG: ";
+    const char ___debugPrefix[] PROGMEM = "DBG: ";
 #endif
 
 void DebugContext::prefix() const
@@ -231,14 +231,14 @@ void DebugContext::pause(uint32_t timeout)
 
 const char *DebugContext::pretty_function(const char* name)
 {
-#if _WIN32
-    {
-        auto ptr = strstr(name, "__thiscall ");
-        if (ptr) {
-            name = ptr + 11;
+    #if _WIN32
+        {
+            auto ptr = strstr(name, "__thiscall ");
+            if (ptr) {
+                name = ptr + 11;
+            }
         }
-    }
-#endif
+    #endif
     PGM_P start = name;
     PGM_P ptr = strchr_P(name, ':');
     if (!ptr) {
@@ -262,6 +262,5 @@ const char *DebugContext::pretty_function(const char* name)
     }
     return start;
 }
-
 
 #endif

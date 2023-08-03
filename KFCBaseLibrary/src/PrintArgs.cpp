@@ -378,7 +378,6 @@ using BufferContext = PrintArgsHelper::BufferContext;
 
 size_t PrintArgs::fillBuffer(uint8_t *data, size_t sizeIn)
 {
-    SELECT_HEAP();
     #if DEBUG_PRINT_ARGS
         _stats.calls.fillBuffer++;
     #endif

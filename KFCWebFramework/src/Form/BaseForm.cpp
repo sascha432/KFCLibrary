@@ -11,7 +11,6 @@
 #include "WebUI/Containers.h"
 #include <JsonTools.h>
 #include "Form/Form.hpp"
-
 #include "Utility/Debug.h"
 
 using namespace FormUI;
@@ -96,9 +95,9 @@ bool Form::BaseForm::validateOnly()
             _addError(field, FSPGM(Form_value_missing_default_message));
         }
     }
-#if DEBUG_KFC_FORMS
-    dump(DEBUG_OUTPUT, "Form Dump: ");
-#endif
+    #if DEBUG_KFC_FORMS
+        dump(DEBUG_OUTPUT, "Form Dump: ");
+    #endif
     return isValid();
 }
 
@@ -278,10 +277,9 @@ const char *Form::BaseForm::jsonEncodeString(const String &str, PrintInterface &
 
 void Form::BaseForm::createJavascript(PrintInterface &output)
 {
-#if DEBUG_KFC_FORMS
-    MicrosTimer dur2;
-    dur2.start();
-#endif
+    #if DEBUG_KFC_FORMS
+        DebugMeasureTimer _mt(PSTR("BaseForm::createJavascript"));
+    #endif
     if (!isValid()) {
         __LDBG_printf("errors=%d", _errors->size());
         output.printf_P(PSTR("<script> $(function() { $.formValidator.addErrors("));
@@ -295,9 +293,6 @@ void Form::BaseForm::createJavascript(PrintInterface &output)
         }
         output.printf_P(PSTR("]); }); </script>"));
     }
-#if DEBUG_KFC_FORMS
-    __DBG_printf("render=form_javascript time=%.3fms", dur2.getTime() / 1000.0);
-#endif
 }
 
 WebUI::Config &Form::BaseForm::createWebUI()

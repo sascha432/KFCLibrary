@@ -112,7 +112,6 @@ const char *StringBufferPool::findStr(const char *str, size_t len) const
 const char *StringBufferPool::addString(const char *str, size_t len)
 {
     __DBG_validatePointerCheck(str, VP_HPS);
-    SELECT_HEAP();
     if (len == 0) {
         return emptyString.c_str();
     }

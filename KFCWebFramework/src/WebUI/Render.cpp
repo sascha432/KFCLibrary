@@ -10,8 +10,8 @@
 #include <PrintHtmlEntitiesString.h>
 #include <misc.h>
 #include "Form/Form.hpp"
-
 #include "Utility/Debug.h"
+#include "HeapSelector.h"
 
 using namespace FormUI;
 
@@ -21,10 +21,12 @@ using namespace FormUI;
 
 void Form::BaseForm::createHtml(PrintInterface &output)
 {
-#if DEBUG_KFC_FORMS
-    MicrosTimer duration;
-    duration.start();
-#endif
+    #if DEBUG_KFC_FORMS
+        DebugMeasureTimer __mt(PSTR("BaseForm::createHtml"));
+    #endif
+
+    SELECT_IRAM();
+
     if (!hasWebUIConfig()) {
         __DBG_printf("form.createWebUI() must be called to create FormUI");
         return;
@@ -85,9 +87,6 @@ void Form::BaseForm::createHtml(PrintInterface &output)
         }
         break;
     }
-#if DEBUG_KFC_FORMS
-    __DBG_printf("render=form_html time=%.3fms", duration.getTime() / 1000.0);
-#endif
 }
 
 // -----------------------------------------------------------------------
@@ -96,38 +95,38 @@ void Form::BaseForm::createHtml(PrintInterface &output)
 
 const char *WebUI::BaseUI::_getLabel() const
 {
-#if DEBUG_PRINT_ARGS && 1
-    const char *value = emptyString.c_str();
-    auto iterator = _storage.find_if(_storage.begin(), _storage.end(), Storage::Vector::isLabel);
-    if (iterator != _storage.end()) {
-        // safe version with validation
-        Storage::TypeByte tb(iterator);
-        __LDBG_assert_printf(tb.count() == 1, "%s count=%u != 1", tb.name(), tb.count());
-        ++iterator;
-        switch (tb.type()) {
-        case Storage::Value::Label::type:
-            value = Storage::Value::Label::pop_front<Storage::Value::Label>(iterator).getValue();
-            break;
-        case Storage::Type::LABEL_RAW:
-            value = Storage::Value::LabelRaw::pop_front<Storage::Value::LabelRaw>(iterator).getValue();
-            break;
-        default:
-            __LDBG_assert_printf(false, "invalid type %u: %s", tb.type(), tb.name());
-            break;
+    #if DEBUG_PRINT_ARGS && 1
+        const char *value = emptyString.c_str();
+        auto iterator = _storage.find_if(_storage.begin(), _storage.end(), Storage::Vector::isLabel);
+        if (iterator != _storage.end()) {
+            // safe version with validation
+            Storage::TypeByte tb(iterator);
+            __LDBG_assert_printf(tb.count() == 1, "%s count=%u != 1", tb.name(), tb.count());
+            ++iterator;
+            switch (tb.type()) {
+            case Storage::Value::Label::type:
+                value = Storage::Value::Label::pop_front<Storage::Value::Label>(iterator).getValue();
+                break;
+            case Storage::Type::LABEL_RAW:
+                value = Storage::Value::LabelRaw::pop_front<Storage::Value::LabelRaw>(iterator).getValue();
+                break;
+            default:
+                __LDBG_assert_printf(false, "invalid type %u: %s", tb.type(), tb.name());
+                break;
+            }
+            __LDBG_assert_printf(_storage.find_if(iterator, _storage.end(), Storage::Vector::isLabel) == _storage.end(), "multiple labels found");
         }
-        __LDBG_assert_printf(_storage.find_if(iterator, _storage.end(), Storage::Vector::isLabel) == _storage.end(), "multiple labels found");
-    }
-    return value;
-#else
-    // fast version with static assert
-    static_assert(sizeof(Storage::Value::String) == sizeof(Storage::Value::Label) && sizeof(Storage::Value::String) == sizeof(Storage::Value::LabelRaw), "size of objects does not match");
+        return value;
+    #else
+        // fast version with static assert
+        static_assert(sizeof(Storage::Value::String) == sizeof(Storage::Value::Label) && sizeof(Storage::Value::String) == sizeof(Storage::Value::LabelRaw), "size of objects does not match");
 
-    auto iterator = _storage.find_if(_storage.begin(), _storage.end(), Storage::Vector::isLabel);
-    if (iterator != _storage.end()) {
-        return Storage::Value::String::pop_front<Storage::Value::String>(++iterator).getValue();
-    }
-    return emptyString.c_str();
-#endif
+        auto iterator = _storage.find_if(_storage.begin(), _storage.end(), Storage::Vector::isLabel);
+        if (iterator != _storage.end()) {
+            return Storage::Value::String::pop_front<Storage::Value::String>(++iterator).getValue();
+        }
+        return emptyString.c_str();
+    #endif
 }
 
 void WebUI::BaseUI::_printLabelTo(PrintInterface &output, const char *forLabel) const
@@ -230,7 +229,7 @@ void WebUI::BaseUI::_printOptionsTo(PrintInterface &output) const
     });
 }
 
-void WebUI::BaseUI::renderInputField(Type type, PrintInterface &output, const char *name, const String &value)
+void WebUI::BaseUI::_renderInputField(Type type, PrintInterface &output, const char *name, const String &value)
 {
     // __DBG_printf("type=%u name=%s", _type, __S(name));
     switch (type) {
@@ -332,6 +331,8 @@ void WebUI::BaseUI::renderInputField(Type type, PrintInterface &output, const ch
 
 void WebUI::BaseUI::html(PrintInterface &output)
 {
+    SELECT_IRAM();
+
     auto &ui = _parent->getWebUIConfig();
     //__LDBG_printf("type=%u name=%s", _type, __S(_parent->getName()));
 
@@ -433,7 +434,7 @@ void WebUI::BaseUI::html(PrintInterface &output)
         // Hidden input
         // ---------------------------------------------------------------
         case Type::HIDDEN:
-            renderInputField(_type, output, name, _parent->getValue());
+            _renderInputField(_type, output, name, _parent->getValue());
             break;
 
         // ---------------------------------------------------------------
@@ -447,7 +448,7 @@ void WebUI::BaseUI::html(PrintInterface &output)
                 output.printf_P(PrintArgs::FormatType::HTML_OPEN_DIV_INPUT_GROUP);
             }
 
-            renderInputField(_type, output, name, _parent->getValue());
+            _renderInputField(_type, output, name, _parent->getValue());
 
             if (hasSuffix) {
                 output.printf_P(PrintArgs::FormatType::HTML_OPEN_DIV_INPUT_GROUP_APPEND);

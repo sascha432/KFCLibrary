@@ -6,22 +6,6 @@
 
 #include "Buffer.h"
 
-//
-// if PIO_FRAMEWORK_ARDUINO_MMU_CACHE16_IRAM48_SECHEAP_SHARED is set, use IRAM for String deduplication
-//
-
-#if ESP8266
-#    include "umm_malloc/umm_malloc_cfg.h"
-#    include <umm_malloc/umm_heap_select.h>
-#    if defined(PIO_FRAMEWORK_ARDUINO_MMU_CACHE16_IRAM48_SECHEAP_SHARED)
-#        define SELECT_HEAP() HeapSelectIram ephemeral;
-#    else
-#        define SELECT_HEAP() ;
-#    endif
-#else
-#    define SELECT_HEAP() ;
-#endif
-
 #ifndef DEBUG_STRING_DEDUPLICATOR
 #    define DEBUG_STRING_DEDUPLICATOR 0
 #endif
