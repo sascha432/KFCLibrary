@@ -11,6 +11,10 @@
 #include <list>
 #include <StringDepulicator.h>
 
+//
+// If PIO_FRAMEWORK_ARDUINO_MMU_CACHE16_IRAM48_SECHEAP_SHARED is 1, use IRAM for the buffers
+//
+
 #ifndef DEBUG_PRINT_ARGS
 #    define DEBUG_PRINT_ARGS (0 || defined(DEBUG_ALL))
 #endif
@@ -185,6 +189,7 @@ public:
     // print FormatType as raw string
     // format specifiers are not replaced
     void printf_P(FormatType type) {
+        SELECT_HEAP();
         __LDBG_assert_printf((type >= FormatType::STRINGS_BEGIN && type <= FormatType::STRINGS_END), "type=%u invalid", type);
         _buffer.write(static_cast<uint8_t>(type));
     }
@@ -196,6 +201,8 @@ protected:
     template <typename... Args>
     void vprintf_va_list(uint8_t *data, size_t dataLen, const Args &... args)
     {
+        SELECT_HEAP();
+
         size_t size = sizeof(FormatType) + _calc_size(args...);
         __PADBG_printf("size=%u data=%u buf=%u args=%u ", size, dataLen, _buffer.length(), sizeof...(args));
 

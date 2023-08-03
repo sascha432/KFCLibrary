@@ -5,16 +5,10 @@
 #include "PrintArgs.h"
 
 #if DEBUG_PRINT_ARGS
-#include "debug_helper_enable.h"
+#    include "debug_helper_enable.h"
 #else
-#include "debug_helper_disable.h"
+#    include "debug_helper_disable.h"
 #endif
-
-
-#if defined(ESP8266)
-#include "umm_malloc/umm_malloc_cfg.h"
-#endif
-
 
 const __FlashStringHelper *PrintArgsHelper::getFormatByType(FormatType type)
 {
@@ -136,7 +130,8 @@ namespace PrintArgsHelper {
 
                 __PADBG_printf_prefix("fmt='%0.32s' args=%u adv=%u\n", _args[0], _numArgs, _advanceInputBuffer);
 
-            } else if (format & static_cast<uint8_t>(FormatType::VPRINTF_TYPE_MASK)) {
+            }
+            else if (format & static_cast<uint8_t>(FormatType::VPRINTF_TYPE_MASK)) {
 
                 // type<FormatType: 7bit>, argument count<uint8_t>, arguments <uintptr_t * (count + 1)>
                 struct Header_t {
@@ -281,9 +276,9 @@ namespace PrintArgsHelper {
             if (offset == 0) {
                 // update string length when starting with a zero offset
                 _strLength = written;
-#if DEBUG_PRINT_ARGS
-                _printArgs._stats.maxLen.vprintf = std::max<uint16_t>(_printArgs._stats.maxLen.vprintf, _strLength);
-#endif
+                #if DEBUG_PRINT_ARGS
+                    _printArgs._stats.maxLen.vprintf = std::max<uint16_t>(_printArgs._stats.maxLen.vprintf, _strLength);
+                #endif
             }
             // printf adds a NUL byte, capacity is reduced
             written = std::min(written, maxCapacity - 1);
@@ -301,15 +296,15 @@ namespace PrintArgsHelper {
             int written;
             if (isPrintf()) {
                 written = vprintf(offset);
-#if DEBUG_PRINT_ARGS
-                _printArgs._stats.calls.vprintf++;
-#endif
+                #if DEBUG_PRINT_ARGS
+                    _printArgs._stats.calls.vprintf++;
+                #endif
             }
             else {
                 written = copyString(offset);
-#if DEBUG_PRINT_ARGS
-                _printArgs._stats.calls.copyString++;
-#endif
+                #if DEBUG_PRINT_ARGS
+                    _printArgs._stats.calls.copyString++;
+                #endif
             }
             __LDBG_assert_printf(written <= _strLength - offset, "written=%d > data=%d", written, _strLength - offset);
             return written;
@@ -383,9 +378,10 @@ using BufferContext = PrintArgsHelper::BufferContext;
 
 size_t PrintArgs::fillBuffer(uint8_t *data, size_t sizeIn)
 {
-#if DEBUG_PRINT_ARGS
-    _stats.calls.fillBuffer++;
-#endif
+    SELECT_HEAP();
+    #if DEBUG_PRINT_ARGS
+        _stats.calls.fillBuffer++;
+    #endif
     BufferContext ctx(*this, data, sizeIn);
 
     while(ctx._outIterator < ctx._outEnd) {
@@ -393,15 +389,15 @@ size_t PrintArgs::fillBuffer(uint8_t *data, size_t sizeIn)
         // input buffer empty
         if (_bufferPtr >= _buffer.end()) {
             __PADBG_printf_prefix("end of input buffer\n");
-#if DEBUG_PRINT_ARGS
-            // add last chunk, print debug info and clear the buffer
-            _stats.outputSize += ctx.size();
-            clear();
-            return ctx.size();
-#else
-            clear();
-            break;
-#endif
+            #if DEBUG_PRINT_ARGS
+                // add last chunk, print debug info and clear the buffer
+                _stats.outputSize += ctx.size();
+                clear();
+                return ctx.size();
+            #else
+                clear();
+                break;
+            #endif
         }
 
         // read type and format from buffer
@@ -437,20 +433,20 @@ size_t PrintArgs::fillBuffer(uint8_t *data, size_t sizeIn)
         else {
             // buffer full, remember last position
             _position += written;
-#if DEBUG_PRINT_ARGS
-            if (ctx.isPrintf()) {
-                _stats.repeat.vprintf++;
-            }
-            else {
-                _stats.repeat.copyString++;
-            }
-#endif
+            #if DEBUG_PRINT_ARGS
+                if (ctx.isPrintf()) {
+                    _stats.repeat.vprintf++;
+                }
+                else {
+                    _stats.repeat.copyString++;
+                }
+            #endif
             //__LDBG_assert_printf((ctx._outEnd == ctx._outIterator) || (ctx._outEnd - ctx._outIterator == 1), "out of range=%d", ctx._outEnd - ctx._outIterator);
             break;
         }
     }
-#if DEBUG_PRINT_ARGS
-    _stats.outputSize += ctx.size();
-#endif
+    #if DEBUG_PRINT_ARGS
+        _stats.outputSize += ctx.size();
+    #endif
     return ctx.size();
 }

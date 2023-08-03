@@ -9,6 +9,7 @@
 
 inline void PrintArgs::vprintf_P(const uintptr_t format, const uintptr_t *args, size_t numArgs)
 {
+    SELECT_HEAP();
     __LDBG_assert_printf(numArgs <= kMaximumPrintfArguments, "num_args=%u exceeds max=%u", numArgs, kMaximumPrintfArguments);
     _buffer.write(static_cast<uint8_t>(numArgs));
     _buffer.push_back(format);
@@ -22,18 +23,21 @@ inline void PrintArgs::print(const char *str)
 
 inline void PrintArgs::print(const __FlashStringHelper *fpstr)
 {
+    SELECT_HEAP();
     _buffer.write(static_cast<uint8_t>(FormatType::SINGLE_STRING));
     _buffer.push_back(reinterpret_cast<uintptr_t>(const_cast<__FlashStringHelper *>(fpstr)));
 }
 
 inline void PrintArgs::println(const char *str)
 {
+    SELECT_HEAP();
     print(FPSTR(str));
     _buffer.write(static_cast<uint8_t>(FormatType::SINGLE_CRLF));
 }
 
 inline void PrintArgs::println(const __FlashStringHelper *fpstr)
 {
+    SELECT_HEAP();
     print(fpstr);
     _buffer.write(static_cast<uint8_t>(FormatType::SINGLE_CRLF));
 }

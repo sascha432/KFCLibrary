@@ -31,6 +31,7 @@ inline size_t StringBuffer::space() const
 
 inline const char *StringBuffer::addString(const char *str, size_t len)
 {
+    SELECT_HEAP();
     __DBG_validatePointerCheck(str, VP_HPS);
     if (len + 1 > size()) {
         return nullptr;
@@ -43,16 +44,16 @@ inline const char *StringBuffer::addString(const char *str, size_t len)
 
 inline void StringBufferPool::clear()
 {
-#if DEBUG_STRING_DEDUPLICATOR && 0
-    if (_pool.size()) {
-        StringVector list;
-        for (const auto &buffer : _pool) {
-            list.push_back(PrintString(F("%u:%u:%u"), buffer.length(), buffer.space(), buffer.count()));
-            buffer.dump(DEBUG_OUTPUT);
+    #if DEBUG_STRING_DEDUPLICATOR && 0
+        if (_pool.size()) {
+            StringVector list;
+            for (const auto &buffer : _pool) {
+                list.push_back(PrintString(F("%u:%u:%u"), buffer.length(), buffer.space(), buffer.count()));
+                buffer.dump(DEBUG_OUTPUT);
+            }
+            __DBG_printf("pool=%p [%s]", this, implode(F(", "), list).c_str());
         }
-        __DBG_printf("pool=%p [%s]", this, implode(F(", "), list).c_str());
-    }
-#endif
+    #endif
     _pool.clear();
 }
 
@@ -87,6 +88,7 @@ inline size_t StringBufferPool::size() const
 
 inline const char *StringDeduplicator::isAttached(const char *str, size_t *len)
 {
+    SELECT_HEAP();
     __DBG_validatePointerCheck(str, VP_HPS);
     if (is_PGM_P(str)) {
         _fpStrCount++;
@@ -132,6 +134,7 @@ inline const char *StringDeduplicator::isAttached(const String &str)
 
 inline const char *StringDeduplicator::attachString(const char *str)
 {
+    SELECT_HEAP();
     __DBG_validatePointerCheck(str, VP_HPS);
     size_t len = ~0U;
     const char *ptr = isAttached(str, &len);
@@ -139,13 +142,13 @@ inline const char *StringDeduplicator::attachString(const char *str)
         return ptr;
     }
 
-#if DEBUG_STRING_DEDUPLICATOR
-    for (const auto str2 : _fpStrings) {
-        if (strcmp_P_P(str, str2) == 0) {
-            _fpDupesCount++;
+    #if DEBUG_STRING_DEDUPLICATOR
+        for (const auto str2 : _fpStrings) {
+            if (strcmp_P_P(str, str2) == 0) {
+                _fpDupesCount++;
+            }
         }
-    }
-#endif
+    #endif
 
     return _strings.addString(str, len);
 }

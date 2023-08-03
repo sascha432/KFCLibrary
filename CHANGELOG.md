@@ -2,7 +2,7 @@
 
 ## Version 0.1.6
 
-- Current master
+- ESP8266 PIO_FRAMEWORK_ARDUINO_MMU_CACHE16_IRAM48_SECHEAP_SHARED support for form rendering using free IRAM instead of the regular heap
 
 ## Version 0.1.5
 
