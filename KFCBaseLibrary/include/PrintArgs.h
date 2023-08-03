@@ -12,7 +12,7 @@
 #include <StringDepulicator.h>
 
 //
-// If PIO_FRAMEWORK_ARDUINO_MMU_CACHE16_IRAM48_SECHEAP_SHARED is 1, use IRAM for the buffers
+// if PIO_FRAMEWORK_ARDUINO_MMU_CACHE16_IRAM48_SECHEAP_SHARED is set, use IRAM for the buffers
 //
 
 #ifndef DEBUG_PRINT_ARGS
