@@ -152,10 +152,10 @@ inline void Configuration::setBinary(HandleType handle, const void *data, size_t
     param.setData(*this, reinterpret_cast<const uint8_t *>(data), length);
 }
 
-inline bool Configuration::isDirty() const
+inline bool Configuration::isDirty()
 {
     for(auto &param: _params) {
-        if (param.isWriteable()) {
+        if (param.isWriteable() && param.hasDataChanged(*this)) {
             return true;
         }
     }

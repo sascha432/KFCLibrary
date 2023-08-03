@@ -471,10 +471,13 @@ public:
     }
 
     void dump(Print &output, bool dirty = false, const String &name = String());
-    bool isDirty() const;
+    bool isDirty();
 
     void exportAsJson(Print& output, const String &version);
     bool importJson(Stream& stream, HandleType *handles = nullptr);
+
+    // returns the config version, an incremental counter each time it is written
+    uint32_t getVersion();
 
 private:
     friend ConfigurationParameter;
