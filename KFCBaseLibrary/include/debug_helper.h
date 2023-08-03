@@ -176,10 +176,12 @@ inline _Ta *__validatePointer(const _Ta *ptr, ValidatePointerType type, const ch
 
 #elif defined(ESP8266)
 
+#include <mmu_iram.h>
+
 #define ___IsValidStackPointer(ptr)                         ((uint32_t)ptr >= SECTION_HEAP_END_ADDRESS && (uint32_t)ptr <= SECTION_STACK_END_ADDRESS)
 #define ___IsValidHeapPointer(ptr)                          ((uint32_t)ptr >= SECTION_HEAP_START_ADDRESS && (uint32_t)ptr < SECTION_DRAM_END_ADDRESS)
-#define ___IsValidDRAMPointer(ptr)                          ((uint32_t)ptr >= SECTION_DRAM_START_ADDRESS && (uint32_t)ptr < SECTION_HEAP_END_ADDRESS)
-#define ___IsValidIRAMPointer(ptr)                          ((uint32_t)ptr >= 0x40100000 && (uint32_t)ptr < 0x40110000)
+#define ___IsValidDRAMPointer(ptr)                          (mmu_is_dram(ptr))
+#define ___IsValidIRAMPointer(ptr)                          (mmu_is_iram(ptr))
 #define ___IsValidPROGMEMPointer(ptr)                       ((uint32_t)ptr >= SECTION_IROM0_TEXT_START_ADDRESS && (uint32_t)ptr < SECTION_IROM0_TEXT_END_ADDRESS)
 #define ___IsValidPointer(ptr)                              (___IsValidHeapPointer(ptr) || ___IsValidPROGMEMPointer(ptr))
 #define ___isValidPointerAlignment(ptr)                     (((uint32_t)ptr & 0x03) == 0)

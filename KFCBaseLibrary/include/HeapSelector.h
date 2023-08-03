@@ -14,7 +14,7 @@
 #    include "umm_malloc/umm_malloc_cfg.h"
 #    include <umm_malloc/umm_heap_select.h>
 #    define HAS_MULTI_HEAP defined(UMM_NUM_HEAPS) && (UMM_NUM_HEAPS > 1)
-#    if defined(PIO_FRAMEWORK_ARDUINO_MMU_CACHE16_IRAM48_SECHEAP_SHARED)
+#    if defined(MMU_IRAM_HEAP)
 #        define SELECT_IRAM() HeapSelectIram ephemeral;
 #        define SELECT_DRAM() HeapSelectDram ephemeral;
 #    else

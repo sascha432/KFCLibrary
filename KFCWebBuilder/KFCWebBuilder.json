@@ -1,17 +1,25 @@
 {
-    "__comment": "Defaults file",
+    // Defaults file
+
+    // operating system
     "os": {
         "#if OS_UNIX": "Unix",
         "#elif OS_WIN": "Windows",
         "#elif OS_OSX": "OSX",
         "#else": "Unknown"
     },
+
+    // runtime config
     "configuration": {
         "run_command_on_success": "",
         "scanner_database_dir": "${path.sys_temp_dir}",
         "package_hash_file": "${path.shared_temp_dir}/kfcfw-package.hash"
     },
+
+    // default .ini file
     "platformio_ini": "./platformio.ini",
+
+    // pre-defined commands
     "commands": {
         "minify_js": "${bin.java} -jar ${bin.closure_compiler} --compilation_level=ADVANCED --warning_level=QUIET --js_output_file=${file.tmp_out} ${file.all_sources}",
         "uglify_js": "${bin.nodejs} ${bin.uglify_js} --compress --mangle -o ${file.tmp_out} ${file.tmp_in}",
@@ -28,6 +36,8 @@
             "#else": ". ${bin.platformio_activate} && ${bin.platformio} run --target uploadfs -v"
         }
     },
+
+    // binary files
     "bin": {
         "platformio_activate": {
             "#if OS_WIN": "~/.platformio/penv/Scripts/activate.bat",
