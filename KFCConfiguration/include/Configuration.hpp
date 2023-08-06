@@ -13,6 +13,7 @@ inline Configuration::~Configuration()
     #if defined(HAVE_NVS_FLASH)
         _nvs_close();
         #ifdef KFC_CFG_NVS_PARTITION_NAME
+            _Timer(_nvsDeinitTimer).remove();
             if (_nvsHavePartitionInitialized) {
                 esp_err_t err = nvs_flash_deinit_partition(KFC_CFG_NVS_PARTITION_NAME);
                 if (err != ESP_OK) {

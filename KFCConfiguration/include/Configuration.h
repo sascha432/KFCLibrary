@@ -49,13 +49,15 @@
 #    endif
 #endif
 
+class NVSDebugAccess;
+
 namespace ConfigurationHelper {
 
     #if !defined(HAVE_NVS_FLASH)
 
         inline uint32_t getFlashAddress()
         {
-            return SECTION_EEPROM_START_ADDRESS - SECTION_FLASH_START_ADDRESS;
+            return SECTION_START_ADDR(EEPROM);
         }
 
         inline uint32_t getFlashAddress(size_t offset)
@@ -143,17 +145,7 @@ namespace ConfigurationHelper {
             return CONFIG_MAGIC_DWORD == _magic;
         }
 
-        #if ESP8266
-
-            explicit operator uint8_t *() {
-                return reinterpret_cast<uint8_t *>(this);
-            }
-
-            operator uint32_t *() {
-                return reinterpret_cast<uint32_t *>(this);
-            }
-
-        #elif ESP32
+        #if ESP32 || HAVE_NVS_FLASH
 
             operator void *() {
                 return reinterpret_cast<void *>(this);
@@ -161,6 +153,16 @@ namespace ConfigurationHelper {
 
             operator const void *() const {
                 return reinterpret_cast<const void *>(this);
+            }
+
+        #elif ESP8266
+
+            explicit operator uint8_t *() {
+                return reinterpret_cast<uint8_t *>(this);
+            }
+
+            operator uint32_t *() {
+                return reinterpret_cast<uint32_t *>(this);
             }
 
         #endif
@@ -531,6 +533,7 @@ private:
     // NVS implementation
     protected:
         friend ConfigurationParameter;
+        friend NVSDebugAccess;
 
         static uint32_t _nvs_key_handle(ConfigurationParameter::TypeEnum_t type, HandleType handle);
         String _nvs_key_handle_name(ConfigurationParameter::TypeEnum_t type, HandleType handle) const;

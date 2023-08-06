@@ -28,12 +28,12 @@ static void __check_buffer()
 bool is_safe_ptr(const uint8_t *ptr)
 {
     __DBG_validatePointerCheck(ptr, VP_HPS);
-#if _MSC_VER
-    return true;
-#else
-    uintptr_t addr = (uintptr_t)ptr;
-    return (addr >= SECTION_HEAP_START_ADDRESS && addr <= SECTION_HEAP_END_ADDRESS) || (addr >= SECTION_FLASH_START_ADDRESS && addr <= SECTION_FLASH_END_ADDRESS);
-#endif
+    #if _MSC_VER
+        return true;
+    #else
+        uintptr_t addr = (uintptr_t)ptr;
+        return (addr >= SECTION_HEAP_START_ADDRESS && addr <= SECTION_HEAP_END_ADDRESS) || (addr >= SECTION_FLASH_START_ADDRESS && addr < SECTION_FLASH_END_ADDRESS);
+    #endif
 }
 
 bool is_safe_ptr(const void *ptr)

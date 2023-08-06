@@ -5,6 +5,7 @@
 #pragma once
 
 #include <stdint.h>
+#include <esp_partition.h>
 
 #if _MSC_VER
 
@@ -57,8 +58,6 @@ EAGLE_SOC_ADDRESS(uint32_t, _EEPROM_end);
 
 #if ESP32
 
-#    define SECTION_FLASH_START_ADDRESS      0x40200000U
-#    define SECTION_FLASH_END_ADDRESS        0x402FEFF0U
 #    define SECTION_IROM0_TEXT_START_ADDRESS ((uint32_t)&_irom0_text_start)
 #    define SECTION_IROM0_TEXT_END_ADDRESS   ((uint32_t)&_irom0_text_end)
 #    define SECTION_HEAP_START_ADDRESS       0x3ffae6e0U
@@ -79,8 +78,6 @@ EAGLE_SOC_ADDRESS(uint32_t, _EEPROM_end);
 
 #else
 
-#    define SECTION_FLASH_START_ADDRESS      0x40200000U
-#    define SECTION_FLASH_END_ADDRESS        0x402FEFF0U
 #    define SECTION_IROM0_TEXT_START_ADDRESS ((uint32_t)&_irom0_text_start)
 #    define SECTION_IROM0_TEXT_END_ADDRESS   ((uint32_t)&_irom0_text_end)
 #    define SECTION_HEAP_START_ADDRESS       ((uint32_t)&_heap_start[0])
