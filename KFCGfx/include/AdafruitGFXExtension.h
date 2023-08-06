@@ -96,8 +96,7 @@ public:
         int16_t maxX = 0, maxY = 0;
         int16_t minX = std::numeric_limits<int16_t>::max(), minY = std::numeric_limits<int16_t>::max();
 
-        auto buf = strdup_P(text);
-        auto bufPtr = buf;
+        auto bufPtr = text;
         char *endPos;
         do {
             auto line = bufPtr;
@@ -147,15 +146,12 @@ public:
 
         } while (endPos);
 
-
         if (pos) {
             pos->x = minX;
             pos->y = minY;
             pos->w = maxX - minX;
             pos->h = maxY - minY;
         }
-
-        free(buf);
 
         return maxY - minY;
     }

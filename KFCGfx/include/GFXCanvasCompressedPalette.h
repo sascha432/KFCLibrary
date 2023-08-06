@@ -39,7 +39,7 @@ public:
     ColorType getPaletteAt(ColorIndexType index) const;
 
 private:
-    void _clearPalettte();
+    void _clearPalette();
     ColorIndexType _addColor(ColorType color);
     ColorType _getColor(ColorIndexType index) const;
     ColorIndexType _getIndex(ColorType color) const;
@@ -62,7 +62,7 @@ inline ColorType GFXCanvasCompressedPalette::getPaletteAt(ColorIndexType index) 
     return _palette[index];
 }
 
-inline void GFXCanvasCompressedPalette::_clearPalettte()
+inline void GFXCanvasCompressedPalette::_clearPalette()
 {
     _size = 0;
 }

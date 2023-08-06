@@ -41,7 +41,7 @@ GFXCanvasCompressed* GFXCanvasCompressedPalette::clone()
 
 void GFXCanvasCompressedPalette::fillScreen(uint16_t color)
 {
-    _clearPalettte();
+    _clearPalette();
     GFXCanvasCompressed::fillScreen(color);
 }
 

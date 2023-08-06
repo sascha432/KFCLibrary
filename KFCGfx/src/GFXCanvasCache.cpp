@@ -35,7 +35,6 @@ Cache::Cache(uWidthType width, sYType y) : _y(y), _width(width), _flags(0)
 {
     SELECT_IRAM();
     _buffer = new ColorType[width]();
-
     if (!_buffer) {
         __DBG_panic("alloc failed, width=%u", width);
         invalidate();
@@ -70,7 +69,6 @@ Cache &Cache::operator=(Cache &&cache) noexcept
     _y = std::exchange(cache._y, kYInvalid);
     _width = std::exchange(cache._width, 0);
     _flags = std::exchange(cache._flags, 0);
-    // cache.__reset();
     return *this;
 }
 

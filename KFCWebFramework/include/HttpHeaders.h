@@ -29,10 +29,10 @@ class AsyncBaseResponse;
 class HttpHeader;
 class HttpHeaders;
 
-typedef std::unique_ptr<HttpHeader>                             HttpHeaderPtr;
-typedef std::vector<HttpHeaderPtr>                              HttpHeadersVector;
-typedef std::vector<HttpHeaderPtr>::iterator                    HttpHeadersIterator;
-typedef std::function<bool(const HttpHeaderPtr &_header)>       HttpHeadersCmpFunction;
+using HttpHeaderPtr = std::unique_ptr<HttpHeader>;
+using HttpHeadersVector = std::vector<HttpHeaderPtr>;
+using HttpHeadersIterator = std::vector<HttpHeaderPtr>::iterator;
+using HttpHeadersCmpFunction = std::function<bool(const HttpHeaderPtr &_header)>;
 
 // ------------------------------------------------------------------------
 // HttpHeader
@@ -650,7 +650,6 @@ inline HttpHeaders::HttpHeaders(bool addDefault)
 
 inline HttpHeaders::~HttpHeaders()
 {
-    _headers.clear();
 }
 
 inline HttpHeaders &HttpHeaders::operator=(HttpHeaders &&headers) noexcept
@@ -666,7 +665,7 @@ inline void HttpHeaders::clear()
 
 inline void HttpHeaders::clear(uint8_t reserveItems)
 {
-    _headers.clear();
+    clear();
     _headers.reserve(reserveItems);
 }
 

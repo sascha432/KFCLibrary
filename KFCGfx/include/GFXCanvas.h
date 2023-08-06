@@ -54,49 +54,21 @@ namespace GFXCanvas {
     inline uXType getClippedX(sXType x, uWidthType maxWidth)
     {
         return std::clamp<sXType>(x, 0, maxWidth - 1);
-        // if (x < 0) {
-        //     return 0;
-        // }
-        // else if (x >= static_cast<sWidthType>(maxWidth)) {
-        //     return static_cast<uXType>(maxWidth - 1);
-        // }
-        // return static_cast<uXType>(x);
     }
 
     inline uXType getClippedX(sXType x, uWidthType minWidth, uWidthType maxWidth)
     {
         return std::clamp<sXType>(x, minWidth, maxWidth - 1);
-        // if (x < static_cast<sWidthType>(minWidth)) {
-        //     x = minWidth;
-        // }
-        // if (x >= static_cast<sWidthType>(maxWidth)) {
-        //     return static_cast<uXType>(maxWidth - 1);
-        // }
-        // return static_cast<uXType>(x);
     }
 
     inline uYType getClippedY(sYType y, uHeightType maxHeight)
     {
         return std::clamp<sYType>(y, 0, maxHeight - 1);
-        // if (y < 0) {
-        //     return 0;
-        // }
-        // else if (y >= static_cast<sHeightType>(maxHeight)) {
-        //     return static_cast<uYType>(maxHeight - 1);
-        // }
-        // return static_cast<uYType>(y);
     }
 
     inline uYType getClippedY(sYType y, uHeightType minHeight, uHeightType maxHeight)
     {
         return std::clamp<sYType>(y, minHeight, maxHeight - 1);
-        // if (y < static_cast<sHeightType>(minHeight)) {
-        //     y = minHeight;
-        // }
-        // if (y >= static_cast<sHeightType>(maxHeight)) {
-        //     return static_cast<uYType>(maxHeight - 1);
-        // }
-        // return static_cast<uYType>(y);
     }
 
     inline uPositionType getClippedXY(sXType x, sYType y, uWidthType maxWidth,uHeightType maxHeight)

@@ -32,9 +32,9 @@ KFCRestAPI::HttpRequest::HttpRequest(KFCRestAPI &api, JsonBaseReader *json, Call
     String token;
     _api.getBearerToken(token);
     if (token.length()) {
-        _api._headers.add(new HttpAuthorization(HttpAuthorization::AuthorizationType::BEARER, token));
+        _api._headers.add<HttpAuthorization>(HttpAuthorization::AuthorizationType::BEARER, token);
     }
-    _api._headers.add(new HttpContentType(FSPGM(mime_application_json)));
+    _api._headers.add<HttpContentType>(FSPGM(mime_application_json));
 }
 
 KFCRestAPI::HttpRequest::~HttpRequest()

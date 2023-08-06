@@ -141,9 +141,9 @@ inline int Buffer::read()
         auto tmp = *_buffer;
         if (--_length) {
             memmove(_buffer, _buffer + 1, _length);
-#if BUFFER_ZERO_FILL
-            _buffer[_length] = 0;
-#endif
+            #if BUFFER_ZERO_FILL
+                _buffer[_length] = 0;
+            #endif
         }
         else {
             clear();
@@ -174,13 +174,28 @@ inline void Buffer::clear()
 
 inline Buffer &Buffer::operator=(const Buffer &buffer)
 {
+    clear(); // free buffer instead using realloc
     _length = buffer._length;
-    if (_changeBuffer(buffer._size)) {
+    if (_changeBuffer(_length + 1)) {
         std::copy_n(buffer.begin(), _length, begin());
+        #if BUFFER_ZERO_FILL
+            _buffer[length] = 0;
+        #endif
     }
     else {
         clear();
     }
+    return *this;
+}
+
+inline Buffer &Buffer::operator =(Buffer&&buffer) noexcept
+{
+    if (_buffer) {
+        free(_buffer);
+    }
+    _buffer = std::exchange(buffer._buffer, nullptr);
+    _length = std::exchange(buffer._length, 0);
+    _size = std::exchange(buffer._size, 0);
     return *this;
 }
 
@@ -224,17 +239,6 @@ inline uint8_t *Buffer::__release()
     _size = 0;
     _length = 0;
     return std::exchange(_buffer, nullptr);
-}
-
-inline Buffer &Buffer::operator =(Buffer &&buffer) noexcept
-{
-    if (_buffer) {
-        free(_buffer);
-    }
-    _buffer = std::exchange(buffer._buffer, nullptr);
-    _length = std::exchange(buffer._length, 0);
-    _size = std::exchange(buffer._size, 0);
-    return *this;
 }
 
 inline void Buffer::removeAndShrink(size_t index, size_t count, size_t minFree)

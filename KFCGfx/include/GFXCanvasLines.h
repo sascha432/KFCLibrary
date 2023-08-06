@@ -15,6 +15,7 @@ namespace GFXCanvas {
     class Lines {
     public:
         Lines(Lines &&) = delete;
+        Lines &operator=(Lines &&) = delete;
 
         Lines();
         Lines(uHeightType height);
@@ -37,7 +38,6 @@ namespace GFXCanvas {
 
         LineBuffer &getLine(sYType y);
         const LineBuffer &getLine(sYType y) const;
-
 
         inline LineBuffer *begin() const {
             return _lines;

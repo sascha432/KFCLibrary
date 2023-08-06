@@ -108,6 +108,9 @@ public:
     KFCRestAPI() : _headers(false), _timeout(15) {
     }
     virtual ~KFCRestAPI() {
+        for(auto request: _requests) {
+            delete request;
+        }
     }
 
     virtual void autoDelete(void *restApiPtr) {
