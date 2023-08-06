@@ -182,7 +182,7 @@ inline _Ta *__validatePointer(const _Ta *ptr, ValidatePointerType type, const ch
 #define ___IsValidHeapPointer(ptr)                          ((uint32_t)ptr >= SECTION_HEAP_START_ADDRESS && (uint32_t)ptr < SECTION_DRAM_END_ADDRESS)
 #define ___IsValidDRAMPointer(ptr)                          (mmu_is_dram(ptr))
 #define ___IsValidIRAMPointer(ptr)                          (mmu_is_iram(ptr))
-#define ___IsValidPROGMEMPointer(ptr)                       ((uint32_t)ptr >= SECTION_IROM0_TEXT_START_ADDRESS && (uint32_t)ptr < SECTION_IROM0_TEXT_END_ADDRESS)
+#define ___IsValidPROGMEMPointer(ptr)                       ((uint32_t)ptr >= SECTION_FLASH_START_ADDR(irom0_text) && (uint32_t)ptr < SECTION_FLASH_END_ADDR(irom0_text))
 #define ___IsValidPointer(ptr)                              (___IsValidHeapPointer(ptr) || ___IsValidPROGMEMPointer(ptr))
 #define ___isValidPointerAlignment(ptr)                     (((uint32_t)ptr & 0x03) == 0)
 

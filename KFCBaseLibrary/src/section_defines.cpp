@@ -36,6 +36,7 @@ static auto P_NVS = get_partition_address_start("nvs");
 static auto P_NVS2 = get_partition_address_start("nvs2");
 static auto P_SAVECRASH = get_partition_address_start("savecrash");
 static auto P_EEPROM = get_partition_address_start("eeprom");
+static auto P_FS = get_partition_address_start("spiffs");
 
 uint32_t &_NVS_start = *P_NVS._start;
 uint32_t &_NVS_end = *P_NVS._end;
@@ -45,6 +46,8 @@ uint32_t &_SAVECRASH_start = *P_SAVECRASH._start;
 uint32_t &_SAVECRASH_end = *P_SAVECRASH._end;
 uint32_t &_EEPROM_start = *P_EEPROM._start;
 uint32_t &_EEPROM_end = *P_EEPROM._end;
+uint32_t &_FS_start = *P_FS._start;
+uint32_t &_FS_end = *P_FS._end;
 
 #endif
 

@@ -151,17 +151,19 @@ class __FlashStringHelper;
 #include <ESP8266WiFiType.h>
 #include <WiFiUdp.h>
 
+inline __attribute__((__always_inline__)) void KFCFS_begin_func();
+
 #if USE_LITTLEFS
 #        include <LittleFS.h>
 #        define KFCFS              LittleFS
-#        define KFCFS_begin()      KFCFS.begin()
+#        define KFCFS_begin()      KFCFS_begin_func()
 #        define KFCFS_openDir(dir) KFCFS.openDir(dir)
 #        define KFCFS_MAX_FILE_LEN 31
 #        define KFCFS_MAX_PATH_LEN 127
 #    else
 #        include <FS.h>
 #        define KFCFS              SPIFFS
-#        define KFCFS_begin()      KFCFS.begin()
+#        define KFCFS_begin()      KFCFS_begin_func()
 #        define KFCFS_openDir(dir) KFCFS.openDir(dir)
 #        define KFCFS_MAX_FILE_LEN 31
 // includes directory slashes and filename
@@ -333,6 +335,15 @@ extern "C" {
     // negative len won't output anything
     void __dump_binary(const void *ptr, int len, size_t perLine = DUMP_BINARY_DEFAULTS, PGM_P title = DUMP_BINARY_NO_TITLE, uint8_t groupBytes = static_cast<uint8_t>(DUMP_BINARY_DEFAULTS));
     void __dump_binary_to(Print &output, const void *ptr, int len, size_t perLine = DUMP_BINARY_DEFAULTS, PGM_P title = DUMP_BINARY_NO_TITLE, uint8_t groupBytes = static_cast<uint8_t>(DUMP_BINARY_DEFAULTS));
+}
+
+inline
+__attribute__((__always_inline__))
+void KFCFS_begin_func() {
+    // DebugMeasureTimer _mt(PSTR("KFCFS_begin"));
+    if (!KFCFS.begin()) {
+        __DBG_printf_E("failed to start FS");
+    }
 }
 
 #if _MSC_VER

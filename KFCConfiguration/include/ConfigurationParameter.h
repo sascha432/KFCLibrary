@@ -145,7 +145,7 @@ namespace ConfigurationHelper {
     public:
         struct {
             union {
-                struct __attribute_packed__ {
+                struct {
                     // crc16 of the config. name
                     HandleType _handle;
                     // type of data

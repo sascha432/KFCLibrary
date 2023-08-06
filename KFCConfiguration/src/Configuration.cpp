@@ -75,6 +75,15 @@ Configuration::Configuration(uint16_t size) :
     {
         auto key = keyStr.c_str();
         auto err = nvs_set_blob(_nvsHandle, key, value, length);
+        if (err == ESP_ERR_NVS_READ_ONLY) {
+            __DBG_printf_E("nvs_set_blob on read only NVS, re-opening in write mode");
+            nvs_close(_nvsHandle);
+            _nvsHandle = 0;
+            err = _nvs_open(true);
+            if (err == ESP_OK) {
+                err = nvs_set_blob(_nvsHandle, key, value, length);
+            }
+        }
         if (err == ESP_OK) {
             return err;
         }
@@ -140,9 +149,9 @@ Configuration::Configuration(uint16_t size) :
         }
         #if NVS_DEINIT_PARTITION_ON_CLOSE
             #if ESP32
-                #define DEINIT_TIMER_MS 250
+                #define DEINIT_TIMER_MS 500
             #else
-                #define DEINIT_TIMER_MS 100
+                #define DEINIT_TIMER_MS 250
             #endif
             // wait a bit before running deinit. the init function takes quite a while to execute
             // executing deinit in the main loop will cause less issues with interrupts as well
@@ -308,11 +317,15 @@ Configuration::WriteResultType Configuration::write()
 
             size_t size = sizeof(header);
             if ((err = _nvs_get_blob(F("header"), header, &size)) != ESP_OK) {
-                __DBG_printf("cannot read header err=%08x", err);
+                // not found means erased or formatted
+                if (err != ESP_ERR_NVS_NOT_FOUND) {
+                    __DBG_printf("cannot read header err=%08x", err);
+                }
                 header = Header();
             }
             else if (size != sizeof(header)) {
-                __DBG_printf("cannot read header size=%u stored=%u", sizeof(header), size);
+                // something has been corrupted
+                nvs_erase_all(_nvsHandle);
                 header = Header();
             }
 

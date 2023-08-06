@@ -15,12 +15,12 @@
 
 // could be IRAM_ATTR, 16 byte should be available
 
-const char ICACHE_FLASH_ATTR STORE_ATTR *fs::FileOpenMode::read = "r";
-const char ICACHE_FLASH_ATTR STORE_ATTR *fs::FileOpenMode::write = "w";
-const char ICACHE_FLASH_ATTR STORE_ATTR *fs::FileOpenMode::append = "a";
-const char ICACHE_FLASH_ATTR STORE_ATTR *fs::FileOpenMode::readplus = "r+";
-const char ICACHE_FLASH_ATTR STORE_ATTR *fs::FileOpenMode::writeplus = "w+";
-const char ICACHE_FLASH_ATTR STORE_ATTR *fs::FileOpenMode::appendplus = "a+";
+const char ICACHE_FLASH_ATTR __attribute__((aligned(4))) *fs::FileOpenMode::read = "r";
+const char ICACHE_FLASH_ATTR __attribute__((aligned(4))) *fs::FileOpenMode::write = "w";
+const char ICACHE_FLASH_ATTR __attribute__((aligned(4))) *fs::FileOpenMode::append = "a";
+const char ICACHE_FLASH_ATTR __attribute__((aligned(4))) *fs::FileOpenMode::readplus = "r+";
+const char ICACHE_FLASH_ATTR __attribute__((aligned(4))) *fs::FileOpenMode::writeplus = "w+";
+const char ICACHE_FLASH_ATTR __attribute__((aligned(4))) *fs::FileOpenMode::appendplus = "a+";
 
 int ___debugbreak_and_panic(const char *filename, int line, const char *function) {
 #if DEBUG

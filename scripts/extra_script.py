@@ -6,7 +6,7 @@ except ImportError:
     import ConfigParser as configparser
 from SCons.Script import ARGUMENTS
 import subprocess
-import os.path
+from os import path
 import os
 import subprocess
 import click
@@ -34,7 +34,7 @@ def extract_re(regex, filename):
         return res
 
 def env_abspath(env, str):
-    return os.path.abspath(env.subst(str))
+    return path.abspath(env.subst(str))
 
 def build_webui(source, target, env, force = False):
     global symlinks
@@ -50,8 +50,8 @@ def build_webui(source, target, env, force = False):
             php_bin = 'php'
     php_bin = which(php_bin);
 
-    src = os.path.abspath(env.subst("$PROJECT_LIBDEPS_DIR/$PIOENV/KFCLibrary"))
-    lib_dst = os.path.abspath(env.subst("$PROJECT_DIR/lib/KFCLibrary"))
+    src = path.abspath(env.subst("$PROJECT_LIBDEPS_DIR/$PIOENV/KFCLibrary"))
+    lib_dst = path.abspath(env.subst("$PROJECT_DIR/lib/KFCLibrary"))
     if platform.system() == 'Windows':
         a = [ 'mklink', '/J', lib_dst, src ]
         return_code = subprocess.run(a, shell=True).returncode
@@ -65,7 +65,7 @@ def build_webui(source, target, env, force = False):
         click.secho('Failed to create symlink: [%u] %s -> %s\nMake sure this links to the current library' % (return_code, src, lib_dst), fg='yellow')
 
     php_file = env_abspath(env, '$PROJECT_LIBDEPS_DIR/$PIOENV/KFCLibrary/KFCWebBuilder/bin/include/cli_tool.php')
-    if not os.path.exists(php_file):
+    if not path.exists(php_file):
         php_file = env_abspath(env, '$PROJECT_DIR/lib/KFCLibrary/KFCWebBuilder/bin/include/cli_tool.php')
     json_file = env_abspath(env, '$PROJECT_DIR/KFCWebBuilder.json')
 
@@ -74,7 +74,7 @@ def build_webui(source, target, env, force = False):
     version = '%s.%s.%s Build %s (%s)' % (version['major'], version['minor'], version['rev'], build['build'], datetime.now().strftime('%b %d %Y %H:%M:%S'))
 
     filename = env_abspath(env, '$PROJECT_DIR/data/.pvt/build')
-    os.makedirs(os.path.dirname(filename), exist_ok=True)
+    os.makedirs(path.dirname(filename), exist_ok=True)
     with open(filename, 'w') as file:
         file.write(version)
 
@@ -89,13 +89,13 @@ def build_webui(source, target, env, force = False):
                 val = 1;
             file.write('%s=%s\n' % (env.subst(key), env.subst(val)))
 
-    if not os.path.isfile(php_bin):
+    if not path.isfile(php_bin):
         click.secho('cannot find php binary: %s: set custom_php_exe=<php binary> or environment variable PHPEXE' % php_bin, fg='yellow')
         env.Exit(1)
-    if not os.path.isfile(php_file):
+    if not path.isfile(php_file):
         click.secho('cannot find %s' % php_file, fg='yellow')
         env.Exit(1)
-    if not os.path.isfile(json_file):
+    if not path.isfile(json_file):
         click.secho('cannot find %s' % json_file, fg='yellow')
         env.Exit(1)
 
@@ -115,7 +115,7 @@ def build_webui(source, target, env, force = False):
         for src in dirs:
             src = env_abspath(env, src)
             dst = env_abspath(env, '${PROJECTDATA_DIR}/%s' % os.path.basename(src))
-            if not os.path.exists(dst):
+            if not path.exists(dst):
                 if verbose:
                     click.secho('Creating symlink %s -> %s' % (src, dst), fg='yellow')
                 if platform.system() == 'Windows':
@@ -155,12 +155,6 @@ def build_webui(source, target, env, force = False):
 def rebuild_webui(source, target, env):
     build_webui(source, target, env, True)
 
-def before_clean(source, target, env):
-    if platform.system() == 'Windows':
-        env.Execute("del \"${PROJECTDATA_DIR}/webui/\" -Recurse")
-    else:
-        env.Execute("rm -fR \"${PROJECTDATA_DIR}/webui/\"")
-
 def build_webui_cleanup(source, target, env):
     global symlinks
     verbose = int(ARGUMENTS.get("PIOVERBOSE", 0))
@@ -170,10 +164,8 @@ def build_webui_cleanup(source, target, env):
                 click.secho('Removing symlink %s' % lnk, fg='yellow')
             os.remove(lnk)
 
-# env.AddPreAction("$BUILD_DIR/spiffs.bin", build_webui)
 env.AddPreAction("$BUILD_DIR/littlefs.bin", build_webui)
 env.AddPostAction("$BUILD_DIR/littlefs.bin", build_webui_cleanup)
-#env.AddPreAction("buildfs", build_webui)
+
 env.AlwaysBuild(env.Alias("rebuildfs", None, rebuild_webui))
 env.AlwaysBuild(env.Alias("buildfs", None, build_webui))
-

@@ -249,6 +249,7 @@ public:
             NVS_COMMIT_ERROR,
             NVS_SET_BLOB_ERROR,
             NVS_ERASE_ALL,
+            NVS_OPEN,
         #else
             FLASH_READ_ERROR,
             FLASH_ERASE_ERROR,
@@ -278,6 +279,8 @@ public:
                     return F("NVS_SET_BLOB_ERROR");
                 case WriteResultType::NVS_ERASE_ALL:
                     return F("NVS_ERASE_ALL");
+                case WriteResultType::NVS_OPEN:
+                    return F("NVS_OPEN");
             #else
                 case WriteResultType::FLASH_READ_ERROR:
                     return F("FLASH_READ_ERROR");
@@ -606,9 +609,9 @@ public:
         size_t getNVSFlashSize() const
         {
             #ifdef SECTION_NVS2_START_ADDRESS
-                return SECTION_NVS2_END_ADDRESS - SECTION_NVS2_START_ADDRESS + 4096;
+                return SECTION_CALC_SIZE(NVS2);
             #else
-                return SECTION_NVS_END_ADDRESS - SECTION_NVS_START_ADDRESS + 4096;
+                return SECTION_CALC_SIZE(NVS);
             #endif
         }
 
