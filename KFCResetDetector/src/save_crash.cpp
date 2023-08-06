@@ -54,6 +54,7 @@ namespace SaveCrash {
         #if KFC_DISABLE_CRASH_COUNTER
             return 0;
         #else
+            KFCFS_begin();
             uint8_t counter = 0;
             File file = KFCFS.open(FSPGM(crash_counter_file), fs::FileOpenMode::read);
             if (file) {
