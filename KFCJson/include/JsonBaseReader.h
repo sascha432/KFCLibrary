@@ -68,6 +68,7 @@ namespace KFCJson {
             JSON_TYPE_OBJECT_END,
         } JsonType_t;
 
+    public:
         JsonBaseReader(Stream &stream) : JsonBaseReader(&stream) {
         }
 
@@ -208,9 +209,9 @@ namespace KFCJson {
         String _valueStr;
         JsonError_t _lastError;
         JsonStackVector _stack;
-    #if DEBUG_JSON_READER
-        String _jsonSource;
-    #endif
+        #if DEBUG_JSON_READER
+            String _jsonSource;
+        #endif
     };
 
 }

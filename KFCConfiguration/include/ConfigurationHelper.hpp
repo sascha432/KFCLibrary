@@ -82,7 +82,7 @@ namespace ConfigurationHelper {
         default:
             break;
         }
-        __DBG_panic("invalid type=%u length=%u", type, length);
+        __LDBG_panic("invalid type=%u length=%u", type, length);
         return 0;
     }
 

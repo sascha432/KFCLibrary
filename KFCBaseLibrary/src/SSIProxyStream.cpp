@@ -46,7 +46,7 @@ size_t SSIProxyStream::_readBuffer(bool templateCheck)
     auto bufferPtr = std::unique_ptr<uint32_t[]>(new uint32_t[bufferSize / sizeof(uint32_t)]);
     auto buf = reinterpret_cast<uint8_t *>(bufferPtr.get());
     if (!buf) {
-        __DBG_printf_E("allocation failed size=%u", bufferSize);
+        __LDBG_printf_E("allocation failed size=%u", bufferSize);
         return 0;
     }
     #if DEBUG_SSI_PROXY_STREAM_POISON_CHECK

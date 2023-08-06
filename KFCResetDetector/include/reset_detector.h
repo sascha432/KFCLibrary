@@ -162,8 +162,8 @@ class ResetDetectorPlugin : public PluginComponent {
 public:
     ResetDetectorPlugin();
 
-    virtual void getStatus(Print &output) override;
     #if ESP8266
+        virtual void getStatus(Print &output) override;
         virtual void createMenu() override; // in web_server.cpp
     #endif
 

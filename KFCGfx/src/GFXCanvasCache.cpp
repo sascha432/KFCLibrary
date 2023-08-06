@@ -8,6 +8,7 @@
 #include <debug_helper.h>
 #include "GFXCanvasConfig.h"
 #include "GFXCanvasCompressed.h"
+#include "HeapSelector.h"
 
 #pragma GCC push_options
 #if DEBUG_GFXCANVAS
@@ -30,8 +31,11 @@ Cache::Cache(Cache &&cache) noexcept :
 {
 }
 
-Cache::Cache(uWidthType width, sYType y) : _buffer(new ColorType[width]()), _y(y), _width(width), _flags(0)
+Cache::Cache(uWidthType width, sYType y) : _y(y), _width(width), _flags(0)
 {
+    SELECT_IRAM();
+    _buffer = new ColorType[width]();
+
     if (!_buffer) {
         __DBG_panic("alloc failed, width=%u", width);
         invalidate();
@@ -73,6 +77,7 @@ Cache &Cache::operator=(Cache &&cache) noexcept
 void Cache::allocate()
 {
     if (!_buffer) {
+        SELECT_IRAM();
         _buffer = new ColorType[_width]();
         __DBG_ASTATS(stats.malloc++);
     }

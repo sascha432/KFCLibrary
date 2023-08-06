@@ -84,7 +84,7 @@ public:
     size_t empty() const {
         return _streams->empty();
     }
-    StreamWrapperVector *getStreams() {
+    StreamWrapperVector *getStreams() const {
         return _streams;
     }
 

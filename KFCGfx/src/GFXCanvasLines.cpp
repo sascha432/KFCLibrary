@@ -6,6 +6,7 @@
 
 #include <Arduino_compat.h>
 #include "GFXCanvasConfig.h"
+#include "HeapSelector.h"
 
 #pragma GCC push_options
 #if DEBUG_GFXCANVAS
@@ -24,8 +25,10 @@ Lines::Lines() : _height(0), _lines(nullptr)
 {
 }
 
-Lines::Lines(uHeightType height) : _height(height), _lines(new LineBuffer[height]())
+Lines::Lines(uHeightType height) : _height(height) //, _lines(new LineBuffer[height]())
 {
+    SELECT_IRAM();
+    _lines = new LineBuffer[height]();
     assert(_lines != nullptr);
     #if DEBUG_GFXCANVAS_STATS_DETAILS
         if (_lines != nullptr) {

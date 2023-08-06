@@ -54,6 +54,6 @@ inline uint32_t getTotalFreeHeap()
                 freeHeap += ESP.getFreeHeap();
             }
         #endif
-    #endif
         return freeHeap;
+    #endif
 }

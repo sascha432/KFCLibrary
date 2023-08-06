@@ -61,18 +61,17 @@ private:
     template<bool _Decr>
     void  _fill(const uint8_t *data, char *dst) {
         if (_Bits > 8) {
-            uint8_t fullBytes = _Bits / 8;
-            while(fullBytes--) {
+            for(int i = 0; i < int(_Bits / 8); i++) {
                 dst = _fill_n<_Decr, 8>(data++, dst);
             }
         }
         _fill_n<_Decr, _Bits & 0x7>(data, dst);
     }
 
-    template<bool _Decr, uint8_t _Count>
+    template<bool _Decr, int _Count>
     char *_fill_n(const uint8_t *data, char *dst) {
         uint8_t tmp = *data;
-        for(uint8_t i = 0; i < _Count; i++) {
+        for(int i = 0; i < _Count; i++) {
             ((_Decr) ? *(--dst) : *dst++) = (tmp & 0x1) + 48;
             tmp >>= 1;
         }

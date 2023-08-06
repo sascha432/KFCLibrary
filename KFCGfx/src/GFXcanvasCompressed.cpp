@@ -7,6 +7,7 @@
 #include <Arduino_compat.h>
 #include <Buffer.h>
 #include "GFXCanvasConfig.h"
+#include "HeapSelector.h"
 
 #include "GFXCanvas.h"
 #include "GFXCanvasCompressed.h"
@@ -221,6 +222,8 @@ void GFXCanvasCompressed::_RLEdecode(ByteBuffer &buffer, ColorType *output)
 
 void GFXCanvasCompressed::_RLEencode(ColorType *data, Buffer &buffer)
 {
+    SELECT_IRAM();
+
     uint8_t rle = 0;
     auto begin = data;
     auto end = &data[_width];

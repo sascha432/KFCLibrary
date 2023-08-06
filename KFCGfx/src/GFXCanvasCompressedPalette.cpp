@@ -7,6 +7,7 @@
 #include <Arduino_compat.h>
 #include "GFXCanvasConfig.h"
 #include "GFXCanvasCompressedPalette.h"
+#include "HeapSelector.h"
 
 #pragma GCC push_options
 #pragma GCC optimize("O3")
@@ -72,6 +73,8 @@ void GFXCanvasCompressedPalette::_RLEencode(ColorType *data, Buffer &buffer)
     // 4 bit: rle = data [0x0-0xe], 0xf indicates that a byte follows
     // 4 bit: palette index
     // 8 bit: rle = data + 0x0f
+
+    SELECT_IRAM();
 
     uint16_t rle = 0;
     auto begin = data;

@@ -66,7 +66,7 @@ void safeSetTZ(const __FlashStringHelper *timezone)
         if (setenv(CStrP(tzEnv), buf, 1) == 0) {
             entry = _getTZEnvironmentEntry();
             if (!entry) {
-                __DBG_printf("could not find TZ after setenv %p ptr %p", entry, entry ? *entry : nullptr);
+                // __LDBG_printf("could not find TZ after setenv %p ptr %p", entry, entry ? *entry : nullptr);
                 tzPtr = nullptr;
                 return;
             }

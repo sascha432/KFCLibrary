@@ -45,7 +45,7 @@ size_t PrintString::print(double n, uint8_t digits, bool trimTrailingZeros)
 size_t PrintString::vprintf(const char *format, va_list arg)
 {
     __DBG_validatePointerCheck(format, VP_HPS);
-    char temp[128];
+    char temp[64];
     size_t len = vsnprintf(temp, sizeof(temp), format, arg);
     if (len > sizeof(temp) - 1) {
         auto strLen = length();
@@ -68,7 +68,7 @@ size_t PrintString::vprintf(const char *format, va_list arg)
 size_t PrintString::vprintf_P(PGM_P format, va_list arg)
 {
     __DBG_validatePointerCheck(format, VP_HPS);
-    char temp[128];
+    char temp[64];
     size_t len = vsnprintf_P(temp, sizeof(temp), format, arg);
     if (len > sizeof(temp) - 1) {
         auto strLen = length();

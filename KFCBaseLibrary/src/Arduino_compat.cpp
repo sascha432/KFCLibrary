@@ -12,16 +12,20 @@
 // w+	wb+	w+b	open for reading and writing. If file exists deletes content and overwrites the file, otherwise creates an empty new file	beginning
 // a+	ab+	a+b	open for reading and writing (append if file exists)	end
 
-const char *fs::FileOpenMode::read = "r";
-const char *fs::FileOpenMode::write = "w";
-const char *fs::FileOpenMode::append = "a";
-const char *fs::FileOpenMode::readplus = "r+";
-const char *fs::FileOpenMode::writeplus = "w+";
-const char *fs::FileOpenMode::appendplus = "a+";
+
+// could be IRAM_ATTR, 16 byte should be available
+
+const char ICACHE_FLASH_ATTR STORE_ATTR *fs::FileOpenMode::read = "r";
+const char ICACHE_FLASH_ATTR STORE_ATTR *fs::FileOpenMode::write = "w";
+const char ICACHE_FLASH_ATTR STORE_ATTR *fs::FileOpenMode::append = "a";
+const char ICACHE_FLASH_ATTR STORE_ATTR *fs::FileOpenMode::readplus = "r+";
+const char ICACHE_FLASH_ATTR STORE_ATTR *fs::FileOpenMode::writeplus = "w+";
+const char ICACHE_FLASH_ATTR STORE_ATTR *fs::FileOpenMode::appendplus = "a+";
 
 int ___debugbreak_and_panic(const char *filename, int line, const char *function) {
 #if DEBUG
     DEBUG_OUTPUT.printf_P(PSTR("___debugbreak_and_panic() called in %s:%u - %s\n"), filename, line, function);
+    ::delay(5000);
     DEBUG_OUTPUT.flush();
 #endif
 #if _MSC_VER
