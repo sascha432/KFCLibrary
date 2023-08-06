@@ -49,8 +49,6 @@ static void ets_printf_P(const char *str, ...)
 
 namespace SaveCrash {
 
-    uint8_t Data::_md5[16];
-
     uint8_t getCrashCounter()
     {
         #if KFC_DISABLE_CRASH_COUNTER
@@ -173,25 +171,6 @@ namespace SaveCrash {
 
 #endif
 
-    void Data::printMD5(Print &output) const
-    {
-        auto ptr = _md5;
-        auto endPtr = ptr + sizeof(_md5);
-        while (ptr < endPtr) {
-            output.printf_P(PSTR("%02x"), (uint32_t)*ptr++);
-        }
-    }
-
-    bool Data::setMD5(const char *str)
-    {
-        if (strlen(str) != (sizeof(_md5) * 2)) {
-            std::fill(std::begin(_md5), std::end(_md5), 0);
-            return false;
-        }
-        hex2bin(_md5, sizeof(_md5), str);
-        return true;
-    }
-
     FlashStorageInfo FlashStorage::getInfo(ItemCallback callback)
     {
         Data header;
@@ -241,7 +220,7 @@ namespace SaveCrash {
                 if (!result || result.size() == 0 || !header) {
                     break; // next sector
                 }
-                __LDBG_printf("time=%u size=%u stack=%u start=0x%08x end=0x%08x sp=0x%08x reason=%s cause=%u " SAVECRASH_EXCEPTION_FMT " md5=%s",
+                __LDBG_printf("time=%u size=%u stack=%u start=0x%08x end=0x%08x sp=0x%08x reason=%s cause=%u " SAVECRASH_EXCEPTION_FMT,
                     header._time,
                     header.getSize(),
                     header.getStackSize(),
@@ -249,8 +228,7 @@ namespace SaveCrash {
                     header._stack._end,
                     header._stack._sp,
                     header.getReason(),
-                    SAVECRASH_EXCEPTION_ARGS(header._info),
-                    header.getMD5().c_str()
+                    SAVECRASH_EXCEPTION_ARGS(header._info)
                 );
 
                 if (callback(CrashLogEntry(header, sector, offset)) == false) {
@@ -274,7 +252,7 @@ namespace SaveCrash {
         if (version) {
             output.printf_P(PSTR(" version=%s\n"), version.toString().c_str());
         }
-        output.printf_P(PSTR(" md5=%s stack-size=%u\n"), item._header.getMD5().c_str(), item._header.getStackSize());
+        output.printf_P(PSTR(" stack-size=%u\n"), item._header.getStackSize());
     }
 
     void FlashStorage::cut_here(Print &output)
@@ -318,8 +296,6 @@ namespace SaveCrash {
         cut_here(output);
         output.print(F("\nFirmware "));
         header.printVersion(output);
-        output.print(F("\nMD5 "));
-        header.printMD5(output);
         output.print(F("\nTimestamp "));
         output.print(header.getTimeStr());
         output.print('\n');

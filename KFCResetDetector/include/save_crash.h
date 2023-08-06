@@ -68,11 +68,11 @@ namespace SaveCrash {
                 return __version != 0 && __version != ~0U;
             }
 
-            String toString(const __FlashStringHelper *buildSep = getDefaultBuildSeperator()) const; // kfc_fw_config.cpp
-            void printTo(Print &output, const __FlashStringHelper *buildSep = getDefaultBuildSeperator()) const; // kfc_fw_config.cpp
+            String toString(const __FlashStringHelper *buildSep = getDefaultBuildSeparator()) const; // kfc_fw_config.cpp
+            void printTo(Print &output, const __FlashStringHelper *buildSep = getDefaultBuildSeparator()) const; // kfc_fw_config.cpp
 
         private:
-            inline static const __FlashStringHelper *getDefaultBuildSeperator() {
+            inline static const __FlashStringHelper *getDefaultBuildSeparator() {
                 return F(".b");
             }
         };
@@ -139,7 +139,6 @@ namespace SaveCrash {
         LastFailAlloc _lastFailAlloc;
         uint32_t _fwVersion;
         struct rst_info _info;
-        static uint8_t _md5[16];
 
         Data() :
             _time(0),
@@ -196,18 +195,8 @@ namespace SaveCrash {
             getVersion().printTo(output);
         }
 
-        String getMD5() const {
-            String md5Str;
-            if (md5Str.reserve(32)) {
-                bin2hex_append(md5Str, _md5, sizeof(_md5));
-            }
-            return md5Str;
-        }
-
         // does not allocate memory
         void printReason(Print &output) const;
-        void printMD5(Print &output) const;
-        static bool setMD5(const char *str);
     };
 
     static constexpr auto kDataSize = sizeof(Data);
@@ -231,7 +220,7 @@ namespace SaveCrash {
         }
 
         inline uint32_t getId() const {
-            return crc32(_header._md5, sizeof(_header._md5), (_sector << 12) | _offset);
+            return crc32(&_header._fwVersion, sizeof(_header._fwVersion), (_sector << 12) | _offset);
         }
     };
 

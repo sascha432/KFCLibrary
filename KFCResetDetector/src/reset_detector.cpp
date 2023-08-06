@@ -15,7 +15,7 @@
 #include <PrintHtmlEntitiesString.h>
 #include "save_crash.h"
 #if IOT_SWITCH
-#include "../src/plugins/switch/switch_def.h"
+#    include "../src/plugins/switch/switch_def.h"
 #endif
 
 #if DEBUG_RESET_DETECTOR
@@ -139,7 +139,6 @@ void ResetDetector::begin(HardwareSerial *serial, int baud)
     #if ESP8266
         #if DEBUG_RESET_DETECTOR
             __LDBG_printf("begin _uart=%p serial=%p baud=%u ctors=%u", _uart, serial, baud, reset_detector_setup_global_ctors_counter);
-
             if (_uart) {
                 __LDBG_printf("\r\n");
                 uart_flush(_uart);
@@ -149,28 +148,32 @@ void ResetDetector::begin(HardwareSerial *serial, int baud)
             }
             __LDBG_printf("serial=%p begin=%u", serial, baud);
         #endif
-        #if IOT_LED_MATRIX_STANDBY_PIN == 3 || IOT_LED_MATRIX_OUTPUT_PIN == 3
+
+        __LDBG_printf("serial->begin");
+        #if ESP8266_USE_UART_RX_AS_OUTPUT
             serial->begin(baud, SERIAL_8N1, SERIAL_TX_ONLY, 1);
+            pinMode(3, INPUT); // keep the PIN floating, in case it has an external pull up/down resistor
         #else
-            serial->begin(baud, SERIAL_8N1);
+            serial->begin(baud);
         #endif
     #elif ESP32
+        __LDBG_printf("serial->begin");
         serial->begin(baud);
     #endif
+    __LDBG_printf("return");
 }
 
 void ResetDetector::begin()
 {
     #if ESP8266
         #if DEBUG_RESET_DETECTOR
-            auto oldUart = _uart;
-            __LDBG_printf("rd::begin(), _uart=%p", _uart);
             if (_uart) {
                 __LDBG_printf("begin() called multiple times without end()");
-                end();
+                delay(1000000);
+                panic();
             }
             _uart = uart_init(UART0, 115200, (int) SERIAL_8N1, (int) SERIAL_FULL, 1, 64, false);
-            __LDBG_printf("debug_begin has been called, old_uart=%p _uart=%p ctors=%u", oldUart, _uart, reset_detector_setup_global_ctors_counter);
+            __LDBG_printf("debug_begin has been called _uart=%p ctors=%u", _uart, reset_detector_setup_global_ctors_counter);
         #endif
 
         __LDBG_printf("init reset detector");
@@ -236,93 +239,92 @@ void ResetDetector::begin()
 
 const __FlashStringHelper *ResetDetector::getResetReason(uint8_t reason)
 {
-#if USE_ESP_GET_RESET_REASON
-    if (static_cast<int>(reason) == 254) {
-        return F("User exception (panic/abort/assert)");
-    }
-    switch(reason) {
-        // normal startup by power on
-        case REASON_DEFAULT_RST:
-            return F("Power On");
-        // hardware watch dog reset
-        case REASON_WDT_RST:
-            return F("Hardware Watchdog");
-        // exception reset, GPIO status won’t change
-        case REASON_EXCEPTION_RST:
-            return F("Exception");
-        // software watch dog reset, GPIO status won’t change
-        case REASON_SOFT_WDT_RST:
-            return F("Software Watchdog");
-        // software restart ,system_restart , GPIO status won’t change
-        case REASON_SOFT_RESTART:
-            return F("Software/System restart");
-        // wake up from deep-sleep
-        case REASON_DEEP_SLEEP_AWAKE:
-            return F("Deep-Sleep Wake");
-        // // external system reset
-        case REASON_EXT_SYS_RST:
-            return F("External System");
-        default:
-            break;
-    }
+    #if USE_ESP_GET_RESET_REASON
+        switch(reason) {
+            // normal startup by power on
+            case REASON_DEFAULT_RST:
+                return F("Power On");
+            // hardware watch dog reset
+            case REASON_WDT_RST:
+                return F("Hardware Watchdog");
+            // exception reset, GPIO status won’t change
+            case REASON_EXCEPTION_RST:
+                return F("Exception");
+            // software watch dog reset, GPIO status won’t change
+            case REASON_SOFT_WDT_RST:
+                return F("Software Watchdog");
+            // software restart ,system_restart , GPIO status won’t change
+            case REASON_SOFT_RESTART:
+                return F("Software/System restart");
+            // wake up from deep-sleep
+            case REASON_DEEP_SLEEP_AWAKE:
+                return F("Deep-Sleep Wake");
+            // // external system reset
+            case REASON_EXT_SYS_RST:
+                return F("External System");
+            case 254:
+                return F("User exception (panic/abort/assert)");
+            default:
+                break;
+        }
+    #elif defined(ESP32)
+        switch(reason) {
+            case ESP_RST_POWERON:
+                return F("Normal startup");
+            case ESP_RST_PANIC:
+                return F("Panic reset");
+            case ESP_RST_INT_WDT:
+                return F("Int. WDT reset");
+            case ESP_RST_TASK_WDT:
+                return F("Task WDT reset");
+            case ESP_RST_WDT:
+                return F("WDT reset");
+            case ESP_RST_SW:
+                return F("System restart");
+            case ESP_RST_DEEPSLEEP:
+                return F("Wake up from deep-sleep");
+            case ESP_RST_EXT:
+                return F("External system reset");
+            case ESP_RST_BROWNOUT:
+                return F("Brownout");
+            case ESP_RST_SDIO:
+                return F("Reset over SDIO");
+            default:
+                break;
+        }
+    #else
+        switch(reason) {
+            case REASON_DEFAULT_RST:
+                return F("Normal startup");
+            case REASON_WDT_RST:
+                return F("WDT reset");
+            case REASON_EXCEPTION_RST:
+                return F("Exception reset");
+            case REASON_SOFT_WDT_RST:
+                return F("Soft WDT reset");
+            case REASON_SOFT_RESTART:
+                return F("System restart");
+            case REASON_DEEP_SLEEP_AWAKE:
+                return F("Wake up from deep-sleep");
+            case REASON_EXT_SYS_RST:
+                return F("External system reset");
+            default:
+                break;
+        }
+    #endif
     return F("Unknown");
-#elif defined(ESP32)
-    switch(reason) {
-        case ESP_RST_POWERON:
-            return F("Normal startup");
-        case ESP_RST_PANIC:
-            return F("Panic reset");
-        case ESP_RST_INT_WDT:
-            return F("Int. WDT reset");
-        case ESP_RST_TASK_WDT:
-            return F("Task WDT reset");
-        case ESP_RST_WDT:
-            return F("WDT reset");
-        case ESP_RST_SW:
-            return F("System restart");
-        case ESP_RST_DEEPSLEEP:
-            return F("Wake up from deep-sleep");
-        case ESP_RST_EXT:
-            return F("External system reset");
-        case ESP_RST_BROWNOUT:
-            return F("Brownout");
-        case ESP_RST_SDIO:
-            return F("Reset over SDIO");
-        default:
-            break;
-    }
-    return F("Unknown");
-#else
-    switch(reason) {
-        case REASON_DEFAULT_RST:
-            return F("Normal startup");
-        case REASON_WDT_RST:
-            return F("WDT reset");
-        case REASON_EXCEPTION_RST:
-            return F("Exception reset");
-        case REASON_SOFT_WDT_RST:
-            return F("Soft WDT reset");
-        case REASON_SOFT_RESTART:
-            return F("System restart");
-        case REASON_DEEP_SLEEP_AWAKE:
-            return F("Wake up from deep-sleep");
-        case REASON_EXT_SYS_RST:
-            return F("External system reset");
-    }
-    return F("Unknown");
-#endif
 }
-
 
 #if DEBUG
 
-void ResetDetector::__setResetCounter(Counter_t counter)
-{
-    __LDBG_printf("_writeData()");
-    _storedData = counter;
-    _data = counter;
-    _writeData();
-}
+    void ResetDetector::__setResetCounter(Counter_t counter)
+    {
+        __LDBG_printf("_writeData()");
+        _storedData = counter;
+        _data = counter;
+        _writeData();
+    }
+
 #endif
 
 void ResetDetector::_readData()
@@ -351,10 +353,18 @@ PROGMEM_DEFINE_PLUGIN_OPTIONS(
     "",                 // reconfigure_dependencies
     PluginComponent::PriorityType::RESET_DETECTOR,
     PluginComponent::RTCMemoryId::RESET_DETECTOR,
+#if ESP8266
     static_cast<uint8_t>(PluginComponent::MenuType::CUSTOM),
+#else
+    static_cast<uint8_t>(PluginComponent::MenuType::NONE),
+#endif
     true,               // allow_safe_mode
     true,               // setup_after_deep_sleep
+#if ESP8266
     true,               // has_get_status
+#else
+    false,              // has_get_status
+#endif
     false,              // has_config_forms
     false,              // has_web_ui
     true,               // has_web_templates
@@ -367,16 +377,24 @@ ResetDetectorPlugin::ResetDetectorPlugin() : PluginComponent(PROGMEM_GET_PLUGIN_
     REGISTER_PLUGIN(this, "ResetDetectorPlugin");
 }
 
-void ResetDetectorPlugin::getStatus(Print &output)
-{
-    auto info = SaveCrash::createFlashStorage().getInfo();
-    output.printf_P(PSTR("%u crash report(s), total size "), info.numTraces());
-    output.print(formatBytes(info.size()));
-    output.printf_P(PSTR(HTML_S(br) "%s of %s available"), formatBytes(info.available()).c_str(), formatBytes(info.capacity()).c_str());
-}
+#if ESP8266
+
+    void ResetDetectorPlugin::getStatus(Print &output)
+    {
+        auto info = SaveCrash::createFlashStorage().getInfo();
+        output.printf_P(PSTR("%u crash report(s), total size "), info.numTraces());
+        output.print(formatBytes(info.size()));
+        output.printf_P(PSTR(HTML_S(br) "%s of %s available"), formatBytes(info.available()).c_str(), formatBytes(info.capacity()).c_str());
+    }
+
+    void ResetDetectorPlugin::createMenu()
+    {
+        bootstrapMenu.addMenuItem(F("SaveCrash Log"), F("savecrash.html"), navMenu.util);
+    }
+
+#endif
 
 
 #if !RESET_DETECTOR_INCLUDE_HPP_INLINE
-#include "reset_detector.hpp"
+#    include "reset_detector.hpp"
 #endif
-
