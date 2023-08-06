@@ -15,6 +15,7 @@
 #include <stl_ext/is_trivially_copyable.h>
 #include <type_traits>
 #include <vector>
+#include <EventScheduler.h>
 #if ESP8266
 #    include <coredecls.h>
 #endif
@@ -551,6 +552,7 @@ private:
         bool _nvsHavePartitionInitialized;
         const char *_nvsNamespace;
         uint32_t _nvsHeapUsage;
+        Event::Timer _nvsDeinitTimer;
 
     #endif
 

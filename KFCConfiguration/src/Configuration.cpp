@@ -86,16 +86,11 @@ Configuration::Configuration(uint16_t size) :
     esp_err_t Configuration::_nvs_commit()
     {
         esp_err_t err = ESP_OK;
-        uint8_t count = 10;
-        while(count--) {
-            err = nvs_commit(_nvsHandle);
-            if (err == ESP_OK) {
-                return err;
-            }
-            Logger_error(F("nvs_commit failed"));
-            delay(100);
+        err = nvs_commit(_nvsHandle);
+        if (err == ESP_OK) {
+            return err;
         }
-        Logger_error(F("FATAL nvs_commit"));
+        Logger_error(F("nvs_commit failed namespace=%s handle=%p mode=%u err=%x"), _nvsNamespace, _nvsHandle, _nvsOpenMode, err);
         delay(100);
         return err;
     }
@@ -127,7 +122,7 @@ Configuration::Configuration(uint16_t size) :
         #endif
 
         if (err != ESP_OK) {
-            __DBG_printf_E("cannot open NVS namespace=%s err=%08x", _nvsNamespace, err);
+            __DBG_printf_E("cannot open NVS namespace=%s mode=%u err=%08x", _nvsNamespace, _nvsOpenMode, err);
         }
         else {
             __LDBG_printf_N("NVS namespace=%s handle=%08x", _nvsNamespace, _nvsHandle);
@@ -144,13 +139,24 @@ Configuration::Configuration(uint16_t size) :
             _nvsHandle = 0;
         }
         #if NVS_DEINIT_PARTITION_ON_CLOSE
-            _nvs_deinit();
+            #if ESP32
+                #define DEINIT_TIMER_MS 1000
+            #else
+                #define DEINIT_TIMER_MS 250
+            #endif
+            _Timer(_nvsDeinitTimer).add(Event::milliseconds(DEINIT_TIMER_MS), false, [this](Event::CallbackTimerPtr) {
+                _nvs_deinit();
+            });
         #endif
     }
 
     void Configuration::_nvs_init()
     {
         // init takes about 16ms (ESP8266 160MHz/80MHz flash) with 32KB and a freshly formatted partition. 32ms if the flash is running on 40MHz
+
+        if (_nvsDeinitTimer) {
+            _Timer(_nvsDeinitTimer).remove();
+        }
 
         #if ESP32 && !defined(KFC_CFG_NVS_PARTITION_NAME)
             // nvs_flash_init() is called automatically
@@ -191,6 +197,8 @@ Configuration::Configuration(uint16_t size) :
 
     void Configuration::_nvs_deinit()
     {
+        _Timer(_nvsDeinitTimer).remove();
+
         if (_nvsHavePartitionInitialized) {
             // DebugMeasureTimer __mt(PSTR("_nvs_deinit"));
 
