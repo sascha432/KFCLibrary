@@ -140,10 +140,12 @@ Configuration::Configuration(uint16_t size) :
         }
         #if NVS_DEINIT_PARTITION_ON_CLOSE
             #if ESP32
-                #define DEINIT_TIMER_MS 1000
-            #else
                 #define DEINIT_TIMER_MS 250
+            #else
+                #define DEINIT_TIMER_MS 100
             #endif
+            // wait a bit before running deinit. the init function takes quite a while to execute
+            // executing deinit in the main loop will cause less issues with interrupts as well
             _Timer(_nvsDeinitTimer).add(Event::milliseconds(DEINIT_TIMER_MS), false, [this](Event::CallbackTimerPtr) {
                 _nvs_deinit();
             });
@@ -224,6 +226,7 @@ void Configuration::release()
             case 0x6f10:
             case 0x2531:
             case 0x7ff7:
+            case 0xdb24:
                 continue;
             default:
                 break;
