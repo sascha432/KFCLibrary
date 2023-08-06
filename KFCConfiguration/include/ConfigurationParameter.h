@@ -145,7 +145,7 @@ namespace ConfigurationHelper {
     public:
         struct {
             union {
-                struct {
+                struct __attribute_packed__ {
                     // crc16 of the config. name
                     HandleType _handle;
                     // type of data
@@ -196,7 +196,7 @@ public:
     ~ConfigurationParameter()
     {
         if (_param.isWriteable()) {
-            free(_param._writeable);
+            delete _param._writeable;
         }
         else if (_param._readable) {
             free(_param._readable);

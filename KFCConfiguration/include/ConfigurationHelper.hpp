@@ -50,11 +50,11 @@ namespace ConfigurationHelper {
         auto &param = parameter._getParam();
         if (param.isWriteable()) {
             //param._length = param._writeable->length();
-            free(param._writeable);
+            delete param._writeable;
             param._writeable = nullptr;
             param._is_writeable = false;
         }
-        if (param._readable) {
+        else if (param._readable) {
             free(param._readable);
             param._readable = nullptr;
         }

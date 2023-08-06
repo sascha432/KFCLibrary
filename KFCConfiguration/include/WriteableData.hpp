@@ -17,7 +17,7 @@ namespace ConfigurationHelper {
         _is_allocated(false)
     {
         if (_length > _buffer_length()) {
-            _data = allocate(size() + 4, nullptr);
+            _data = allocate(size() + 1, nullptr);
             _is_allocated = true;
         }
 
