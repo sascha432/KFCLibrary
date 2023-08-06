@@ -316,8 +316,13 @@ Configuration::WriteResultType Configuration::write()
                 header = Header();
             }
 
+            auto version = header.version();
+            if (!version || isDirty()) {
+                version++;
+            }
+
             // update header
-            header.update(header.version() + 1, _params.size(), Header::getParamsLength(_params.size()));
+            header.update(version, _params.size(), Header::getParamsLength(_params.size()));
             Buffer buffer;
 
             // write new data and create params
