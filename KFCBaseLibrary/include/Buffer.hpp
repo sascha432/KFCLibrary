@@ -179,7 +179,7 @@ inline Buffer &Buffer::operator=(const Buffer &buffer)
     if (_changeBuffer(_length + 1)) {
         std::copy_n(buffer.begin(), _length, begin());
         #if BUFFER_ZERO_FILL
-            _buffer[length] = 0;
+            _buffer[_length] = 0;
         #endif
     }
     else {
