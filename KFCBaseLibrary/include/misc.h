@@ -553,7 +553,7 @@ constexpr size_t kGetRequiredBitsForValue(int64_t value, size_t count) {
 // this functions downcasts the end (i.e. millis() or micros()) to the same type that an overrun does not affect the time measured
 // the max. time that can be measured is the maximum value of Ta
 
-template<typename Ta, typename Tb>
+template <typename Ta, typename Tb>
 Ta get_time_since(Ta start, Tb end)
 {
     static_assert(std::is_unsigned_v<Ta>::true, "start must be unsigned");
@@ -563,10 +563,24 @@ Ta get_time_since(Ta start, Tb end)
 
 // check if a certain duration has been passed
 
-template<typename Ta, typename Tb>
+template <typename Ta, typename Tb>
 Ta has_duration_passed(Ta start, Tb end, Ta duration)
 {
     return (get_time_since<Ta, Tb>) > duration;
+}
+
+// get millis() and never return 0
+// by default it returns 1 millisecond in the future for 0
+// to get 1 millisecond in the past, use millis_not_zero(-1LL)
+
+inline __attribute__((__always_inline__))
+decltype(millis()) millis_not_zero(decltype(millis()) value = 1)
+{
+    auto ms = millis();
+    if (ms) {
+        return ms;
+    }
+    return value;
 }
 
 #ifdef max
