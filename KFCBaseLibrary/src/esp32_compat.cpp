@@ -76,16 +76,30 @@ extern "C" {
 
     #else
 
-        uint8_t temprature_sens_read();
+        #if CONFIG_IDF_TARGET_ESP32S3
 
-        float esp32TemperatureRead()
-        {
-            auto temp = temprature_sens_read();
-            if (temp == 128) {
-                return NAN;
+            // S3 temperature support will be fully supported in IDF 5.0, it's part of driver refactoring and there are breaking changes.
+            // Workaround solution for temp sensor for S3 will be backported to IDF 4.4 but it's not ready yet.
+
+            float esp32TemperatureRead()
+            {
+                return 99.9f;
             }
-            return (temp - 32) / 1.8f;
-        }
+
+        #else
+
+            uint8_t temprature_sens_read();
+
+            float esp32TemperatureRead()
+            {
+                auto temp = temprature_sens_read();
+                if (temp == 128) {
+                    return NAN;
+                }
+                return (temp - 32) / 1.8f;
+            }
+
+        #endif
 
     #endif
 
