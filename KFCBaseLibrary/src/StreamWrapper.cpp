@@ -48,13 +48,18 @@ void StreamWrapper::clear()
 void StreamWrapper::add(Stream *output)
 {
     MUTEX_LOCK_BLOCK(_lock) {
-        __DSW("add output=%p", output);
-        if (std::find(_streams->begin(), _streams->end(), output) != _streams->end()) {
-            __DSW("IGNORING DUPLICATE STREAM %p", output);
-            return;
-        }
-        _streams->push_back(output);
+        _add(output);
     }
+}
+
+void StreamWrapper::_add(Stream *output)
+{
+    __DSW("add output=%p", output);
+    if (std::find(_streams->begin(), _streams->end(), output) != _streams->end()) {
+        __DSW("IGNORING DUPLICATE STREAM %p", output);
+        return;
+    }
+    _streams->push_back(output);
 }
 
 void StreamWrapper::replaceFirst(Stream *output, Stream *input)
@@ -68,7 +73,7 @@ void StreamWrapper::replaceFirst(Stream *output, Stream *input)
             _streams->front() = output;
         }
         else {
-            add(output);
+            _add(output);
             setInput(input);
         }
     }

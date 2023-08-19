@@ -98,7 +98,10 @@ public:
 
     virtual void flush();
 
-private:
+protected:
+    void _add(Stream *output); // no locking
+
+protected:
     StreamWrapperVector *_streams;
     bool _freeStreams;
     Stream *_input;
