@@ -43,7 +43,7 @@
 #    include <user_interface.h>
 #endif
 
-#if RTC_SUPPORT == 0
+#if RTC_SUPPORT == 0 && RTC_SUPPORT_NO_TIMER == 0
     RTCMemoryManager::RtcTimer RTCMemoryManager::_rtcTimer;
 #endif
 
@@ -459,7 +459,9 @@ void RTCMemoryManager::_writeTime(const RtcTime &time)
 
     void RTCMemoryManager::setupRTC()
     {
-        _rtcTimer.startTimer(1000, true);
+        #if RTC_SUPPORT_NO_TIMER == 0
+            _rtcTimer.startTimer(1000, true);
+        #endif
     }
 
     void RTCMemoryManager::updateTimeOffset(uint32_t offset)
