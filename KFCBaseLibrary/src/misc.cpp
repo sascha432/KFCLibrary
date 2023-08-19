@@ -205,26 +205,29 @@ File tmpfile(String /*dir*/tmpfile, const String &prefix)
 
 File createFileRecursive(const String &path, const char *mode)
 {
-    String parts;
+    __LDBG_printf("path=%s mode=%s", path.c_str(), mode);
     File file = KFCFS.open(path, mode);
-    if (!file) {
-        char sep[2] = { '/', 0 };
-        split::split(path.c_str(), sep, [&](const char *str, size_t size, int flags) {
-            if (!parts.endsWith('/')) {
-                parts += '/';
+    if (file) {
+        return file;
+    }
+    if (!KFCFS.exists(path)) { // check if the file exists
+        int fromIndex = 0;
+        int pos = 0;
+        while ((pos = path.indexOf('/', fromIndex)) != -1) {
+            // skip "/"
+            if (pos) {
+                // create sub directories
+                String dir = path.substring(0, pos);
+                __LDBG_printf("create dir=%s exists=%u", dir.c_str(), KFCFS.exists(dir));
+                KFCFS.mkdir(dir);
             }
-            parts.concat(str, size);
-            if (flags & split::SplitFlagsType::LAST) {
-                __LDBG_printf("create file=%s exists=%u mode=%s", parts.c_str(), KFCFS.exists(parts), mode);
-                if (!KFCFS.exists(parts)) {
-                    file = KFCFS.open(parts, mode);
-                }
-            }
-            else {
-                KFCFS.mkdir(parts);
-                __LDBG_printf("create dir=%s exists=%u", parts.c_str(), KFCFS.exists(parts));
-            }
-        }, split::SplitFlagsType::NONE, 32);
+            fromIndex = pos + 1;
+        }
+        // try to open the file again
+        if (pos) {
+            __LDBG_printf("path=%s mode=%s (retry)", path.c_str(), mode);
+            file = KFCFS.open(path, mode);
+        }
     }
     return file;
 }
@@ -542,11 +545,11 @@ uint16_t tokenizer(char *str, TokenizerArgs &args, bool hasCommand, char **nextC
     return argc;
 }
 
-void split::split(const char *str, const char *sep, AddItemCallback callback, int flags, uint16_t limit)
+void split::split(const char *str, PGM_P sep, AddItemCallback callback, int flags, uint16_t limit)
 {
     unsigned int start = 0, stop;
     for (stop = 0; str[stop]; stop++) {
-        if (limit > 0 && strchr(sep, str[stop])) {
+        if (limit > 0 && strchr_P(sep, str[stop])) {
             limit--;
             callback(str + start, stop - start, flags);
             start = stop + 1;

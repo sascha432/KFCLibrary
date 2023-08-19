@@ -414,7 +414,7 @@ namespace split {
         }
     }
 
-    void split(const char *str, const char *sep, AddItemCallback callback, int flags = SplitFlagsType::EMPTY, uint16_t limit = UINT16_MAX);
+    void split(const char *str, PGM_P sep, AddItemCallback callback, int flags = SplitFlagsType::EMPTY, uint16_t limit = UINT16_MAX);
     void split_P(const FPStr &str, const FPStr &sep, AddItemCallback callback, int flags = SplitFlagsType::EMPTY, uint16_t limit = UINT16_MAX);
 };
 
@@ -548,6 +548,25 @@ constexpr size_t _kGetRequiredBitsForValue(uint64_t value, size_t count) {
 // get number of bits to store value
 constexpr size_t kGetRequiredBitsForValue(int64_t value, size_t count) {
     return value == 0 ? count : value < 0 ? _kGetRequiredBitsForValue(static_cast<uint64_t>(-value), 1) : _kGetRequiredBitsForValue(value >> 1, count + 1);
+}
+
+// this functions downcasts the end (i.e. millis() or micros()) to the same type that an overrun does not affect the time measured
+// the max. time that can be measured is the maximum value of Ta
+
+template<typename Ta, typename Tb>
+Ta get_time_since(Ta start, Tb end)
+{
+    static_assert(std::is_unsigned_v<Ta>::true, "start must be unsigned");
+    static_assert(sizeof(Ta) <= sizeof(Tb), "start type must be the same size or smaller than the provided end time");
+    return static_cast<Ta>(end) - start;
+}
+
+// check if a certain duration has been passed
+
+template<typename Ta, typename Tb>
+Ta has_duration_passed(Ta start, Tb end, Ta duration)
+{
+    return (get_time_since<Ta, Tb>) > duration;
 }
 
 #ifdef max
