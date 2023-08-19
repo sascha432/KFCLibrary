@@ -16,10 +16,10 @@ public:
     }
 
 public:
-    SyslogFile(const char *hostname, SyslogQueue *queue, const String &filename, size_t maxSize = kMaxFileSize, uint16_t maxRotate = kKeepRotatedFilesLimit);
+    SyslogFile(SemaphoreMutex &lock, const char *hostname, const String &filename, size_t maxSize = kMaxFileSize, uint16_t maxRotate = kKeepRotatedFilesLimit);
 
     virtual bool setupZeroConf(const String &hostname, const IPAddress &address, uint16_t port);
-    virtual void transmit(const SyslogQueueItem &item);
+    virtual void transmit(const SyslogItem &item);
     virtual uint32_t getState(StateType state);
     virtual String getHostname() const;
     virtual uint16_t getPort() const;

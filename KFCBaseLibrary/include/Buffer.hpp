@@ -71,9 +71,14 @@ inline void Buffer::remove(size_t index, size_t count)
 
 inline void Buffer::_remove(size_t index, size_t count)
 {
-    auto dst_begin = begin() + index;
-    std::copy(dst_begin + count, end(), dst_begin);
-    _length -= count;
+    if (count == _length) {
+        _length = 0;
+    }
+    else {
+        auto dst_begin = begin() + index;
+        std::copy(dst_begin + count, end(), dst_begin);
+        _length -= count;
+    }
 #if BUFFER_ZERO_FILL
     std::fill(begin() + _length, _buffer_end(), 0);
 #endif

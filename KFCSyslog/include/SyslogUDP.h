@@ -10,12 +10,12 @@ class SyslogUDP : public Syslog {
 public:
     static constexpr uint16_t kDefaultPort = 514;
 
-    SyslogUDP(const char *hostname, SyslogQueue *queue, const String &host, uint16_t port = kDefaultPort);
+    SyslogUDP(SemaphoreMutex &lock, const char *hostname, const String &host, uint16_t port = kDefaultPort);
     virtual ~SyslogUDP();
 
     virtual bool setupZeroConf(const String &hostname, const IPAddress &address, uint16_t port);
     virtual uint32_t getState(StateType state);
-    virtual void transmit(const SyslogQueueItem &item);
+    virtual void transmit(const SyslogItem &item);
     virtual String getHostname() const;
     virtual uint16_t getPort() const;
 

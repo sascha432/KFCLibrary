@@ -9,11 +9,17 @@
 #endif
 
 #include "SyslogParameter.h"
-#include "SyslogQueue.h"
 #include <Arduino_compat.h>
+#include <Mutex.h>
 #include <PrintString.h>
 #include <functional>
 #include <vector>
+
+#if ESP32
+#    define SYSLOG_PLUGIN_QUEUE_SIZE            4096
+#elif ESP8266
+#    define SYSLOG_PLUGIN_QUEUE_SIZE            1024
+#endif
 
 #ifndef SYSLOG_USE_RFC5424
 #    define SYSLOG_USE_RFC5424 0 // 1 is not working ATM
@@ -38,7 +44,6 @@
 #define SYSLOG_NIL_VALUE (SYSLOG_NIL_SP[0])
 
 class Syslog;
-class SyslogStream;
 
 #if defined(HAVE_KFC_FIRMWARE_VERSION) && HAVE_KFC_FIRMWARE_VERSION
 
@@ -72,13 +77,22 @@ extern const SyslogFilterItemPair syslogFilterSeverityItems[] PROGMEM;
 
 #endif
 
-class SyslogQueue;
+#if DEBUG_SYSLOG
+#    include <debug_helper_enable.h>
+#else
+#    include <debug_helper_disable.h>
+#endif
+
 class SyslogParameter;
-class SyslogManagedStream;
-class SyslogPlugin;
 
 class Syslog {
 public:
+    static constexpr size_t kMaxQueueSize = SYSLOG_PLUGIN_QUEUE_SIZE;
+
+public:
+    using SyslogItem = String;
+    using SyslogQueue = std::vector<SyslogItem>;
+
     enum class StateType {
         NONE = 0,
         CAN_SEND,               // ready to send messages
@@ -90,7 +104,7 @@ public:
 public:
     Syslog(const Syslog &) = delete;
 
-    Syslog(const char *hostname, SyslogQueue *queue);
+    Syslog(SemaphoreMutex &lock, const char *hostname);
     virtual ~Syslog();
 
     virtual bool setupZeroConf(const String &hostname, const IPAddress &address, uint16_t port) = 0;
@@ -109,17 +123,30 @@ public:
         return getState(StateType::HAS_CONNECTION);
     }
 
-    virtual void transmit(const SyslogQueueItem &item) = 0;
+    virtual void transmit(const SyslogItem &item) = 0;
     virtual String getHostname() const = 0;
     virtual uint16_t getPort() const = 0;
 
-    virtual void clear();
+    // clear queue
+    void clear();
+
+    void setFacility(SyslogFacility facility);
+    void setSeverity(SyslogSeverity severity);
+
+    // add message
+    void addMessage(String &&message);
+    void addMessage(const String &message);
+
+    // get dropped message
+    uint32_t getDropped();
+
+    // get queue item count
+    uint32_t getQueueSize();
+
+    // transmit one item and return items left
+    uint32_t deliverQueue();
 
 protected:
-    friend SyslogStream;
-    friend SyslogManagedStream;
-    friend SyslogPlugin;
-
     String _getHeader(uint32_t millis) const;
     void _addTimestamp(PrintString &buffer, uint32_t millis, PGM_P format) const;
 
@@ -145,24 +172,103 @@ private:
 
 protected:
     SyslogParameter _parameter;
-    SyslogQueue &_queue;
+    String _message;
+    SyslogQueue _queue;
+    uint32_t _dropped;
+    SemaphoreMutex &_lock;
 };
 
-inline Syslog::Syslog(const char *hostname, SyslogQueue *queue) :
+inline Syslog::Syslog(SemaphoreMutex &lock, const char *hostname) :
     _parameter(hostname),
-    _queue(*queue)
+    _dropped(0),
+    _lock(lock)
 {
 }
 
 inline Syslog::~Syslog()
 {
-	delete reinterpret_cast<SyslogQueue *>(&_queue);
+}
+
+inline void Syslog::addMessage(String &&message)
+{
+    __LDBG_printf("msg=%s", message.c_str());
+    MUTEX_LOCK_BLOCK(_lock) {
+        size_t size = _queue.capacity() * sizeof(SyslogItem);
+        for(const auto &item: _queue) {
+            size += item.__getAllocSize();
+            if (size > kMaxQueueSize) {
+                __LDBG_printf("dropped=%u", size);
+                _dropped++;
+                return;
+            }
+        }
+        __LDBG_printf("size=%u", size);
+        _queue.emplace_back(std::move(message));
+    }
+    deliverQueue();
+}
+
+inline void addMessage(const String &message)
+{
+    addMessage(std::move(String(message)));
+}
+
+inline uint32_t Syslog::getDropped()
+{
+    MUTEX_LOCK_BLOCK(_lock) {
+        return _dropped;
+    }
+    __builtin_unreachable();
+}
+
+inline uint32_t Syslog::getQueueSize()
+{
+    MUTEX_LOCK_BLOCK(_lock) {
+        return _queue.size();
+    }
+    __builtin_unreachable();
+}
+
+inline uint32_t Syslog::deliverQueue()
+{
+    if (!canSend() || isSending()) {
+        // delay delivery
+        return getQueueSize();
+    }
+
+    SyslogItem item;
+    MUTEX_LOCK_BLOCK(_lock) {
+        if (_queue.empty()) {
+            return 0;
+        }
+        item = _queue.front();
+        _queue.erase(_queue.begin());
+    }
+
+    // transmit message
+    transmit(item);
+
+    return getQueueSize();
 }
 
 inline void Syslog::clear()
 {
-    _queue.clear();
+    __LDBG_printf("clear=%u", _queue.size());
+    MUTEX_LOCK_BLOCK(_lock) {
+        _queue.clear();
+    }
 }
+
+inline void Syslog::setFacility(SyslogFacility facility)
+{
+    _parameter.setFacility(facility);
+}
+
+inline void Syslog::setSeverity(SyslogSeverity severity)
+{
+    _parameter.setSeverity(severity);
+}
+
 
 inline void Syslog::_addParameter(PrintString &buffer, const char *value) const
 {
@@ -178,3 +284,7 @@ inline void Syslog::_addParameter(PrintString &buffer, const __FlashStringHelper
 {
     __addParameter(buffer, value);
 }
+
+#if DEBUG_SYSLOG
+#    include <debug_helper_disable.h>
+#endif

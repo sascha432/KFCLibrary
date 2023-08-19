@@ -556,7 +556,7 @@ constexpr size_t kGetRequiredBitsForValue(int64_t value, size_t count) {
 template <typename Ta, typename Tb>
 Ta get_time_since(Ta start, Tb end)
 {
-    static_assert(std::is_unsigned_v<Ta>::true, "start must be unsigned");
+    static_assert(std::is_unsigned_v<Ta>, "start must be unsigned");
     static_assert(sizeof(Ta) <= sizeof(Tb), "start type must be the same size or smaller than the provided end time");
     return static_cast<Ta>(end) - start;
 }

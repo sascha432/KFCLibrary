@@ -8,19 +8,17 @@
 #include "SyslogParameter.h"
 #include "Syslog.h"
 #include "SyslogTCP.h"
-#include "SyslogQueue.h"
 
 #if DEBUG_SYSLOG
-#include <debug_helper_enable.h>
+#    include <debug_helper_enable.h>
 #else
-#include <debug_helper_disable.h>
+#    include <debug_helper_disable.h>
 #endif
 
-SyslogTCP::SyslogTCP(const char *hostname, SyslogQueue *queue, const String &host, uint16_t port, bool useTLS) :
-    Syslog(hostname, queue),
+SyslogTCP::SyslogTCP(SemaphoreMutex &lock, const char *hostname, const String &host, uint16_t port, bool useTLS) :
+    Syslog(lock, hostname),
     _client(nullptr),
     _host(nullptr),
-    _queueId(0),
     _port(port),
     _ack(0),
     _useTLS(useTLS)
@@ -32,45 +30,44 @@ SyslogTCP::SyslogTCP(const char *hostname, SyslogQueue *queue, const String &hos
     }
 }
 
-void SyslogTCP::transmit(const SyslogQueueItem &item)
+void SyslogTCP::transmit(const SyslogItem &message)
 {
-    auto &message = item.getMessage();
-    __LDBG_printf("id=%u msg=%s%s", item.getId(), _getHeader(item.getMillis()).c_str(), message.c_str());
-    __LDBG_assert(_ack == 0);
-    __LDBG_assert(_queueId == 0);
     #if DEBUG_SYSLOG
         if (_ack) {
-            __LDBG_printf("ack=%u id=%u buffer=%u", _ack, _queueId, _buffer.length());
-            clear();
+            __LDBG_printf_E("ack=%u buffer=%u", _ack, _buffer.length());
+            _ack = -1;
+            _clear();
         }
     #endif
 
-    _queueId = item.getId();
-    _buffer = _getHeader(item.getMillis());
-    auto ptr = message.c_str();
-    char ch;
-    while((ch = *ptr++) != 0) {
-        switch(ch) {
-        case '\n':
-            _buffer.write(F("\\n"));
-            break;
-        case '\r':
-            _buffer.write(F("\\r"));
-            break;
-        case 0:
-            _buffer.write(F("\\x00"));
-            break;
-        default:
-            _buffer.write(ch);
-            break;
-        }
-    }
-    _buffer.write('\n');
-    _ack = _buffer.length();
-
-    // __DBG_printf("buffer: %s", printable_string(_buffer.c_str(), _buffer.length()).c_str());
-
     _connect();
+
+    MUTEX_LOCK_BLOCK(_lock) {
+        __LDBG_printf("msg=%s%s", _getHeader(millis()).c_str(), message.c_str());
+        __LDBG_assert(_ack == 0);
+
+        _buffer = _getHeader(millis());
+        auto ptr = message.c_str();
+        char ch;
+        while((ch = *ptr++) != 0) {
+            switch(ch) {
+            case '\n':
+                _buffer.write(F("\\n"));
+                break;
+            case '\r':
+                _buffer.write(F("\\r"));
+                break;
+            case 0:
+                _buffer.write(F("\\x00"));
+                break;
+            default:
+                _buffer.write(ch);
+                break;
+            }
+        }
+        _buffer.write('\n');
+        _ack = _buffer.length();
+    }
 }
 
 uint32_t SyslogTCP::getState(StateType state)
@@ -78,8 +75,11 @@ uint32_t SyslogTCP::getState(StateType state)
     switch (state) {
     case StateType::CAN_SEND:
         return (_port != 0) && (_host || IPAddress_isValid(_address)) && WiFi.isConnected();
-    case StateType::IS_SENDING:
-        return _queueId;
+    case StateType::IS_SENDING: {
+        MUTEX_LOCK_BLOCK(_lock) {
+            return _ack != 0;
+        }
+    }
     case StateType::CONNECTED:
         return _client && _client->connected();
     case StateType::HAS_CONNECTION:
@@ -90,16 +90,14 @@ uint32_t SyslogTCP::getState(StateType state)
     return false;
 }
 
-void SyslogTCP::clear()
+void SyslogTCP::_clear()
 {
-    // clear queue and disconnect
-    if (_client) {
-        _disconnect();
+    MUTEX_LOCK_BLOCK(_lock) {
+        if (_ack != _buffer.length()) { // discard buffer that has been send partially
+            _buffer.clear();
+            _ack = 0;
+        }
     }
-    _queueId = 0;
-    _ack = 0;
-    _buffer.clear();
-    _queue.clear();
 }
 
 bool SyslogTCP::setupZeroConf(const String &hostname, const IPAddress &address, uint16_t port)
@@ -198,7 +196,7 @@ void SyslogTCP::_allocClient()
     _client->setRxTimeout(kMaxIdleSeconds);
 }
 
-void SyslogTCP::_freeClient()
+void SyslogTCP::_freeClient(bool clear)
 {
     if (_client) {
         _Timer(_reconnectTimer).remove();
@@ -215,37 +213,22 @@ void SyslogTCP::_freeClient()
         delete _client;
         _client = nullptr;
     }
+    if (clear) {
+        _clear();
+    }
 }
 
 void SyslogTCP::_status(bool success, const __FlashStringHelper *reason)
 {
     #if DEBUG_SYSLOG
         if (success) {
-            __DBG_printf("success queue_id=%u", _queueId);
+            __DBG_printf("success");
         }
         else {
-            __DBG_printf("failure queue_id=%u reason=%s", _queueId, reason);
+            __DBG_printf("failure");
         }
     #endif
-    if (hasQueue()) {
-        if (!success) {
-            /*
-TODO fix memory leak
-D11616589 (SyslogTCP.cpp:225 <2448:1> _status): failed to send syslog message queue_id=18 reason=connect failed buffer=<5>Jul 13 18:50:17 KFCE12138 kfcfw: Disconnected from MQTT serve (119)
-D11617713 (SyslogTCP.cpp:225 <2256:1> _status): failed to send syslog message queue_id=18 reason=connect failed buffer=<5>Jul 13 18:50:17 KFCE12138 kfcfw: Disconnected from MQTT serve (119)
-D11618839 (SyslogTCP.cpp:225 <2064:1> _status): failed to send syslog message queue_id=18 reason=connect failed buffer=<5>Jul 13 18:50:17 KFCE12138 kfcfw: Disconnected from MQTT serve (119)            */
-            // __DBG_printf("failed to send syslog message size=%u queue_id=%u len=%u", _queue.size(), _queueId, reason, _buffer.length());
-            // __DBG_printf("failed to send syslog message size=%u queue_id=%u reason=%s buffer=%s (%u)", _queue.size(), _queueId, reason, printable_string(_buffer.c_str(), _buffer.length(), 64).c_str(), _buffer.length());
-        }
-        // _queue.remove(_queueId, success);
-        // TODO remove needs to update the queueid
-        // workaround is to clear the entire queue to avoid a memory leak
-        // _queueId = XXX
-
-        // clear entire queue
-        _queue.clear();
-        _queueId = 0;
-
+    MUTEX_LOCK_BLOCK(_lock) {
         _buffer.clear();
         _ack = 0;
     }
@@ -253,40 +236,50 @@ D11618839 (SyslogTCP.cpp:225 <2064:1> _status): failed to send syslog message qu
 
 void SyslogTCP::_sendQueue()
 {
-    if (_queueId && _buffer.length() && _client->connected() && _client->canSend()) {
-        auto toSend = std::min(_client->space(), _buffer.length());
-        auto written = _client->write(_buffer.cstr_begin(), toSend);
-        if (written == toSend) {
-            // remove what has been written to the socket
-            if (written == _buffer.length()) {
-                _buffer.clear();
+    bool reconnect = false;
+    MUTEX_LOCK_BLOCK(_lock) {
+        if (_buffer.length() && _client->connected() && _client->canSend()) {
+            auto toSend = std::min(_client->space(), _buffer.length());
+            auto written = _client->write(_buffer.cstr_begin(), toSend);
+            if (written == toSend) {
+                // remove what has been written to the socket
+                if (written == _buffer.length()) {
+                    _buffer.clear();
+                }
+                else {
+                    _buffer.removeAndShrink(0, written);
+                }
             }
             else {
-                _buffer.removeAndShrink(0, written);
+                reconnect = true;
             }
         }
-        else {
-            _status(false, F("socket write error, reconnecting"));
-            _reconnect();
-        }
+    }
+    if (reconnect) {
+        _status(false, F("socket write error, reconnecting"));
+        _reconnect();
     }
 }
 
 void SyslogTCP::_onAck(size_t len, uint32_t time)
 {
-    __LDBG_printf("len=%u time=%u ack=%u id=%u buffer=%u state=%s", len, time, _ack, _queueId, _buffer.length(), _client->stateToString());
+    __LDBG_printf("len=%u time=%u ack=%u buffer=%u state=%s", len, time, _ack, _buffer.length(), _client->stateToString());
     if (hasQueue()) {
         if (len > _ack) {
             _status(false, F("invalid ACK size, reconnecting"));
             _reconnect();
         }
         else {
-            _ack -= len;
-            if (_ack == 0 && _buffer.length() == 0) {
+            size_t bufferLen;
+            MUTEX_LOCK_BLOCK(_lock) {
+                _ack -= len;
+                bufferLen = _buffer.length();
+            }
+            if (_ack == 0 && bufferLen == 0) {
                 // report success and remove queueId
                 _status(true);
             }
-             else if (_buffer.length()) {
+             else if (bufferLen) {
                  // try to send more data
                  _sendQueue();
              }

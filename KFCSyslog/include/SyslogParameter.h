@@ -7,7 +7,7 @@
 #include <Arduino_compat.h>
 
 #ifndef SYSLOG_APPNAME
-#define SYSLOG_APPNAME                          "kfcfw"
+#    define SYSLOG_APPNAME "kfcfw"
 #endif
 
 typedef enum  : uint8_t {
