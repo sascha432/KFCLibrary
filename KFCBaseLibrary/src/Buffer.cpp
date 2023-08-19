@@ -14,8 +14,10 @@
 
 bool Buffer::_changeBuffer(size_t newSize)
 {
-    if (newSize == 0 && _size) {
-        clear();
+    if (newSize == 0) {
+        if (_size) { // clear if not already cleared
+            clear();
+        }
     }
     else {
         auto resize = _alignSize(newSize);
