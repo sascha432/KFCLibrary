@@ -270,7 +270,7 @@ void SyslogTCP::_onAck(size_t len, uint32_t time)
             _reconnect();
         }
         else {
-            size_t bufferLen;
+            size_t bufferLen = 0;
             MUTEX_LOCK_BLOCK(_lock) {
                 _ack -= len;
                 bufferLen = _buffer.length();

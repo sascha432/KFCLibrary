@@ -20,19 +20,23 @@ public:
     }
     ~SemaphoreMutex()
     {
-        while(_locked > 0) {
-            unlock();
+        while(unlock()) {
         }
     }
 
-    void lock() {
-        _locked++;
+    bool lock() {
         ets_intr_lock();
+        _locked++;
+        return true;
     }
 
-    void unlock() {
-        ets_intr_unlock();
-        _locked--;
+    bool unlock() {
+        bool result = _locked > 0;
+        if (result) {
+            _locked--;
+            ets_intr_unlock();
+        }
+        return result;
     }
 
     int _locked;
