@@ -4,10 +4,6 @@
 
 #include "MicrosTimer.h"
 
-uint32_t get_time_diff(uint32_t start, uint32_t end) {
-    return __inline_get_time_diff(start, end);
-}
-
 MicrosTimer::timer_t MicrosTimer::getTime(timer_t time) {
     if (!_valid) {
         return 0;

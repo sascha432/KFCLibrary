@@ -56,7 +56,7 @@ void PushButton::event(EventType eventType, uint32_t now)
 void PushButton::loop()
 {
     if (_startTimerRunning && _repeatTime) {
-        _duration = get_time_diff(_startTimer, millis());
+        _duration = get_time_since(_startTimer, millis());
         // between down and up
         if (_duration >= _longPressTime) {
             // start with 1...
@@ -96,7 +96,7 @@ void PushButton::loop()
 void PushButton::_buttonReleased()
 {
     uint32_t ms = millis();
-    _duration = get_time_diff(_startTimer, ms);
+    _duration = get_time_since(_startTimer, ms);
 
     #if PIN_MONITOR_BUTTON_GROUPS
         _singleClickGroup->released(this, ms);

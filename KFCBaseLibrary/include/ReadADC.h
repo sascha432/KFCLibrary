@@ -137,7 +137,7 @@ private:
     public:
         ResultQueue(uint8_t numSamples, uint32_t intervalMicros, Callback callback, uint32_t id = 0);
         bool needsUpdate(uint32_t time) const {
-            return (get_time_diff(_result._lastUpdate, time) >= _interval);
+            return (get_time_since(_result._lastUpdate, time) >= _interval);
         }
         bool finished() const {
             return (_result._samples >= _samples);

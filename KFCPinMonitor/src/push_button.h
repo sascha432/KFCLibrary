@@ -172,7 +172,7 @@ namespace PinMonitor {
 
     inline uint32_t SingleClickGroup::getDuration() const
     {
-        return get_time_diff(_timer, millis());
+        return get_time_since(_timer, millis());
     }
 
     // --------------------------------------------------------------------

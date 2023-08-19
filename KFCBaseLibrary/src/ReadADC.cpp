@@ -35,7 +35,7 @@
     static uint16_t ___system_adc_read() {
         static uint32_t last = 0;
         static uint32_t count = 0;
-        auto diff = get_time_diff(last, millis());
+        auto diff = get_time_since(last, millis());
         if (diff > DEBUG_READ_ADC_PRINT_INTERVAL) {
             last = millis();
             __DBG_printf("system_adc_read() called %.3f/second (#%u)", count / (diff / 1000.0), count);

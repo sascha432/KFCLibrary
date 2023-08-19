@@ -55,7 +55,9 @@ CallbackTimer *Scheduler::_add(const char *name, int64_t delay, RepeatType repea
     #if DEBUG_OSTIMER
         auto nameStr = PrintString(F("%s(%s:%u)"), name, DebugContext::__pos._file, DebugContext::__pos._line);
         name = nameStr.c_str();
-        DebugContext::__pos = DebugContext();
+        #if !DEBUG_EVENT_SCHEDULER
+            DebugContext::__pos = DebugContext();
+        #endif
     #endif
 
     auto timerPtr = new CallbackTimer(name, callback, delay, repeat, priority);
@@ -288,7 +290,7 @@ void Scheduler::_invokeCallback(CallbackTimerPtr timer, uint32_t runtimeLimit)
             }
         }
     }
-    uint32_t diff = runtimeLimit ? get_time_diff(start, micros()) : 0;
+    uint32_t diff = runtimeLimit ? get_time_since(start, micros()) : 0;
 
     if (diff > runtimeLimit) {
         __LDBG_printf(_VT100(bold_red) "timer=%p time=%u limit=%u exceeded%s" _VT100(reset), timer, diff, runtimeLimit, fpos.c_str());

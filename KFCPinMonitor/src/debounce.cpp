@@ -24,7 +24,7 @@ StateType Debounce::_debounce(bool lastValue, uint16_t interruptCount, uint32_t 
     if (interruptCount) {
 
         // set start to time when we received the last pin change interrupt
-        _debounceTimer = now - (get_time_diff(last, micros()) / 1000U);
+        _debounceTimer = now - (get_time_since(last, micros()) / 1000U);
 
         // debounce timer running?
         if (_debounceTimerRunning == false) {
@@ -51,11 +51,11 @@ StateType Debounce::_debounce(bool lastValue, uint16_t interruptCount, uint32_t 
 
     #if DEBUG_PIN_MONITOR_DEBOUNCE
         if (_debounceTimerRunning) {
-            __DBG_printf("interruptCount==0: debounce timer running=%u timeout=%u/%u", _debounceTimerRunning, get_time_diff(_debounceTimer, now), pinMonitor.getDebounceTime());
+            __DBG_printf("interruptCount==0: debounce timer running=%u timeout=%u/%u", _debounceTimerRunning, get_time_since(_debounceTimer, now), pinMonitor.getDebounceTime());
         }
     #endif
 
-    if (_debounceTimerRunning && get_time_diff(_debounceTimer, now) >= pinMonitor.getDebounceTime()) {
+    if (_debounceTimerRunning && get_time_since(_debounceTimer, now) >= pinMonitor.getDebounceTime()) {
 
         // we did not register any changes and the debounce timeout has expired
         // remove timer
