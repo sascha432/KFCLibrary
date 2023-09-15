@@ -124,7 +124,7 @@ void OpenWeatherMapAPI::WeatherInfo::dump(Print &output) const
     output.printf_P(PSTR("Country: %s\n"), country.c_str());
     output.printf_P(PSTR("Timezone: %d\n"), val.timezone);
     output.printf_P(PSTR("Temperature: %.1f C (min/max %.1f/%.1f)\n"), kelvinToC(val.temperature), kelvinToC(val.temperature_min), kelvinToC(val.temperature_max));
-    output.printf_P(PSTR("Temperature: %.1f F (min/max %.1f/%.1f)\n"), kelvinToF(val.temperature), kelvinToF(val.temperature_min), kelvinToF(val.temperature_max));
+    // output.printf_P(PSTR("Temperature: %.1f F (min/max %.1f/%.1f)\n"), kelvinToF(val.temperature), kelvinToF(val.temperature_min), kelvinToF(val.temperature_max));
     output.printf_P(PSTR("Humidity: %d %%\n"), val.humidity);
     output.printf_P(PSTR("Pressure: %d hPa\n"), val.pressure);
 
@@ -180,9 +180,9 @@ void OpenWeatherMapAPI::WeatherForecast::dump(Print & output) const
         auto &info = f.second;
         output.printf_P(PSTR("[%s] - Time: %d\n"), f.first.c_str(), (int)info.val.time);
         output.printf_P(PSTR("Temperature: %.1f C (min/max %.1f/%.1f)\n"), kelvinToC(info.val.temperature), kelvinToC(info.val.temperature_min), kelvinToC(info.val.temperature_max));
-        output.printf_P(PSTR("Temperature: %.1f F (min/max %.1f/%.1f)\n"), kelvinToF(info.val.temperature), kelvinToF(info.val.temperature_min), kelvinToF(info.val.temperature_max));
-        output.printf_P(PSTR("Humidity: %d %%\n"), info.val.humidity);
-        output.printf_P(PSTR("Pressure: %d hPa\n"), info.val.pressure);
+        // output.printf_P(PSTR("Temperature: %.1f F (min/max %.1f/%.1f)\n"), kelvinToF(info.val.temperature), kelvinToF(info.val.temperature_min), kelvinToF(info.val.temperature_max));
+        // output.printf_P(PSTR("Humidity: %d %%\n"), info.val.humidity);
+        // output.printf_P(PSTR("Pressure: %d hPa\n"), info.val.pressure);
     }
 }
 

@@ -40,8 +40,8 @@ public:
             float temperature;
             float temperature_min;
             float temperature_max;
-            uint8_t humidity;
-            uint16_t pressure;
+            float rain;
+            // uint16_t pressure;
         } val;
         std::vector<OpenWeatherMapAPI::Weather_t> weather;
     };
