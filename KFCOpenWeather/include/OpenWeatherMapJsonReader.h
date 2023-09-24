@@ -10,10 +10,10 @@
 
 using namespace KFCJson;
 
-class OpenWeatherInfoJsonReader : public JsonBaseReader {
+class OpenWeatherMapJsonReader : public JsonBaseReader {
 public:
-    OpenWeatherInfoJsonReader(Stream *stream, OpenWeatherMapAPI::WeatherInfo &info);
-    OpenWeatherInfoJsonReader(OpenWeatherMapAPI::WeatherInfo &info);
+    OpenWeatherMapJsonReader(Stream *stream, OpenWeatherMapAPI::WeatherInfo &info);
+    OpenWeatherMapJsonReader(OpenWeatherMapAPI::WeatherInfo &info);
 
     virtual bool beginObject(bool isArray);
     virtual bool processElement();
