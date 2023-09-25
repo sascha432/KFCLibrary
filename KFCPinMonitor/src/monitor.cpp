@@ -383,21 +383,11 @@ namespace PinMonitor {
         detach(std::remove_if(_handlers.begin(), _handlers.end(), stdex::compare_unique_ptr(handler)), _handlers.end());
     }
 
-    void Monitor::loop()
-    {
-        pinMonitor._loop();
-    }
-
-    void Monitor::loopTimer(Event::CallbackTimerPtr)
-    {
-        pinMonitor._loop();
-    }
-
     void Monitor::_attachLoop()
     {
         __LDBG_printf("attach=loop timer=%d", _loopTimer ? (bool)*_loopTimer : -1);
         if (_loopTimer) {
-            _Timer(_loopTimer)->add(Event::kMinDelay, true, loopTimer, Event::PriorityType::TIMER);
+            _Timer(_loopTimer)->add(Event::milliseconds(5), true, loopTimer, Event::PriorityType::TIMER);
         }
         else {
             LOOP_FUNCTION_ADD(loop);
@@ -431,7 +421,7 @@ namespace PinMonitor {
     //
     void Monitor::_loop()
     {
-        MUTEX_LOCK_BLOCK(_lock) {
+        {
             uint32_t now = millis();
             if (now == _lastRun) { // limit to once per millisecond
                 return;

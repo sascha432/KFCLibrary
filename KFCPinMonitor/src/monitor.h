@@ -77,7 +77,7 @@ namespace PinMonitor {
     private:
         Vector _handlers;       // button handler, base class Pin
         PinVector _pins;        // pins class HardwarePin
-        SemaphoreMutex _lock;   // lock for _loop()
+        SemaphoreMutex _lock;   // lock for _loop() in loopTimer()
         uint32_t _lastRun;
         Event::Timer *_loopTimer;
         uint8_t _pinModeFlag;
@@ -128,5 +128,17 @@ namespace PinMonitor {
     }
 
     extern Monitor pinMonitor;
+
+    inline void Monitor::loop()
+    {
+        pinMonitor._loop();
+    }
+
+    inline void Monitor::loopTimer(Event::CallbackTimerPtr)
+    {
+        MUTEX_LOCK_BLOCK(pinMonitor._lock) {
+            pinMonitor._loop();
+        }
+    }
 
 }
