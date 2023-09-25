@@ -94,6 +94,10 @@ void reset_detector_setup_global_ctors()
         }
     #endif
 
+    #if ESP8266_USE_UART_RX_AS_OUTPUT
+        // switch to input as soon as possible
+        pinMode(3, INPUT);
+    #endif
     #if ESP32
         timersNoInit.ctor();
     #endif
