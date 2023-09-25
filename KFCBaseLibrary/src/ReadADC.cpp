@@ -30,46 +30,6 @@
 #undef _min
 #undef _max
 
-#if DEBUG_READ_ADC_PRINT_INTERVAL && ESP8266
-
-    static uint16_t ___system_adc_read() {
-        static uint32_t last = 0;
-        static uint32_t count = 0;
-        auto diff = get_time_since(last, millis());
-        if (diff > DEBUG_READ_ADC_PRINT_INTERVAL) {
-            last = millis();
-            __DBG_printf("system_adc_read() called %.3f/second (#%u)", count / (diff / 1000.0), count);
-            count = 0;
-        }
-        count++;
-        return system_adc_read();
-    }
-
-#else
-
-    #if ESP8266
-
-        static inline uint16_t ___system_adc_read() {
-            return system_adc_read();
-        }
-
-    #elif ESP32
-
-        #include <esp_adc_cal.h>
-
-        #ifndef READ_ADC_DEFAULT_PIN
-            #define READ_ADC_DEFAULT_PIN adc1_channel_t::ADC1_CHANNEL_0
-        #endif
-
-        static inline uint16_t ___system_adc_read() {
-            return adc1_get_raw(READ_ADC_DEFAULT_PIN);
-        }
-
-    #endif
-
-
-#endif
-
 ADCManager::ResultQueue::ResultQueue(uint8_t numSamples, uint32_t intervalMicros, Callback callback, uint32_t id) :
     _id(id),
     _samples(numSamples),
@@ -192,18 +152,6 @@ void ADCManager::_loop()
     if (_queue.empty()) {
         LoopFunctions::remove(loop);
     }
-}
-
-uint16_t ADCManager::__readAndNormalizeADCValue()
-{
-    int32_t value = ___system_adc_read() + _offset;
-    if (value < 0) {
-        return 0;
-    }
-    else if (value >= (int32_t)kMaxADCValue)  {
-        return kMaxADCValue;
-    }
-    return value;
 }
 
 void ADCManager::_updateTimestamp()

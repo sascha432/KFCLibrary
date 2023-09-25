@@ -513,3 +513,51 @@ inline void ADCManager::cancelAverageRequest(uint32_t queueId)
 {
     _queue.erase(std::remove(_queue.begin(), _queue.end(), queueId), _queue.end());
 }
+
+#if DEBUG_READ_ADC_PRINT_INTERVAL && ESP8266
+
+    uint16_t ___system_adc_read()
+    {
+        static uint32_t last = 0;
+        static uint32_t count = 0;
+        auto diff = get_time_since(last, millis());
+        if (diff > DEBUG_READ_ADC_PRINT_INTERVAL) {
+            last = millis();
+            __DBG_printf("system_adc_read() called %.3f/second (#%u)", count / (diff / 1000.0), count);
+            count = 0;
+        }
+        count++;
+        return system_adc_read();
+    }
+
+#else
+
+    #if ESP8266
+
+        inline uint16_t ___system_adc_read()
+        {
+            return system_adc_read();
+        }
+
+    #elif ESP32
+
+        #include <esp_adc_cal.h>
+
+        #ifndef READ_ADC_DEFAULT_PIN
+            #define READ_ADC_DEFAULT_PIN adc1_channel_t::ADC1_CHANNEL_0
+        #endif
+
+        inline uint16_t ___system_adc_read()
+        {
+            return adc1_get_raw(READ_ADC_DEFAULT_PIN);
+        }
+
+    #endif
+
+
+#endif
+
+inline uint16_t ADCManager::__readAndNormalizeADCValue()
+{
+    return std::clamp<int32_t>(___system_adc_read() + _offset, 0, kMaxADCValue);
+}
