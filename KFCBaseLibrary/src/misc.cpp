@@ -578,8 +578,8 @@ size_t strftime_P(char *buf, size_t size, PGM_P format, const struct tm *tm)
 {
 #if defined(ESP8266)
     // strftime does not support PROGMEM
-    char fmt[strlen_P(format) + 1];
-    strcpy_P(fmt, format);
+    String tmp = FPSTR(format);
+    auto fmt = tmp.c_str();
 #else
     auto fmt = format;
 #endif
