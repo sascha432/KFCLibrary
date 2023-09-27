@@ -136,9 +136,9 @@ inline _Ta *__validatePointer(const _Ta *ptr, ValidatePointerType type, const ch
 #define __DBG_printf_W(fmt, ...)                            debug_printf(PSTR(_VT100(yellow) fmt _VT100(reset) __DBG_newline), ##__VA_ARGS__)
 #define __DBG_printf_N(fmt, ...)                            debug_printf(PSTR(_VT100(bold_green) fmt _VT100(reset) __DBG_newline), ##__VA_ARGS__)
 #define __DBG_println()                                     debug_print(F(__DBG_newline))
-#define __DBG_panic(fmt, ...)                               (DEBUG_OUTPUT.printf_P(PSTR(fmt __DBG_newline), ## __VA_ARGS__) && __debugbreak_and_panic())
+#define __DBG_panic(fmt, ...)                               (DEBUG_OUTPUT.printf_P(PSTR(_VT100(bold_red) fmt _VT100(reset) __DBG_newline), ##__VA_ARGS__) && __debugbreak_and_panic())
 #define __DBG_assert(cond)                                  (!(cond) ? (__DBG_print(_VT100(bold_red) "assert( " _STRINGIFY(cond) ") FAILED" _VT100(reset)) && DebugContext::reportAssert(DebugContext_ctor(), F(_STRINGIFY(cond)))) : false)
-#define __DBG_assert_printf(cond, fmt, ...)                 (!(cond) ? (__DBG_print(_VT100(bold_red) "assert( " _STRINGIFY(cond) ") FAILED" _VT100(reset)) && __DBG_printf(fmt, ##__VA_ARGS__) && DebugContext::reportAssert(DebugContext_ctor(), F(_STRINGIFY(cond)))) : false)
+#define __DBG_assertf(cond, fmt, ...)                 (!(cond) ? (__DBG_print(_VT100(bold_red) "assert( " _STRINGIFY(cond) ") FAILED") && __DBG_printf(fmt _VT100(reset), ##__VA_ARGS__) && DebugContext::reportAssert(DebugContext_ctor(), F(_STRINGIFY(cond)))) : false)
 #define __DBG_assert_panic(cond, fmt, ...)                  (__DBG_assert(cond) ? __DBG_panic(fmt, ##__VA_ARGS__) : false)
 #define __DBG_print_result(result)                          debug_print_result(result)
 #define __DBG_printf_result(result, fmt, ...)               debug_printf_result(result, PSTR(fmt __DBG_newline), ##__VA_ARGS__)
@@ -157,7 +157,7 @@ inline _Ta *__validatePointer(const _Ta *ptr, ValidatePointerType type, const ch
 #define _ASSERTE(cond)                                      __DBG_assert(cond)
 #endif
 #ifndef _ASSERT_EXPR
-#define _ASSERT_EXPR(cond, fmt, ...)                        __DBG_assert_printf(cond, fmt, ##__VA_ARGS__)
+#define _ASSERT_EXPR(cond, fmt, ...)                        __DBG_assertf(cond, fmt, ##__VA_ARGS__)
 #endif
 
 // memory management
@@ -198,16 +198,16 @@ inline _Ta *__validatePointer(const _Ta *ptr, ValidatePointerType type, const ch
 
 #endif
 
-#define __DBG_check_alloc(ptr, allow_null)                  __DBG_assert_printf((allow_null && ptr == nullptr) || (!allow_null && ptr != nullptr && ___IsValidHeapPointer(ptr)), "alloc=%08x", ptr)
+#define __DBG_check_alloc(ptr, allow_null)                  __DBG_assertf((allow_null && ptr == nullptr) || (!allow_null && ptr != nullptr && ___IsValidHeapPointer(ptr)), "alloc=%08x", ptr)
 #define __DBG_check_alloc_no_null(ptr)                      __DBG_check_alloc(ptr, false)
 #define __DBG_check_alloc_null(ptr)                         __DBG_check_alloc(ptr, true)
-#define __DBG_check_alloc_aligned(ptr)                      __DBG_assert_printf((ptr != nullptr) && ___isValidPointerAlignment(ptr), "not aligned=%08x", ptr)
+#define __DBG_check_alloc_aligned(ptr)                      __DBG_assertf((ptr != nullptr) && ___isValidPointerAlignment(ptr), "not aligned=%08x", ptr)
 
 // validate pointers to RAM or PROGMEM
 
-#define __DBG_check_ptr_no_null(ptr)                        __DBG_assert_printf((ptr != nullptr) && ___IsValidPointer(ptr), "pointer=%08x", ptr)
-#define __DBG_check_ptr_null(ptr)                           __DBG_assert_printf((ptr == nullptr) || ___IsValidPointer(ptr), "pointer=%08x", ptr)
-#define __DBG_check_ptr(ptr, allow_null)                    __DBG_assert_printf((allow_null && ptr == nullptr) || (!allow_null && ptr != nullptr && ___IsValidPointer(ptr)), "pointer=%08x", ptr)
+#define __DBG_check_ptr_no_null(ptr)                        __DBG_assertf((ptr != nullptr) && ___IsValidPointer(ptr), "pointer=%08x", ptr)
+#define __DBG_check_ptr_null(ptr)                           __DBG_assertf((ptr == nullptr) || ___IsValidPointer(ptr), "pointer=%08x", ptr)
+#define __DBG_check_ptr(ptr, allow_null)                    __DBG_assertf((allow_null && ptr == nullptr) || (!allow_null && ptr != nullptr && ___IsValidPointer(ptr)), "pointer=%08x", ptr)
 
 #define __DBG_function()                                    DebugContext::Guard guard(DebugContext_ctor());
 #define __DBG_function_printf(fmt, ...)                     DebugContext::Guard guard(DebugContext_ctor(), PSTR(fmt), ##__VA_ARGS__);
@@ -224,7 +224,7 @@ inline _Ta *__validatePointer(const _Ta *ptr, ValidatePointerType type, const ch
 #define __LDBG_print(...)                                   __LDBG_IF(__DBG_print(__VA_ARGS__))
 #define __LDBG_println(...)                                 __LDBG_IF(__DBG_println(__VA_ARGS__))
 #define __LDBG_assert(...)                                  __LDBG_IF(__DBG_assert(__VA_ARGS__))
-#define __LDBG_assert_printf(cond, fmt, ...)                __LDBG_IF(__DBG_assert_printf(cond, fmt, ##__VA_ARGS__))
+#define __LDBG_assertf(cond, fmt, ...)                      __LDBG_IF(__DBG_assertf(cond, fmt, ##__VA_ARGS__))
 #define __LDBG_assert_panic(cond, fmt, ...)                 __LDBG_IF(__DBG_assert_panic(cond, fmt, ##__VA_ARGS__))
 #define __LDBG_print_result(result, ...)                    __LDBG_S_IF(__DBG_print_result(result, ##__VA_ARGS__), result)
 #define __LDBG_function()                                   __LDBG_IF(__DBG_function())
@@ -353,7 +353,7 @@ static inline int DEBUG_OUTPUT_flush() {
 #define __DBG_printf_N(...)                                 ;
 #define __DBG_panic(...)                                    ;
 #define __DBG_assert(...)                                   ;
-#define __DBG_assert_printf(...)                            ;
+#define __DBG_assertf(...)                            ;
 #define __DBG_assert_panic(...)                             ;
 #define __DBG_print_result(result, ...)                     result
 #define __DBG_IF(...)
@@ -369,7 +369,7 @@ static inline int DEBUG_OUTPUT_flush() {
 #define __LDBG_printf_W(...)                                ;
 #define __LDBG_printf_N(...)                                ;
 #define __LDBG_assert(...)                                  ;
-#define __LDBG_assert_printf(...)                           ;
+#define __LDBG_assertf(...)                           ;
 #define __LDBG_assert_panic(...)                            ;
 #define __LDBG_print_result(result, ...)                    result
 

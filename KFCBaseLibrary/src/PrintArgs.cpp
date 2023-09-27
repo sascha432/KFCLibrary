@@ -12,7 +12,7 @@
 
 const __FlashStringHelper *PrintArgsHelper::getFormatByType(FormatType type)
 {
-    __LDBG_assert_printf((type >= FormatType::STRINGS_BEGIN && type <= FormatType::STRINGS_END), "type=%u invalid", type);
+    __LDBG_assertf((type >= FormatType::STRINGS_BEGIN && type <= FormatType::STRINGS_END), "type=%u invalid", type);
 
     switch(type) {
         case FormatType::HTML_CLOSE_QUOTE_CLOSE_TAG:
@@ -76,7 +76,7 @@ const __FlashStringHelper *PrintArgsHelper::getFormatByType(FormatType type)
         default:
             break;
     }
-    __LDBG_assert_printf(false, "type=%u missing", type);
+    __LDBG_assertf(false, "type=%u missing", type);
     return nullptr;
 }
 
@@ -178,7 +178,7 @@ namespace PrintArgsHelper {
                     switch (_type) {
                         case FormatType::VPRINTF_REPEAT:
                             {
-                                __LDBG_assert_printf(false, "not implemented");
+                                __LDBG_assertf(false, "not implemented");
 
                                 // buffer: type<FormatType>, format repeat count<uint8_t>, argument count<uint8_t>, format<const char *>, arguments<uintptr_t * count>
                                 struct Header_t {
@@ -234,7 +234,7 @@ namespace PrintArgsHelper {
 #endif
                             break;
                         default:
-                            __LDBG_assert_printf(false, "type %u not implemented", _type);
+                            __LDBG_assertf(false, "type %u not implemented", _type);
                             break;
                     }
                 }
@@ -285,7 +285,7 @@ namespace PrintArgsHelper {
             if (offset) {
                 // if we have an offset, move data to the beginning
                 written -= offset;
-                __LDBG_assert_printf(written >= 0, "written=%d negative", written);
+                __LDBG_assertf(written >= 0, "written=%d negative", written);
                 std::copy_n(_outIterator + offset, written, _outIterator);
             }
             _outIterator += written;
@@ -306,7 +306,7 @@ namespace PrintArgsHelper {
                     _printArgs._stats.calls.copyString++;
                 #endif
             }
-            __LDBG_assert_printf(written <= _strLength - offset, "written=%d > data=%d", written, _strLength - offset);
+            __LDBG_assertf(written <= _strLength - offset, "written=%d > data=%d", written, _strLength - offset);
             return written;
         }
 
@@ -415,7 +415,7 @@ size_t PrintArgs::fillBuffer(uint8_t *data, size_t sizeIn)
                     // TODO
                     // in case the output buffer is too small, create temporary buffer for printf
                     // or increase the output buffer if possible
-                    __LDBG_assert_printf(ctx._outIterator != ctx._outBegin, "output buffer=%u too small for the data=%u", ctx.capacity(), _strLength + 1);
+                    __LDBG_assertf(ctx._outIterator != ctx._outBegin, "output buffer=%u too small for the data=%u", ctx.capacity(), _strLength + 1);
                     // not enough space, return what we have and wait for an empty buffer
                     break;
                 }
@@ -423,7 +423,7 @@ size_t PrintArgs::fillBuffer(uint8_t *data, size_t sizeIn)
             written = ctx.copyBuffer(_position);
         }
 
-        __LDBG_assert_printf(written <= _strLength - _position, "written=%d > data=%d", written, _strLength - _position);
+        __LDBG_assertf(written <= _strLength - _position, "written=%d > data=%d", written, _strLength - _position);
         if (written == _strLength - _position) {
             // all data fit into the output buffer, continue with next item
             ctx.advanceInputBuffer();
@@ -440,7 +440,7 @@ size_t PrintArgs::fillBuffer(uint8_t *data, size_t sizeIn)
                     _stats.repeat.copyString++;
                 }
             #endif
-            //__LDBG_assert_printf((ctx._outEnd == ctx._outIterator) || (ctx._outEnd - ctx._outIterator == 1), "out of range=%d", ctx._outEnd - ctx._outIterator);
+            //__LDBG_assertf((ctx._outEnd == ctx._outIterator) || (ctx._outEnd - ctx._outIterator == 1), "out of range=%d", ctx._outEnd - ctx._outIterator);
             break;
         }
     }

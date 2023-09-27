@@ -48,7 +48,7 @@ __KFC_FORMS_INLINE_METHOD__
 const Form::Error::Vector &Form::BaseForm::getErrors() const
 {
     if (_errors == nullptr) {
-        __LDBG_assert_printf(_errors != nullptr, "_errors=nullptr getErrors() called with hasErrors() == false / isValid() == true");
+        __LDBG_assertf(_errors != nullptr, "_errors=nullptr getErrors() called with hasErrors() == false / isValid() == true");
         const_cast<BaseForm *>(this)->_errors = new ErrorVector();
     }
     return *_errors;

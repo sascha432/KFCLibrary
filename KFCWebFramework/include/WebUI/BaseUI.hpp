@@ -89,7 +89,7 @@ void FormUI::WebUI::BaseUI::_addItem(const Container::DisabledAttribute &attribu
 __KFC_FORMS_INLINE_METHOD__
 WebUI::BaseUI &Field::BaseField::setFormUI(WebUI::BaseUI *formUI)
 {
-    __LDBG_assert_printf(formUI != nullptr, "invalid baseui=%p", formUI);
+    __LDBG_assertf(formUI != nullptr, "invalid baseui=%p", formUI);
     if (_formUI) {
         delete _formUI;
     }

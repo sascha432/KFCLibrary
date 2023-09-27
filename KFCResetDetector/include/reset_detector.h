@@ -66,23 +66,20 @@ public:
     class Data {
     public:
         static constexpr Counter_t kInvalidCounter = (1U << (sizeof(Counter_t) << 3)) - 1;
-        static constexpr Counter_t kMaxCounter = kInvalidCounter - 1;
+        static constexpr Counter_t kMaxCounter = kInvalidCounter - 2;
         static constexpr Reason_t kInvalidReason = 0xff;
         static constexpr size_t kReasonMax = 8;
 
     public:
         Data(Counter_t reset_counter = kInvalidCounter, bool safe_mode = false);
 
-        operator bool() const;
-        operator int() const;
-        operator Counter_t() const;
-        Data &operator=(Counter_t counter);
-        Data &operator++();
-
+        bool isValid() const;
         void setValid(bool valid);
         void setSafeMode(bool safe_mode);
         bool isSafeMode() const;
-        Counter_t getResetCounter();
+        Counter_t getResetCounter() const;
+        void setResetCounter(Counter_t counter);
+        void incrResetCounter();
         void pushReason(Reason_t reason);
         bool hasValidReason() const;
         Reason_t getReason() const;
@@ -90,9 +87,9 @@ public:
         const Reason_t *end() const;
 
     protected:
-        Reason_t *_begin();
-        Reason_t *_end();
-        Reason_t *_current();
+        Reason_t *_begin() const;
+        Reason_t *_end() const;
+        Reason_t *_current() const;
 
     private:
         Counter_t _reset_counter;

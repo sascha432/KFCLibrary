@@ -38,61 +38,145 @@ public:
         using RTCMemoryId = uint8_t;
     #endif
 
+    static constexpr auto kMemorySize = 256;
+    static_assert(kMemorySize % 4 == 0 && kMemorySize <= 384, "invalid kMemorySize");
     #if ESP8266
-        // static constexpr uint16_t kMemoryLimit = kMemorySize - sizeof(Header_t);
-        static constexpr uint8_t kBlockSize = 4;
-        static constexpr uint8_t kBaseAddress = 64;
-        static constexpr uint16_t kMemorySize = (128 - kBaseAddress) * kBlockSize; // fixed
-        static constexpr uint8_t kLastAddress = kBaseAddress + (kMemorySize / kBlockSize) - 1;
-        static constexpr uint32_t kClearNumBlocks = 16;
+        /*
+        Layout of RTC Memory is as follows:
+        Ref: Espressif doc 2C-ESP8266_Non_OS_SDK_API_Reference, section 3.3.23 (system_rtc_mem_write)
+
+        |<------system data (256 bytes)------->|<-----------------user data (512 bytes)--------------->|
+
+        SDK function signature:
+        bool	system_rtc_mem_read	(
+                        uint32	des_addr,
+                        void	*	src_addr,
+                        uint32	save_size
+        )
+
+        The system data section can't be used by the user, so:
+        des_addr must be >=64 (i.e.: 256/4) and <192 (i.e.: 768/4)
+        src_addr is a pointer to data
+        save_size is the number of bytes to write
+
+        For the method interface:
+        offset is the user block number (block size is 4 bytes) must be >= 0 and <128
+        data is a pointer to data, 4-byte aligned
+        size is number of bytes in the block pointed to by data
+
+        Same for write
+
+        Note: If the Updater class is in play, e.g.: the application uses OTA, the eboot
+        command will be stored into the first 128 bytes of user data, then it will be
+        retrieved by eboot on boot. That means that user data present there will be lost.
+        Ref:
+        - discussion in PR #5330.
+        - https://github.com/esp8266/esp8266-wiki/wiki/Memory-Map#memmory-mapped-io-registers
+        - Arduino/bootloaders/eboot/eboot_command.h RTC_MEM definition
+        */
+        static constexpr auto kRTCMemorySize = 768; // total size
+        static constexpr auto kBlockSize = 4; // block size
+        static constexpr auto kBaseAddress = (kRTCMemorySize - kMemorySize) / kBlockSize; // block number
+        static_assert(kBaseAddress >= 96 && kBaseAddress < 192, "invalid kBaseAddress");
     #elif ESP32
-        static constexpr uint8_t kBaseAddress = 0;
-        static constexpr uint16_t kMemorySize = (64 * 4) - kBaseAddress; // can be adjusted
-        static constexpr uint8_t kBlockSize = 1;
-        static constexpr uint8_t kLastAddress = kBaseAddress + (kMemorySize / kBlockSize) - 1;
-        static constexpr uint32_t kClearNumBlocks = 64;
+        static constexpr auto kBaseAddress = 0;
+        static constexpr auto kBlockSize = 1;
+        static constexpr auto kRTCMemorySize = kMemorySize * kBlockSize;
+        static_assert(kBaseAddress != 0, "invalid kBaseAddress");
+    #else
+        #error invalid target
     #endif
+    static constexpr auto kLastAddress = kBaseAddress + (kMemorySize / kBlockSize) - 1;
 
     struct Header_t {
-        // length includes the header
         uint16_t length;
         uint16_t crc;
         // get length of the data
-        inline uint16_t data_length() const {
+        inline uint16_t data_length() const
+        {
             return length - sizeof(Header_t);
         }
+        // get header length without crc
+        inline uint16_t header_len_without_crc() const
+        {
+            return offsetof(Header_t, crc);
+        }
         // get offset of the crc
-        inline uint16_t crc_offset() const {
-            return data_length() + offsetof(Header_t, crc);
+        inline uint16_t crc_offset() const
+        {
+            return data_length() + header_len_without_crc();
         }
         // get start address
-        inline uint16_t start_address() const {
+        inline uint16_t start_address() const
+        {
             return ((kMemorySize - length) / kBlockSize) + kBaseAddress;
         }
         // get start pointer to the start of the data
-        inline uint8_t *begin(void *ptr) const {
+        inline uint8_t *begin(void *ptr) const
+        {
             return reinterpret_cast<uint8_t *>(ptr);
         }
         // get pointer to the end of the data
-        inline uint8_t *end(void *ptr) const {
+        inline uint8_t *end(void *ptr) const
+        {
             return begin(ptr) + data_length();
-        }
-        // get distance to the start in bytes
-        inline size_t distance(void *start, void *iterator) {
-            return end(iterator) - begin(start);
         }
     };
 
     struct Entry_t {
         uint8_t mem_id;
         uint8_t length;
-
-        Entry_t() : mem_id(0), length(0) {}
-        Entry_t(const uint8_t *ptr) : mem_id(ptr[0]), length(ptr[1])  {}
-        Entry_t(RTCMemoryManager::RTCMemoryId id, uint8_t len) : mem_id(static_cast<uint8_t>(id)), length(len) {}
-
-        operator bool() const{
+        // constructors
+        Entry_t() :
+            mem_id(0),
+            length(0)
+        {
+        }
+        Entry_t(const uint8_t *ptr) :
+            mem_id(ptr[0]),
+            length(ptr[1])
+        {
+        }
+        Entry_t(RTCMemoryManager::RTCMemoryId id, uint8_t len) :
+            mem_id(static_cast<uint8_t>(id)),
+            length(len)
+        {
+        }
+        // validation
+        operator bool() const
+        {
             return mem_id != 0 && length != 0;
+        }
+        uint16_t append(uint8_t *&dstPtr, const void *srcPtr) const
+        {
+            memmove(dstPtr, this, sizeof(*this));
+            dstPtr += sizeof(*this);
+            memmove(dstPtr, srcPtr, length);
+            dstPtr += length;
+            return length + sizeof(*this);
+        }
+    };
+
+    struct ReadReturn_t {
+        uint8_t *_memPtr;
+        uint8_t *_dataPtr;
+        Entry_t _entry;
+        // constructors
+        ReadReturn_t(uint8_t *memPtr = nullptr, uint8_t *dataPtr = nullptr, Entry_t entry = Entry_t()) :
+            _memPtr(memPtr),
+            _dataPtr(dataPtr),
+            _entry(entry)
+        {
+        }
+        // validation
+        operator bool() const
+        {
+            return _memPtr != nullptr;
+        }
+        // get memory pointer
+        auto getUniqueMemPtr() const
+        {
+            return std::unique_ptr<uint8_t[]>(_memPtr);
         }
     };
 
@@ -128,14 +212,14 @@ public:
 
         static const __FlashStringHelper *getStatus(SyncStatus status) {
             switch(status) {
-            case SyncStatus::YES:
-                return F("In sync");
-            case SyncStatus::NO:
-                return F("Out of sync");
-            case SyncStatus::NTP_UPDATE:
-                return F("NTP update in progress");
-            default:
-                break;
+                case SyncStatus::YES:
+                    return F("In sync");
+                case SyncStatus::NO:
+                    return F("Out of sync");
+                case SyncStatus::NTP_UPDATE:
+                    return F("NTP update in progress");
+                case SyncStatus::UNKNOWN:
+                    break;
             }
             return F("Unknown");
         }
@@ -145,56 +229,66 @@ public:
         }
     };
 
-    static constexpr auto kRtcTimeSize = sizeof(RtcTime);
-
 public:
     static constexpr uint16_t kHeaderOffset = kMemorySize - sizeof(Header_t);
     static constexpr uint16_t kHeaderAddress = (kHeaderOffset / kBlockSize) + kBaseAddress;
-    static constexpr uint16_t kMemoryLimit = kMemorySize - (kMemorySize - (kHeaderAddress * kBlockSize)) - kBaseAddress;
 
     inline static bool _isAligned(size_t len) {
-        return (len % kBlockSize) == 0;
+        if  __CONSTEXPR17 (kBlockSize > 1) {
+            return (len % kBlockSize) == 0;
+        }
+        return true;
+    }
+
+    inline static uint16_t _getAlignedLength(uint16_t len) {
+        if  __CONSTEXPR17 (kBlockSize > 1) {
+            return ((len + (kBlockSize - 1)) / kBlockSize) * kBlockSize;
+        }
+        return len;
     }
 
     static_assert(sizeof(Header_t) % kBlockSize == 0, "header not aligned");
 
 public:
-    // copy data to address
+    // read data for id
+    // if data is nullptr, it returns the length only
+    // returns 0 as error or the length<=maxSize of the data
+    // maxSize is limited to 255 bytes
+    // data is filled with maxSize zero bytes even if an error occurs
     static uint8_t read(RTCMemoryId id, void *data, uint8_t maxSize);
 
-    // // reuse temporarily allocated memory
-    // // requires to free the returned pointer using release()
-    // static uint8_t *read(RTCMemoryId id, uint8_t &length);
-
-    // // free pointer returned by read()
-    // static void release(uint8_t *buffer);
-
+    // write data for id
+    // maxSize is limited to 255 bytes
     static bool write(RTCMemoryId id, const void *, uint8_t maxSize);
 
+    // remove data for id
     static bool remove(RTCMemoryId id);
+
+    // clear entire RTC memory
     static bool clear();
 
-    static bool dump(Print &output, RTCMemoryId id);
+    // returns the number of dumped objects or -1 for error
+    static int dump(Print &output, RTCMemoryId id = RTCMemoryId::NONE/*dump all*/);
 
     static SemaphoreMutexStatic &_lock;
 
 private:
     static bool _readHeader(Header_t &header);
     static uint8_t *_readMemory(Header_t &header, uint16_t extraSize);
-    static uint8_t *_read(uint8_t *&data, Header_t &header, Entry_t &entry, RTCMemoryId id);
+    static ReadReturn_t _read(RTCMemoryId id);
 
-// methods to use the internal RTC
+    static bool _write(RTCMemoryId id, const void *, uint8_t maxSize);
+
 public:
     #if RTC_SUPPORT == 0
+        // methods for the internal RTC
         static void setupRTC();
         static void updateTimeOffset(uint32_t millis_offset);
         static void storeTime();
     #endif
     static void setTime(time_t time, SyncStatus status);
     static SyncStatus getSyncStatus();
-    // there must be valid record in the RTC memory to use following methods
-    static void setSyncStatus(bool inSync);
-    static void setNtpUpdate();
+    static void setSyncStatus(SyncStatus status);
 
     inline static RtcTime readTime() {
         return _readTime();
@@ -220,23 +314,6 @@ private:
     #endif
 };
 
-inline RTCMemoryManager::SyncStatus RTCMemoryManager::getSyncStatus()
-{
-    return _readTime().status;
-}
-
-inline bool RTCMemoryManager::remove(RTCMemoryId id)
-{
-    return write(id, nullptr, 0);
-}
-
-inline void RTCMemoryManager::setTime(time_t time, SyncStatus status)
-{
-    auto rtc = RtcTime(time, status);
-    __LDBG_printf("set time=%u status=%s", rtc.getTime(), rtc.getStatus());
-    _writeTime(rtc);
-}
-
 #if RTC_SUPPORT == 0
 
     inline void RTCMemoryManager::storeTime()
@@ -248,24 +325,31 @@ inline void RTCMemoryManager::setTime(time_t time, SyncStatus status)
 
 #endif
 
-inline void RTCMemoryManager::setSyncStatus(bool status)
+inline bool RTCMemoryManager::remove(RTCMemoryId id)
 {
-    auto rtc = _readTime();
-    __LDBG_printf("new status=%u old status=%u", status, rtc.status);
-    if (
-        (status == true && rtc.status != SyncStatus::YES) ||
-        (status == false && rtc.status == SyncStatus::YES)
-    ) {
-        rtc.status = status ? SyncStatus::YES : SyncStatus::NO;
-        _writeTime(rtc);
-    }
+    return write(id, nullptr, 0);
 }
 
-inline void RTCMemoryManager::setNtpUpdate()
+inline RTCMemoryManager::SyncStatus RTCMemoryManager::getSyncStatus()
+{
+    return _readTime().status;
+}
+
+inline void RTCMemoryManager::setTime(time_t time, SyncStatus status)
+{
+    auto rtc = RtcTime(time, status);
+    __LDBG_printf("set time=%u status=%s", rtc.getTime(), rtc.getStatus());
+    _writeTime(rtc);
+}
+
+inline void RTCMemoryManager::setSyncStatus(SyncStatus newStatus)
 {
     auto rtc = _readTime();
-    rtc.status = SyncStatus::NTP_UPDATE;
-    _writeTime(rtc);
+    __LDBG_printf("new status=%u old status=%u", newStatus, rtc.status);
+    if (newStatus != rtc.status) {
+        rtc.status = newStatus;
+        _writeTime(rtc);
+    }
 }
 
 #include <pop_pack.h>

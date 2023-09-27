@@ -123,7 +123,7 @@ WebUI::BaseUI &Form::BaseForm::addFormUI(WebUI::BaseUI *formUI)
 
 Group &Form::BaseForm::addGroup(const __FlashStringHelper *name, const Container::Label &label, bool expanded, RenderType type)
 {
-    __LDBG_assert_printf(getGroupType(type) == GroupType::OPEN, "invalid type=%u group type=%u", type, getGroupType(type));
+    __LDBG_assertf(getGroupType(type) == GroupType::OPEN, "invalid type=%u group type=%u", type, getGroupType(type));
     __LDBG_printf("group=%s start", name);
     auto &group = _add<Group>(name, expanded);
     group.setFormUI(&group, type, label);
@@ -132,7 +132,7 @@ Group &Form::BaseForm::addGroup(const __FlashStringHelper *name, const Container
 
 Group &Form::BaseForm::addGroup(const __FlashStringHelper *name, bool expanded, RenderType type)
 {
-    __LDBG_assert_printf(getGroupType(type) == GroupType::OPEN, "invalid type=%u group type=%u", type, getGroupType(type));
+    __LDBG_assertf(getGroupType(type) == GroupType::OPEN, "invalid type=%u group type=%u", type, getGroupType(type));
     auto &group = _add<Group>(name, expanded);
     group.setFormUI(&group, type);
     return group;
@@ -165,7 +165,7 @@ Form::BaseForm &Form::BaseForm::endGroup(const __FlashStringHelper *name, Render
 
 Form::BaseForm::GroupType Form::BaseForm::getGroupType(RenderType type)
 {
-    __LDBG_assert_printf(type >= RenderType::BEGIN_GROUPS && type <= RenderType::END_GROUPS, "invalid group type=%u", type);
+    __LDBG_assertf(type >= RenderType::BEGIN_GROUPS && type <= RenderType::END_GROUPS, "invalid group type=%u", type);
 
     if (type >= RenderType::BEGIN_GROUPS && type <= RenderType::END_GROUPS) {
         return static_cast<GroupType>(
@@ -187,7 +187,7 @@ RenderType Form::BaseForm::getEndGroupType(RenderType type)
     default:
         break;
     }
-    __LDBG_assert_printf(F("group type not valid") == nullptr, "group type=%u not valid", getGroupType(type));
+    __LDBG_assertf(F("group type not valid") == nullptr, "group type=%u not valid", getGroupType(type));
     return RenderType::NONE;
 }
 

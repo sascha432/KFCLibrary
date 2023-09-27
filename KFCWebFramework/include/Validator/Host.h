@@ -28,13 +28,13 @@ namespace FormUI {
                 if (_allowedTypes == AllowedType::EMPTY) {
                     _allowedTypes = EnumHelper::Bitset::addBits(_allowedTypes, AllowedType::HOST_OR_IP);
                 }
-                __LDBG_assert_printf(allowedTypes != AllowedType::NONE, "allowed type NONE");
+                __LDBG_assertf(allowedTypes != AllowedType::NONE, "allowed type NONE");
             }
             //Hostname(const String &message, AllowedType allowedTypes = AllowedType::HOST_OR_IP) :
             //    BaseValidator(message, FSPGM(FormHostValidator_default_message)),
             //    _allowedTypes(allowedTypes)
             //{
-            //    __LDBG_assert_printf(allowedTypes != AllowedType::NONE, "allowed type NONE");
+            //    __LDBG_assertf(allowedTypes != AllowedType::NONE, "allowed type NONE");
             //}
 
             virtual bool validate() override {

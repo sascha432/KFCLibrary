@@ -117,6 +117,13 @@ void reset_detector_setup_global_ctors()
     #endif
 }
 
+#pragma push_macro("__LDBG_printf")
+
+#if ESP8266 && DEBUG_RESET_DETECTOR
+#    undef __LDBG_printf
+#    define __LDBG_printf(fmt, ...) ::printf_P(PSTR("DBG%04u %s:%u: " fmt "\n"), micros() / 1000, __BASENAME_FILE__, __LINE__, ##__VA_ARGS__); uart_wait_tx_empty(_uart);
+#endif
+
 ResetDetector::ResetDetector()
 {
     __LDBG_printf("c'tor ResetDetector");
@@ -145,12 +152,13 @@ void ResetDetector::begin(HardwareSerial *serial, int baud)
             __LDBG_printf("begin _uart=%p serial=%p baud=%u ctors=%u", _uart, serial, baud, reset_detector_setup_global_ctors_counter);
             if (_uart) {
                 __LDBG_printf("\r\n");
+                uart_wait_tx_empty(_uart);
                 uart_flush(_uart);
                 uart_uninit(_uart);
                 _uart = nullptr;
-                __LDBG_printf("_uart=%p", _uart);
+                // __LDBG_printf("_uart=%p", _uart);
             }
-            __LDBG_printf("serial=%p begin=%u", serial, baud);
+            // __LDBG_printf("serial=%p begin=%u", serial, baud);
         #endif
 
         __LDBG_printf("serial->begin");
@@ -164,7 +172,7 @@ void ResetDetector::begin(HardwareSerial *serial, int baud)
         __LDBG_printf("serial->begin");
         serial->begin(baud);
     #endif
-    __LDBG_printf("return");
+    __LDBG_printf("begin returns");
 }
 
 void ResetDetector::begin()
@@ -183,7 +191,7 @@ void ResetDetector::begin()
         __LDBG_printf("init reset detector");
 
         _readData();
-        ++_data;
+        _data.incrResetCounter();
 
         struct rst_info &resetInfo = *system_get_rst_info();
         _data.pushReason(resetInfo.reason);
@@ -199,7 +207,7 @@ void ResetDetector::begin()
             }
         #endif
 
-        __LDBG_printf("valid=%d safe_mode=%u counter=%u new=%u", !!_storedData, _storedData.isSafeMode(), _storedData.getResetCounter(), _data.getResetCounter());
+        __LDBG_printf("valid=%d safe_mode=%u counter=%u new=%u", _storedData.isValid(), _storedData.isSafeMode(), _storedData.getResetCounter(), _data.getResetCounter());
         __LDBG_printf("info=%s crash=%u reset=%u reboot=%u wakeup=%u", getResetInfo().c_str(), hasCrashDetected(), hasResetDetected(), hasRebootDetected(), hasWakeUpDetected());
 
     #elif ESP32
@@ -208,7 +216,8 @@ void ResetDetector::begin()
         resetInfo.reason = esp_reset_reason();
 
         _readData();
-        ++_data;
+        _data.incrResetCounter();
+
         _data.pushReason(resetInfo.reason);
 
         __LDBG_printf("depc=%08x epc1=%08x epc2=%08x epc3=%08x exccause=%08x excvaddr=%08x reason=%u", resetInfo.depc, resetInfo.epc1, resetInfo.epc2, resetInfo.epc3, resetInfo.exccause, resetInfo.excvaddr, resetInfo.reason);
@@ -324,8 +333,8 @@ const __FlashStringHelper *ResetDetector::getResetReason(uint8_t reason)
     void ResetDetector::__setResetCounter(Counter_t counter)
     {
         __LDBG_printf("_writeData()");
-        _storedData = counter;
-        _data = counter;
+        _storedData.setResetCounter(counter);
+        _data.setResetCounter(counter);
         _writeData();
     }
 
@@ -333,8 +342,9 @@ const __FlashStringHelper *ResetDetector::getResetReason(uint8_t reason)
 
 void ResetDetector::_readData()
 {
-    __LDBG_printf("_readData()");
-    if (RTCMemoryManager::read(PluginComponent::RTCMemoryId::RESET_DETECTOR, &_storedData, sizeof(_storedData))) {
+    auto read = RTCMemoryManager::read(PluginComponent::RTCMemoryId::RESET_DETECTOR, &_storedData, sizeof(_storedData));
+    __LDBG_printf("_readData() read=%u", read);
+    if (read == sizeof(_storedData)) {
         _storedData.setValid(true);
         _data = _storedData;
     }
@@ -342,7 +352,14 @@ void ResetDetector::_readData()
         _storedData = Data();
         _data = Data(0, false);
     }
+    __DBG_printf("rst_counter=%u valid=%u", _data.getResetCounter(), _data.isValid());
 }
+
+#if !RESET_DETECTOR_INCLUDE_HPP_INLINE
+#    include "reset_detector.hpp"
+#endif
+
+#pragma pop_macro("__LDBG_printf")
 
 #include "logger.h"
 
@@ -396,9 +413,4 @@ ResetDetectorPlugin::ResetDetectorPlugin() : PluginComponent(PROGMEM_GET_PLUGIN_
         bootstrapMenu.addMenuItem(F("SaveCrash Log"), F("savecrash.html"), navMenu.util);
     }
 
-#endif
-
-
-#if !RESET_DETECTOR_INCLUDE_HPP_INLINE
-#    include "reset_detector.hpp"
 #endif

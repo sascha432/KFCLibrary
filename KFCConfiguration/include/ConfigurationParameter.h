@@ -67,20 +67,20 @@ namespace ConfigurationHelper {
         }
 
         inline bool isWriteable() const {
-            __LDBG_assert_printf((_is_writeable == true && _writeable) || (_is_writeable == false), "is_writeable=%u _writeable=%p", _is_writeable, _writeable);
+            __LDBG_assertf((_is_writeable == true && _writeable) || (_is_writeable == false), "is_writeable=%u _writeable=%p", _is_writeable, _writeable);
             return _is_writeable;
         }
 
         void resizeWriteable(size_type length, ConfigurationParameter &param, Configuration &conf);
 
         void setWriteable(WriteableData *writeable) {
-            __DBG_assert_printf(_is_writeable == false, "is_writeable=%u writeable=%p _writeable=%p", _is_writeable, writeable, _writeable);
+            __DBG_assertf(_is_writeable == false, "is_writeable=%u writeable=%p _writeable=%p", _is_writeable, writeable, _writeable);
             _is_writeable = true;
             _writeable = writeable;
         }
 
         void setReadable(void *ptr) {
-            __LDBG_assert_printf(_is_writeable == false, "is_writeable=%u", _is_writeable);
+            __LDBG_assertf(_is_writeable == false, "is_writeable=%u", _is_writeable);
             _readable = (uint8_t *)ptr;
         }
 
@@ -275,7 +275,7 @@ namespace ConfigurationHelper {
 
     inline void ParameterInfo::resizeWriteable(size_type length, ConfigurationParameter &param, Configuration &conf)
     {
-        __DBG_assert_printf(_is_writeable == true, "is_writeable=%u new_length=%u %s", _is_writeable, length, param.toString().c_str());
+        __DBG_assertf(_is_writeable == true, "is_writeable=%u new_length=%u %s", _is_writeable, length, param.toString().c_str());
         _writeable->resize(length, param, conf);
     }
 

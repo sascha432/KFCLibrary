@@ -37,29 +37,29 @@ namespace FormUI {
             }
 
             void setTitle(const __FlashStringHelper *title) {
-                __LDBG_assert_printf(_title == nullptr, "title=%s new_title=%s", _title, reinterpret_cast<PGM_P>(title));
+                __LDBG_assertf(_title == nullptr, "title=%s new_title=%s", _title, reinterpret_cast<PGM_P>(title));
                 _title = encodeHtmlEntities(title);
             }
             void setTitle(const String &title) {
-                __LDBG_assert_printf(_title == nullptr, "title=%s new_title=%s", _title, title.c_str());
+                __LDBG_assertf(_title == nullptr, "title=%s new_title=%s", _title, title.c_str());
                 _title = encodeHtmlEntities(title);
             }
 
             void setSaveButtonLabel(const __FlashStringHelper *label) {
-                __LDBG_assert_printf(_saveButtonLabel <= kDefaultButtonLabel, "label=%s new_label=%s", _saveButtonLabel, reinterpret_cast<PGM_P>(label));
+                __LDBG_assertf(_saveButtonLabel <= kDefaultButtonLabel, "label=%s new_label=%s", _saveButtonLabel, reinterpret_cast<PGM_P>(label));
                 _saveButtonLabel = encodeHtmlEntities(label);
             }
             void setSaveButtonLabel(const String &label) {
-                __LDBG_assert_printf(_saveButtonLabel <= kDefaultButtonLabel, "label=%s new_label=%s", _saveButtonLabel, label.c_str());
+                __LDBG_assertf(_saveButtonLabel <= kDefaultButtonLabel, "label=%s new_label=%s", _saveButtonLabel, label.c_str());
                 _saveButtonLabel = encodeHtmlEntities(label);
             }
 
             void setContainerId(const __FlashStringHelper *id) {
-                __LDBG_assert_printf(_containerId == nullptr, "container_id=%s new_container_id=%s", _saveButtonLabel, reinterpret_cast<PGM_P>(id));
+                __LDBG_assertf(_containerId == nullptr, "container_id=%s new_container_id=%s", _saveButtonLabel, reinterpret_cast<PGM_P>(id));
                 _containerId = attachString(id);
             }
             void setContainerId(const String &id) {
-                __LDBG_assert_printf(_containerId == nullptr, "container_id=%s new_container_id=%s", _saveButtonLabel, id.c_str());
+                __LDBG_assertf(_containerId == nullptr, "container_id=%s new_container_id=%s", _saveButtonLabel, id.c_str());
                 _containerId = attachString(id);
             }
 

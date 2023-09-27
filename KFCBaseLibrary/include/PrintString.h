@@ -217,7 +217,8 @@ inline __attribute__((__always_inline__))
 size_t PrintString::strftime(const char *format, struct tm *tm)
 {
     char temp[128];
-    ::strftime(temp, sizeof(temp), format, tm);
+    ::strftime(temp, sizeof(temp) - 1, format, tm);
+    temp[sizeof(temp) - 1] = 0;
     return print(temp);
 }
 
@@ -229,7 +230,8 @@ inline __attribute__((__always_inline__))
 size_t PrintString::strftime_P(PGM_P format, struct tm *tm)
 {
     char temp[128];
-    ::strftime_P(temp, sizeof(temp), format, tm);
+    ::strftime_P(temp, sizeof(temp) - 1, format, tm);
+    temp[sizeof(temp) - 1] = 0;
     return print(temp);
 }
 

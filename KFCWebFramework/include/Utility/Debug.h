@@ -21,6 +21,6 @@
 
 
 #if DEBUG_KFC_FORMS_DISABLE_ASSERT
-#undef __LDBG_assert_printf
-#define __LDBG_assert_printf(...)
+#undef __LDBG_assertf
+#define __LDBG_assertf(...)
 #endif

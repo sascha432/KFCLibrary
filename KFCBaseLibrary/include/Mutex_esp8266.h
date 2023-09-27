@@ -39,7 +39,7 @@ public:
         return result;
     }
 
-    int _locked;
+    volatile int _locked;
 };
 
 // ------------------------------------------------------------------------

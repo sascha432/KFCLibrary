@@ -32,7 +32,7 @@
 #    define __DBG_BUFFER_asserted(cmp, ...)  \
         {                                    \
             auto res = (__VA_ARGS__);        \
-            __DBG_assert_printf(res == cmp, _STRINGIFY(__VA_ARGS__) " failed result=%d expected=%d", res, cmp); \
+            __DBG_assertf(res == cmp, _STRINGIFY(__VA_ARGS__) " failed result=%d expected=%d", res, cmp); \
         }
 #else
 #    define __DBG_BUFFER_assert(...)

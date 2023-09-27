@@ -276,6 +276,6 @@ bool ConfigurationParameter::_readData(Configuration &conf, uint16_t offset)
         }
 
     #endif
-    __LDBG_assert_printf(_param.isString() == false || _param.string()[_param.length()] == 0, "%s NUL byte missing", toString().c_str());
+    __LDBG_assertf(_param.isString() == false || _param.string()[_param.length()] == 0, "%s NUL byte missing", toString().c_str());
     return true;
 }

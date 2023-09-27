@@ -34,13 +34,13 @@ const __FlashStringHelper *ResetDetector::getResetReason() const
 __RESET_DETECTOR_INLINE_ALWAYS__
 ResetDetector::Counter_t ResetDetector::getResetCounter() const
 {
-    return _data;
+    return _data.getResetCounter();
 }
 
 __RESET_DETECTOR_INLINE__
 ResetDetector::Counter_t ResetDetector::getInitialResetCounter() const
 {
-    return _storedData;
+    return _storedData.getResetCounter();
 }
 
 __RESET_DETECTOR_INLINE_ALWAYS__
@@ -181,6 +181,7 @@ void ResetDetector::armTimer()
 __RESET_DETECTOR_INLINE__
 const String ResetDetector::getResetInfo() const
 {
+    __LDBG_printf("getResetInfo() valid=%u", _data.isValid());
     #if ESP32
         return getResetReason();
     #else
@@ -192,7 +193,7 @@ __RESET_DETECTOR_INLINE__
 void ResetDetector::clearCounter()
 {
     __LDBG_printf("set counter=0 (%u) safe_mode=%u", _data.getResetCounter(), _data.isSafeMode());
-    _data = 0;
+    _data.setResetCounter(0);
     _writeData();
 }
 
@@ -207,11 +208,17 @@ void ResetDetector::setSafeModeAndClearCounter(bool safeMode)
 __RESET_DETECTOR_INLINE__
 void ResetDetector::_writeData()
 {
-    if (!_data) {
-        RTCMemoryManager::remove(PluginComponent::RTCMemoryId::RESET_DETECTOR);
+    if (_data.isValid()) {
+        __LDBG_printf("write data cnt=%u", _data.getResetCounter());
+        if (!RTCMemoryManager::write(PluginComponent::RTCMemoryId::RESET_DETECTOR, &_data, sizeof(_data))) {
+            __LDBG_printf("write error");
+        }
     }
     else {
-        RTCMemoryManager::write(PluginComponent::RTCMemoryId::RESET_DETECTOR, &_data, sizeof(_data));
+        __LDBG_printf("remove data");
+        if (!RTCMemoryManager::remove(PluginComponent::RTCMemoryId::RESET_DETECTOR)) {
+            __LDBG_printf("remove error");
+        }
     }
 }
 
@@ -228,44 +235,16 @@ ResetDetector::Data::Data(Counter_t reset_counter, bool safe_mode) :
 }
 
 __RESET_DETECTOR_INLINE_ALWAYS__
-ResetDetector::Data::operator bool() const
+bool ResetDetector::Data::isValid() const
 {
     return _reset_counter != kInvalidCounter;
-}
-
-__RESET_DETECTOR_INLINE_ALWAYS__
-ResetDetector::Data::operator int() const
-{
-    return _reset_counter;
-}
-
-__RESET_DETECTOR_INLINE_ALWAYS__
-ResetDetector::Data::operator Counter_t() const
-{
-    return _reset_counter;
-}
-
-__RESET_DETECTOR_INLINE_ALWAYS__
-ResetDetector::Data &ResetDetector::Data::operator=(Counter_t counter)
-{
-    _reset_counter = counter;
-    return *this;
-}
-
-__RESET_DETECTOR_INLINE__
-ResetDetector::Data &ResetDetector::Data::operator++()
-{
-    if (_reset_counter < kMaxCounter) {
-        _reset_counter++;
-    }
-    return *this;
 }
 
 __RESET_DETECTOR_INLINE__
 void ResetDetector::Data::setValid(bool valid)
 {
     if (valid) {
-        if (!*this) {
+        if (!isValid()) {
             _reset_counter = 0;
         }
     }
@@ -287,16 +266,29 @@ bool ResetDetector::Data::isSafeMode() const
 }
 
 __RESET_DETECTOR_INLINE_ALWAYS__
-ResetDetector::Counter_t ResetDetector::Data::getResetCounter()
+ResetDetector::Counter_t ResetDetector::Data::getResetCounter() const
 {
     return _reset_counter;
+}
+
+__RESET_DETECTOR_INLINE_ALWAYS__
+void ResetDetector::Data::setResetCounter(Counter_t counter)
+{
+    _reset_counter = counter;
+}
+
+__RESET_DETECTOR_INLINE_ALWAYS__
+void ResetDetector::Data::incrResetCounter()
+{
+    if (isValid() && _reset_counter < kMaxCounter) {
+        _reset_counter++;
+    }
 }
 
 __RESET_DETECTOR_INLINE__
 void ResetDetector::Data::pushReason(Reason_t reason)
 {
-    auto begin = _begin();
-    std::copy(begin + 1, _end(), begin);
+    std::copy(_begin() + 1, _end(), _begin());
     *_current() = reason;
 }
 
@@ -309,51 +301,51 @@ bool ResetDetector::Data::hasValidReason() const
 __RESET_DETECTOR_INLINE_ALWAYS__
 ResetDetector::Reason_t ResetDetector::Data::getReason() const
 {
-    return *const_cast<Data *>(this)->_current();
+    return *_current();
 }
 
 __RESET_DETECTOR_INLINE__
 const ResetDetector::Reason_t *ResetDetector::Data::begin() const
 {
-    auto ptr = const_cast<Data *>(this)->_begin();
-    while(ptr < end() && *ptr == kInvalidReason) {
+    auto ptr = _begin();
+    while(ptr <= end() && *ptr == kInvalidReason) {
         ptr++;
     }
-    return ptr; // ptr >= _begin() && < _end()
+    return ptr;
 }
 
 __RESET_DETECTOR_INLINE_ALWAYS__
 const ResetDetector::Reason_t *ResetDetector::Data::end() const
 {
-    return const_cast<Data *>(this)->_end();
+    return _end();
 }
 
 __RESET_DETECTOR_INLINE_ALWAYS__
-ResetDetector::Reason_t *ResetDetector::Data::_begin()
+ResetDetector::Reason_t *ResetDetector::Data::_begin() const
 {
-    return _reason;
+    return const_cast<Reason_t *>(&_reason[0]);
 }
 
 __RESET_DETECTOR_INLINE_ALWAYS__
-ResetDetector::Reason_t *ResetDetector::Data::_end()
+ResetDetector::Reason_t *ResetDetector::Data::_end() const
 {
-    return &_reason[kReasonMax];
+    return const_cast<Reason_t *>(&_reason[kReasonMax]);
 }
 
 __RESET_DETECTOR_INLINE_ALWAYS__
-ResetDetector::Reason_t *ResetDetector::Data::_current()
+ResetDetector::Reason_t *ResetDetector::Data::_current() const
 {
-    return &_reason[kReasonMax - 1];
+    return const_cast<Reason_t *>(&_reason[kReasonMax - 1]);
 }
 
 #ifdef __RESET_DETECTOR_INLINE_INLINE_DEFINED__
-#undef  __RESET_DETECTOR_INLINE__
-#undef __RESET_DETECTOR_INLINE_INLINE_DEFINED__
-#ifdef __RESET_DETECTOR_NOINLINE__
-#undef __RESET_DETECTOR_NOINLINE__
-#endif
+#    undef __RESET_DETECTOR_INLINE__
+#    undef __RESET_DETECTOR_INLINE_INLINE_DEFINED__
+#    ifdef __RESET_DETECTOR_NOINLINE__
+#        undef __RESET_DETECTOR_NOINLINE__
+#    endif
 #endif
 
 #if DEBUG_RESET_DETECTOR
-#include <debug_helper_disable.h>
+#    include <debug_helper_disable.h>
 #endif

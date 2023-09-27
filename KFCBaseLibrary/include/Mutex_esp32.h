@@ -41,7 +41,7 @@ inline SemaphoreMutex::SemaphoreMutex(bool lock) :
     _locked(0),
     _lock(xSemaphoreCreateMutex())
 {
-    __LDBG_assert_printf(_lock != NULL, "xSemaphoreCreateMutex() res=%p", _lock);
+    __LDBG_assertf(_lock != NULL, "xSemaphoreCreateMutex() res=%p", _lock);
     if (lock) {
         this->lock();
     }
@@ -71,7 +71,7 @@ inline bool SemaphoreMutex::lock()
 {
     _locked++;
     while(xSemaphoreTake(_lock, kPortDefaultDelay) != pdTRUE) {
-        __LDBG_assert_printf(false, "xSemaphoreTake locked=%", _locked);
+        __LDBG_assertf(false, "xSemaphoreTake locked=%", _locked);
     }
     return true;
 }
@@ -97,7 +97,7 @@ public:
     }
     ~SemaphoreMutexStatic()
     {
-        __LDBG_assert_printf(_lock != NULL, "_lock=%p", _lock);
+        __LDBG_assertf(_lock != NULL, "_lock=%p", _lock);
         if (_lock) {
             unlock();
             _lock = NULL;
@@ -105,12 +105,12 @@ public:
     }
 
     bool lock() {
-        __LDBG_assert_printf(_lock != NULL, "_lock=%p", _lock);
+        __LDBG_assertf(_lock != NULL, "_lock=%p", _lock);
         return SemaphoreMutex::lock();
     }
 
     bool unlock() {
-        __LDBG_assert_printf(_lock != NULL, "_lock=%p", _lock);
+        __LDBG_assertf(_lock != NULL, "_lock=%p", _lock);
         return SemaphoreMutex::unlock();
     }
 
@@ -137,7 +137,7 @@ inline SemaphoreMutexRecursive::SemaphoreMutexRecursive(bool lock) :
     _locked(0),
     _lock(xSemaphoreCreateRecursiveMutex())
 {
-    __LDBG_assert_printf(_lock != NULL, "xSemaphoreCreateRecursiveMutex() res=%p", _lock);
+    __LDBG_assertf(_lock != NULL, "xSemaphoreCreateRecursiveMutex() res=%p", _lock);
     if (lock) {
         this->lock();
     }
@@ -165,7 +165,7 @@ inline bool SemaphoreMutexRecursive::lock()
 {
     _locked++;
     while(xSemaphoreTakeRecursive(_lock, kPortDefaultDelay) != pdTRUE) {
-        __LDBG_assert_printf(false, "xSemaphoreTakeRecursive locked=%u", _locked);
+        __LDBG_assertf(false, "xSemaphoreTakeRecursive locked=%u", _locked);
     }
     return true;
 }

@@ -143,7 +143,7 @@ namespace PinMonitor {
         if (_repeatCount == kClickRepeatNotSet) {
             _repeatCount = 0;
         }
-        // __LDBG_assert_printf(_repeatCount == kClickRepeatNotSet && _timerRunning == false, "timer running and _repeatCount not set");
+        // __LDBG_assertf(_repeatCount == kClickRepeatNotSet && _timerRunning == false, "timer running and _repeatCount not set");
         // _repeatCount = getRepeatCount();
         // return _repeatCount;
 

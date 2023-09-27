@@ -143,7 +143,7 @@ namespace Event {
             _callbackTimer && _callbackTimer->_timer ? _callbackTimer->_timer->_managedTimer._callbackTimer : nullptr
         );
         if (_callbackTimer && _callbackTimer->_timer) {
-            __DBG_assert_printf(_callbackTimer->_timer->_managedTimer._callbackTimer == nullptr || _callbackTimer->_timer->_managedTimer._callbackTimer == _callbackTimer, "_managedTimer._callbackTimer=%p points to a different _callbackTimer=%p", _callbackTimer->_timer->_managedTimer._callbackTimer, _callbackTimer);
+            __DBG_assertf(_callbackTimer->_timer->_managedTimer._callbackTimer == nullptr || _callbackTimer->_timer->_managedTimer._callbackTimer == _callbackTimer, "_managedTimer._callbackTimer=%p points to a different _callbackTimer=%p", _callbackTimer->_timer->_managedTimer._callbackTimer, _callbackTimer);
         }
         if (_callbackTimer) {
             _callbackTimer->_timer = nullptr;

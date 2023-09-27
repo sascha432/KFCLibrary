@@ -50,13 +50,13 @@ Form::BaseForm &Group::end()
 {
     auto &form = getForm();
     if (_groupOpen == false) {
-        __LDBG_assert_printf(F("group already closed") == nullptr, "group=%s already closed", getName());
+        __LDBG_assertf(F("group already closed") == nullptr, "group=%s already closed", getName());
         return form;
     }
 
     // get RenderType for closing the group
     RenderType type = getRenderType();
-    __LDBG_assert_printf(form.getGroupType(type) == Form::BaseForm::GroupType::OPEN, "invalid type=%u group=%u name=%s", type, form.getGroupType(type), getName());
+    __LDBG_assertf(form.getGroupType(type) == Form::BaseForm::GroupType::OPEN, "invalid type=%u group=%u name=%s", type, form.getGroupType(type), getName());
 
     _groupOpen = false;
     form.endGroup(FPSTR(getName()), form.getEndGroupType(type));

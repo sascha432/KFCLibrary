@@ -101,7 +101,7 @@ const char *WebUI::BaseUI::_getLabel() const
         if (iterator != _storage.end()) {
             // safe version with validation
             Storage::TypeByte tb(iterator);
-            __LDBG_assert_printf(tb.count() == 1, "%s count=%u != 1", tb.name(), tb.count());
+            __LDBG_assertf(tb.count() == 1, "%s count=%u != 1", tb.name(), tb.count());
             ++iterator;
             switch (tb.type()) {
             case Storage::Value::Label::type:
@@ -111,10 +111,10 @@ const char *WebUI::BaseUI::_getLabel() const
                 value = Storage::Value::LabelRaw::pop_front<Storage::Value::LabelRaw>(iterator).getValue();
                 break;
             default:
-                __LDBG_assert_printf(false, "invalid type %u: %s", tb.type(), tb.name());
+                __LDBG_assertf(false, "invalid type %u: %s", tb.type(), tb.name());
                 break;
             }
-            __LDBG_assert_printf(_storage.find_if(iterator, _storage.end(), Storage::Vector::isLabel) == _storage.end(), "multiple labels found");
+            __LDBG_assertf(_storage.find_if(iterator, _storage.end(), Storage::Vector::isLabel) == _storage.end(), "multiple labels found");
         }
         return value;
     #else
@@ -162,11 +162,11 @@ void WebUI::BaseUI::_printAttributeTo(PrintInterface &output) const
                 if (true) {
                     auto attribute = Storage::Value::AttributeMinMax::pop_front<Storage::Value::AttributeMinMax>(iterator);
                     output.printf_P(PSTR(" min=\"%d\" max=\"%d\""), attribute.getMin(), attribute.getMax());
-                    __LDBG_assert_printf(tb.count() == 1, "AttributeMinMax count=%u != 1", tb.count());
+                    __LDBG_assertf(tb.count() == 1, "AttributeMinMax count=%u != 1", tb.count());
                 }
                 break;
             default:
-                __LDBG_assert_printf(false, "invalid type %u: %s", tb.type(), tb.name());
+                __LDBG_assertf(false, "invalid type %u: %s", tb.type(), tb.name());
                 break;
         }
     });
@@ -198,7 +198,7 @@ void WebUI::BaseUI::_printSuffixTo(PrintInterface &output) const
                 }
                 break;
             default:
-                __LDBG_assert_printf(false, "invalid type %u: %s", tb.type(), tb.name());
+                __LDBG_assertf(false, "invalid type %u: %s", tb.type(), tb.name());
                 break;
         }
     });
@@ -223,7 +223,7 @@ void WebUI::BaseUI::_printOptionsTo(PrintInterface &output) const
                 }
                 break;
             default:
-                __LDBG_assert_printf(false, "invalid type %u: %s", tb.type(), tb.name());
+                __LDBG_assertf(false, "invalid type %u: %s", tb.type(), tb.name());
                 break;
         }
     });
@@ -317,7 +317,7 @@ void WebUI::BaseUI::_renderInputField(Type type, PrintInterface &output, const c
             break;
 
         case Type::CHECKBOX:
-            __LDBG_assert_printf(F("not implemented") == nullptr, "not implemented");
+            __LDBG_assertf(F("not implemented") == nullptr, "not implemented");
             //  <input type="checkbox" aria-label="Checkbox for following text input">
             break;
 

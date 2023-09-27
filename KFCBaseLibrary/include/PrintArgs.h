@@ -176,7 +176,7 @@ public:
     // use FormatType as format string
     template <typename... Args>
     void printf_P(FormatType type, const Args &... args) {
-        __LDBG_assert_printf((type >= FormatType::STRINGS_BEGIN && type <= FormatType::STRINGS_END), "type=%u invalid", type);
+        __LDBG_assertf((type >= FormatType::STRINGS_BEGIN && type <= FormatType::STRINGS_END), "type=%u invalid", type);
         uint8_t data[] = { static_cast<uint8_t>(static_cast<uint8_t>(type) | static_cast<uint8_t>(FormatType::VPRINTF_TYPE_MASK)) };
         vprintf_va_list(data, sizeof(data), args...);
     }
@@ -184,7 +184,7 @@ public:
     // print FormatType as raw string
     // format specifiers are not replaced
     void printf_P(FormatType type) {
-        __LDBG_assert_printf((type >= FormatType::STRINGS_BEGIN && type <= FormatType::STRINGS_END), "type=%u invalid", type);
+        __LDBG_assertf((type >= FormatType::STRINGS_BEGIN && type <= FormatType::STRINGS_END), "type=%u invalid", type);
         _buffer.write(static_cast<uint8_t>(type));
     }
 
@@ -208,7 +208,7 @@ protected:
         _bufferPtr = _buffer.end() + sizeof(FormatType);
         _collect(args...);
 
-        __LDBG_assert_printf(size == (size_t)(_bufferPtr - _buffer.end()), "calc_size=%u does not match size=%u", (int)size, (int)(_bufferPtr - _buffer.end()));
+        __LDBG_assertf(size == (size_t)(_bufferPtr - _buffer.end()), "calc_size=%u does not match size=%u", (int)size, (int)(_bufferPtr - _buffer.end()));
 
         // store number of pointers copied
         *_buffer.end() = ((_bufferPtr - &_buffer.end()[1]) / sizeof(uintptr_t)) - 1;

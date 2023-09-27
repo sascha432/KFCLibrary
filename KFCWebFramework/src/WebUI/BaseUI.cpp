@@ -29,7 +29,7 @@ const char *WebUI::Config::encodeHtmlEntities(const char *cStr, Mode mode)
     __DBG_validatePointerCheck(cStr, VP_HPS);
     uint8_t byte = pgm_read_byte(cStr);
     if (byte == 0xff) { // marker for html
-        __LDBG_assert_printf(F("marker deprecated") == nullptr, "marker deprecated");
+        __LDBG_assertf(F("marker deprecated") == nullptr, "marker deprecated");
         return strings().attachString(cStr) + 1;
     }
     // if (byte == '<') { // marker for html
@@ -48,7 +48,7 @@ const char *WebUI::Config::encodeHtmlEntities(const char *cStr, Mode mode)
 
 void WebUI::BaseUI::_addItem(const Container::SelectSuffix &suffix)
 {
-    __LDBG_assert_printf(suffix._items.empty() == false, "empty list");
+    __LDBG_assertf(suffix._items.empty() == false, "empty list");
     if (suffix._items.empty()) {
         return;
     }
@@ -68,7 +68,7 @@ void WebUI::BaseUI::_addItem(const Container::SelectSuffix &suffix)
 
 void WebUI::BaseUI::_addItem(const Container::TextInputSuffix &suffix)
 {
-    __LDBG_assert_printf(suffix._items.empty() == false, "empty list");
+    __LDBG_assertf(suffix._items.empty() == false, "empty list");
     if (suffix._items.empty()) {
         return;
     }
@@ -87,7 +87,7 @@ void WebUI::BaseUI::_addItem(const Container::TextInputSuffix &suffix)
 
 void WebUI::BaseUI::_addItem(const Container::CheckboxButtonSuffix &suffix)
 {
-    __LDBG_assert_printf(suffix._items.empty() == false, "empty list");
+    __LDBG_assertf(suffix._items.empty() == false, "empty list");
     if (suffix._items.empty()) {
         return;
     }

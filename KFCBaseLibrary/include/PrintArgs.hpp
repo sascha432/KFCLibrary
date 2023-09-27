@@ -9,7 +9,7 @@
 
 inline void PrintArgs::vprintf_P(const uintptr_t format, const uintptr_t *args, size_t numArgs)
 {
-    __LDBG_assert_printf(numArgs <= kMaximumPrintfArguments, "num_args=%u exceeds max=%u", numArgs, kMaximumPrintfArguments);
+    __LDBG_assertf(numArgs <= kMaximumPrintfArguments, "num_args=%u exceeds max=%u", numArgs, kMaximumPrintfArguments);
     _buffer.write(static_cast<uint8_t>(numArgs));
     _buffer.push_back(format);
     _buffer.write(reinterpret_cast<const uint8_t *>(args), sizeof(uintptr_t) * numArgs);

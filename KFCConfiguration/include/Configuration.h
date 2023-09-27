@@ -335,7 +335,7 @@ public:
             size_type length;
             auto ptr = param.getBinary(*this, length, offset);
             if (ptr) {
-                __DBG_assert_printf(length == maxLength, "%04x: resizing binary blob=%u to %u maxLength=%u type=%u", handle, length, sizeof(_Ta), maxLength, ConfigurationParameter::getType<_Ta>());
+                __DBG_assertf(length == maxLength, "%04x: resizing binary blob=%u to %u maxLength=%u type=%u", handle, length, sizeof(_Ta), maxLength, ConfigurationParameter::getType<_Ta>());
             }
         }
         makeWriteable(param, maxLength);
