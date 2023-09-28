@@ -346,6 +346,7 @@ bool RTCMemoryManager::clear()
             }
             auto memUniquePtr = std::unique_ptr<uint8_t[]>(memPtr);
             output.printf_P(PSTR("RTC data length: %u\n"), header.data_length());
+            output.printf_P(PSTR("RTC memory usage: %u\n"), header.length);
 
             DumpBinary dumper(output);
             auto ptr = header.begin(memPtr);
@@ -382,6 +383,27 @@ bool RTCMemoryManager::clear()
                 }
                 ptr += entry.length;
             }
+
+            #if RTC_SUPPORT == 0 && RTC_SUPPORT_NO_TIMER == 0
+                _rtcTimer.detach();
+            #endif
+
+            uint32_t start = micros();
+            uint32_t heap = ESP.getFreeHeap();
+            constexpr int kRepeats = 1000;
+            for(int i = 0; i < kRepeats; i++) {
+                storeTime();
+            }
+            uint32_t dur = micros() - start;
+            int heapUsage = heap - ESP.getFreeHeap();
+
+            output.printf_P(PSTR("RTC benchmark (%ux storeTime) time: %.3fms heap: %d\n"), kRepeats, dur / 1000.0, heapUsage);
+
+            #if RTC_SUPPORT == 0 && RTC_SUPPORT_NO_TIMER == 0
+                setupRTC();
+            #endif
+
+
             __LDBG_printf("result=%d", result);
             return result;
         }
@@ -389,48 +411,3 @@ bool RTCMemoryManager::clear()
     }
 
 #endif
-
-RTCMemoryManager::RtcTime RTCMemoryManager::_readTime()
-{
-    RtcTime rtc;
-    if (read(RTCMemoryId::RTC, &rtc, sizeof(rtc)) == sizeof(rtc)) {
-        __LDBG_printf("read time=%u status=%s", rtc.getTime(), rtc.getStatus());
-        return rtc;
-    }
-    __LDBG_printf("invalid RtcTime");
-    return RtcTime();
-}
-
-void RTCMemoryManager::_writeTime(const RtcTime &time)
-{
-    __LDBG_printf("write time=%u status=%s", time.getTime(), time.getStatus());
-    write(RTCMemoryId::RTC, &time, sizeof(time));
-}
-
-#if RTC_SUPPORT == 0
-
-    void RTCMemoryManager::setupRTC()
-    {
-        #if RTC_SUPPORT_NO_TIMER == 0
-            _rtcTimer.startTimer(1000, true);
-        #endif
-    }
-
-    void RTCMemoryManager::updateTimeOffset(uint32_t offset)
-    {
-        __LDBG_printf("update time offset=%ums", offset);
-        offset /= 1000;
-        if (offset) {
-            auto rtc = _readTime();
-            rtc.time += offset;
-            _writeTime(rtc);
-        }
-    }
-
-#endif
-
-void RTCMemoryManager::_clearTime()
-{
-    __LDBG_print("clearTime");
-    remove(RTCMemoryId::RTC);
-}

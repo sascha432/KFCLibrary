@@ -280,12 +280,12 @@ private:
     static bool _write(RTCMemoryId id, const void *, uint8_t maxSize);
 
 public:
-    #if RTC_SUPPORT == 0
-        // methods for the internal RTC
-        static void setupRTC();
-        static void updateTimeOffset(uint32_t millis_offset);
-        static void storeTime();
-    #endif
+    // methods for the internal RTC
+    static void setupRTC();
+    static void updateTimeOffset(uint32_t millis_offset);
+    static void storeTime();
+
+    // methods for the RTC
     static void setTime(time_t time, SyncStatus status);
     static SyncStatus getSyncStatus();
     static void setSyncStatus(SyncStatus status);
@@ -314,20 +314,35 @@ private:
     #endif
 };
 
-#if RTC_SUPPORT == 0
+inline void RTCMemoryManager::storeTime()
+{
+    auto rtc = _readTime();
+    rtc.time = time(nullptr);
+    _writeTime(rtc);
+}
 
-    inline void RTCMemoryManager::storeTime()
-    {
-        auto rtc = _readTime();
-        rtc.time = time(nullptr);
-        _writeTime(rtc);
+inline RTCMemoryManager::RtcTime RTCMemoryManager::_readTime()
+{
+    RtcTime rtc;
+    if (read(RTCMemoryId::RTC, &rtc, sizeof(rtc)) == sizeof(rtc)) {
+        return rtc;
     }
+    return RtcTime();
+}
 
-#endif
+inline void RTCMemoryManager::_writeTime(const RtcTime &time)
+{
+    write(RTCMemoryId::RTC, &time, sizeof(time));
+}
 
 inline bool RTCMemoryManager::remove(RTCMemoryId id)
 {
     return write(id, nullptr, 0);
+}
+
+inline void RTCMemoryManager::_clearTime()
+{
+    remove(RTCMemoryId::RTC);
 }
 
 inline RTCMemoryManager::SyncStatus RTCMemoryManager::getSyncStatus()
@@ -348,6 +363,24 @@ inline void RTCMemoryManager::setSyncStatus(SyncStatus newStatus)
     __LDBG_printf("new status=%u old status=%u", newStatus, rtc.status);
     if (newStatus != rtc.status) {
         rtc.status = newStatus;
+        _writeTime(rtc);
+    }
+}
+
+inline void RTCMemoryManager::setupRTC()
+{
+    #if RTC_SUPPORT_NO_TIMER == 0
+        _rtcTimer.startTimer(1000, true);
+    #endif
+}
+
+inline void RTCMemoryManager::updateTimeOffset(uint32_t offset)
+{
+    __LDBG_printf("update time offset=%ums", offset);
+    offset /= 1000;
+    if (offset) {
+        auto rtc = _readTime();
+        rtc.time += offset;
         _writeTime(rtc);
     }
 }
