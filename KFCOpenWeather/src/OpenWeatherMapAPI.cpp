@@ -53,6 +53,7 @@ bool OpenWeatherMapAPI::parseData(const String &data)
 {
     StreamString stream;
     stream.print(data);
+    _info.clear();
     return parseData(reinterpret_cast<Stream &>(stream));
 }
 
