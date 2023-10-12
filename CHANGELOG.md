@@ -2,6 +2,7 @@
 
 ## Version 0.1.6
 
+- Updated OpenWeatherMap API to OneCall API 3.0
 - Fixed memory leak in KFCConfiguration
 - Improved NVS support for KFCConfiguration
 - Generic API to access IRAM and DRAM (requires `PIO_FRAMEWORK_ARDUINO_MMU_CACHE16_IRAM48_SECHEAP_SHARED` for the ESP8266)
