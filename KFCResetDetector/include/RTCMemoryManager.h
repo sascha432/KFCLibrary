@@ -316,9 +316,11 @@ private:
 
 inline void RTCMemoryManager::storeTime()
 {
-    auto rtc = _readTime();
-    rtc.time = time(nullptr);
-    _writeTime(rtc);
+    #if RTC_SUPPORT == 0
+        auto rtc = _readTime();
+        rtc.time = time(nullptr);
+        _writeTime(rtc);
+    #endif
 }
 
 inline RTCMemoryManager::RtcTime RTCMemoryManager::_readTime()
@@ -369,20 +371,22 @@ inline void RTCMemoryManager::setSyncStatus(SyncStatus newStatus)
 
 inline void RTCMemoryManager::setupRTC()
 {
-    #if RTC_SUPPORT_NO_TIMER == 0
+    #if RTC_SUPPORT == 0 && RTC_SUPPORT_NO_TIMER == 0
         _rtcTimer.startTimer(1000, true);
     #endif
 }
 
 inline void RTCMemoryManager::updateTimeOffset(uint32_t offset)
 {
-    __LDBG_printf("update time offset=%ums", offset);
-    offset /= 1000;
-    if (offset) {
-        auto rtc = _readTime();
-        rtc.time += offset;
-        _writeTime(rtc);
-    }
+    #if RTC_SUPPORT == 0
+        __LDBG_printf("update time offset=%ums", offset);
+        offset /= 1000;
+        if (offset) {
+            auto rtc = _readTime();
+            rtc.time += offset;
+            _writeTime(rtc);
+        }
+    #endif
 }
 
 #include <pop_pack.h>
