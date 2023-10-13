@@ -15,14 +15,18 @@ OpenWeatherMapJsonReader::OpenWeatherMapJsonReader(OpenWeatherMapAPI::WeatherInf
 bool OpenWeatherMapJsonReader::beginObject(bool isArray)
 {
     if (getObjectPath(false) == F("daily[]")) {
-        #if DEBUG_OPENWEATHERMAPAPI
-            _info._updated = time(nullptr);
-        #endif
+        if (_info.limitReached) { // limit has been reached, ignore data
+            return true;
+        }
+        if (_info.daily.size() == _info.limit) { // new daily record, check if we have reached the limit
+            _info.limitReached = true; // do not read anymore
+            return true;
+        }
         _info.daily.emplace_back();
     }
-    //auto pathStr = getObjectPath(false);
-    //auto path = pathStr.c_str();
-    //Serial.printf("begin path %s array=%u\n", path, isArray);
+    // auto pathStr = getObjectPath(false);
+    // auto path = pathStr.c_str();
+    // Serial.printf("begin path %s array=%u\n", path, isArray);
     return true;
 }
 
@@ -37,9 +41,13 @@ bool OpenWeatherMapJsonReader::processElement() {
         _info.timezone = getIntValue();
     }
     else {
+        bool getDescr = true;
         OpenWeatherMapAPI::Weather_t *item = nullptr;
         if (path.startsWith(F("daily[]."))) {
-            item = &_info.daily.back();
+            if (!_info.limitReached) { // ignore data if limit has been reached
+                item = &_info.daily.back();
+                getDescr = _info.getDailyDescr;
+            }
         }
         else if (path.startsWith(F("current."))) {
             item = &_info.current;
@@ -85,7 +93,9 @@ bool OpenWeatherMapJsonReader::processElement() {
                 item->sunset = getIntValue();
             }
             else if (path.endsWith(F("weather[].description"))) {
-                item->descr = getValue();
+                if (getDescr) {
+                    item->descr = getValue();
+                }
             }
             else if (path.endsWith(F("weather[].icon"))) {
                 item->icon = getValue();
