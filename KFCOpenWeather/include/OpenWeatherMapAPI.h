@@ -58,15 +58,24 @@ public:
         }
     };
 
+    #define WEATHER_INFO_NO_DATA_YET_FSTR F("No weather data")
+
     class WeatherInfo {
     public:
 
-        WeatherInfo() : error(F("No data")) {}
+        WeatherInfo() : error(WEATHER_INFO_NO_DATA_YET_FSTR) {}
 
         time_t getSunRiseAsGMT() const;
         time_t getSunSetAsGMT() const;
         void dump(Print &output) const;
 
+        // returns true if the data has not been loaded yet
+        bool noData() const
+        {
+            return (error == WEATHER_INFO_NO_DATA_YET_FSTR);
+        }
+
+        // returns true if valid data is present
         bool hasData() const
         {
             return hasError() == false && daily.size();
