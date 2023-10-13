@@ -73,84 +73,90 @@ void KFCRestAPI::HttpRequest::setUri(const String &uri)
     __LDBG_printf("url=%s", _url.c_str());
 }
 
-void KFCRestAPI::_onData(void *ptr, HttpClient *request, size_t available)
-{
-    __LDBG_printf("available=%u, httpRequestPtr=%p", available, ptr);
-    auto &httpRequest = *reinterpret_cast<HttpRequest *>(ptr);
-    uint8_t buffer[64];
-    size_t len;
-    HeapStream stream(buffer);
-    httpRequest.setStream(&stream);
-    while((len = request->responseRead(buffer, sizeof(buffer))) > 0) {
-        __LDBG_printf("response(%u): %*.*s", len, len, len, buffer);
-        stream.setLength(len);
-        if (!httpRequest.parseStream()) {
-            request->abort();
-            request->onData(nullptr);
-            break;
+#if KFC_REST_API_USE_HTTP_CLIENT
+
+#else
+
+    void KFCRestAPI::_onData(void *ptr, HttpClient *request, size_t available)
+    {
+        __LDBG_printf("available=%u, httpRequestPtr=%p", available, ptr);
+        auto &httpRequest = *reinterpret_cast<HttpRequest *>(ptr);
+        uint8_t buffer[64];
+        size_t len;
+        HeapStream stream(buffer);
+        httpRequest.setStream(&stream);
+        while((len = request->responseRead(buffer, sizeof(buffer))) > 0) {
+            __LDBG_printf("response(%u): %*.*s", len, len, len, buffer);
+            stream.setLength(len);
+            if (!httpRequest.parseStream()) {
+                request->abort();
+                request->onData(nullptr);
+                break;
+            }
         }
     }
-}
 
-void KFCRestAPI::_onReadyStateChange(void *ptr, HttpClient *request, int readyState)
-{
-    __LDBG_printf("readyState=%d, httpRequestPtr=%p", readyState, ptr);
-    auto httpRequestPtr = reinterpret_cast<HttpRequest *>(ptr);
-    auto &httpRequest = *httpRequestPtr;
+    void KFCRestAPI::_onReadyStateChange(void *ptr, HttpClient *request, int readyState)
+    {
+        __LDBG_printf("readyState=%d, httpRequestPtr=%p", readyState, ptr);
+        auto httpRequestPtr = reinterpret_cast<HttpRequest *>(ptr);
+        auto &httpRequest = *httpRequestPtr;
 
-    if (readyState == 4) {
-        int httpCode;
+        if (readyState == 4) {
+            int httpCode;
 
-        request->onData(nullptr); // disable callback, if any data is left, onPoll() will call it again
-        if ((httpCode = request->responseHTTPcode()) == 200) {
-            // read rest of the data that was not processed by onData()
-            if (request->available()) {
-                _onData(ptr, request, request->available());
-            }
-            httpRequest.finish(200);
-
-        } else {
-
-            String message;
-            // int code = 0;
-
-            // read response
-            uint8_t buffer[64];
-            HeapStream stream(buffer);
-            JsonCallbackReader reader(stream, [&message](const String& key, const String& value, size_t partialLength, JsonBaseReader& json) {
-                if (json.getLevel() == 1 && key.equals(F("message"))) {
-                    message = value;
+            request->onData(nullptr); // disable callback, if any data is left, onPoll() will call it again
+            if ((httpCode = request->responseHTTPcode()) == 200) {
+                // read rest of the data that was not processed by onData()
+                if (request->available()) {
+                    _onData(ptr, request, request->available());
                 }
-                return true;
+                httpRequest.finish(200);
+
+            } else {
+
+                String message;
+                // int code = 0;
+
+                // read response
+                uint8_t buffer[64];
+                HeapStream stream(buffer);
+                JsonCallbackReader reader(stream, [&message](const String& key, const String& value, size_t partialLength, JsonBaseReader& json) {
+                    if (json.getLevel() == 1 && key.equals(F("message"))) {
+                        message = value;
+                    }
+                    return true;
+                });
+                reader.parseStream();
+
+                size_t len;
+                while((len = request->responseRead(buffer, sizeof(buffer))) > 0) {
+                    __LDBG_printf("response(%u): %*.*s", len, len, len, buffer);
+                    stream.setLength(len);
+                    if (!reader.parseStream()) {
+                        break;
+                    }
+                }
+
+                if (message.length()) {
+                    httpRequest.setMessage(message);
+                }
+                else {
+                    httpRequest.setMessage(PrintString(F("HTTP error code %d"), httpCode));
+                }
+
+                __LDBG_printf("http_code=%d code=%d message=%s", httpCode, readyState, message.c_str());
+                httpRequest.finish(httpCode);
+            }
+
+            LoopFunctions::callOnce([httpRequestPtr]() {
+                KFCRestAPI::_removeHttpRequest(httpRequestPtr);
             });
-            reader.parseStream();
 
-            size_t len;
-            while((len = request->responseRead(buffer, sizeof(buffer))) > 0) {
-                __LDBG_printf("response(%u): %*.*s", len, len, len, buffer);
-                stream.setLength(len);
-                if (!reader.parseStream()) {
-                    break;
-                }
-            }
-
-            if (message.length()) {
-                httpRequest.setMessage(message);
-            }
-            else {
-                httpRequest.setMessage(PrintString(F("HTTP error code %d"), httpCode));
-            }
-
-            __LDBG_printf("http_code=%d code=%d message=%s", httpCode, readyState, message.c_str());
-            httpRequest.finish(httpCode);
         }
-
-        LoopFunctions::callOnce([httpRequestPtr]() {
-            KFCRestAPI::_removeHttpRequest(httpRequestPtr);
-        });
-
     }
-}
+
+#endif
 
 void KFCRestAPI::_removeHttpRequest(KFCRestAPI::HttpRequest *httpRequestPtr)
 {
@@ -175,31 +181,72 @@ void KFCRestAPI::_createRestApiCall(const String &endPointUri, const String &bod
     _requests.push_back(httpRequestPtr);
     auto &request = httpRequest.getRequest();
 
-    request.onData(_onData, httpRequestPtr);
-    request.onReadyStateChange(_onReadyStateChange, httpRequestPtr);
+    #if !KFC_REST_API_USE_HTTP_CLIENT
+        request.onData(_onData, httpRequestPtr);
+        request.onReadyStateChange(_onReadyStateChange, httpRequestPtr);
+    #endif
     request.setTimeout(_timeout);
     httpRequest.setUri(endPointUri);
 
-    if (request.open(String(body.length() ? F("POST") : F("GET")).c_str(), httpRequest.getUrl())) {
+    #if KFC_REST_API_USE_HTTP_CLIENT
 
+        // connect
+
+        // TODO
+        #error TODO
+
+        // send request
         _headers.setHeadersCallback([&request](const String &name, const String &header) {
-            #if ESP32
-                request.setReqHeader(name, header);
-            #else
-                request.setReqHeader(name.c_str(), header.c_str());
-            #endif
+            request.addHeader(name, header);
         }, true);
+        if (request.sendRequest(String(body.length() ? F("POST") : F("GET")).c_str(), body)) {
 
-        if (request.send(body.c_str())) {
+            // implement polling
+            LoopFunctions::add([httpRequestPtr]() {
+
+                auto &httpRequest = *httpRequestPtr;
+                auto &request = httpRequest.getRequest();
+
+                // read response stream and data feed to parser
+
+                // TODO
+
+                // on error remove loop function and call
+                if (false) { //TODO
+                    LoopFunctions::remove(httpRequestPtr);
+                    _removeHttpRequest(httpRequestPtr);
+                }
+
+            }, httpRequestPtr);
 
         } else {
             httpRequest.setMessage(PrintString(F("HTTP client send error (%s)"), httpRequest.getUrl()));
             httpRequest.finish(-101);
         }
 
-    }
-    else {
-        httpRequest.setMessage(PrintString(F("HTTP client open error (%s)"), httpRequest.getUrl()));
-        httpRequest.finish(-100);
-    }
+    #else
+
+        if (request.open(String(body.length() ? F("POST") : F("GET")).c_str(), httpRequest.getUrl())) {
+            _headers.setHeadersCallback([&request](const String &name, const String &header) {
+                #if ESP32
+                    request.setReqHeader(name, header);
+                #else
+                    request.setReqHeader(name.c_str(), header.c_str());
+                #endif
+            }, true);
+            if (request.send(body.c_str())) {
+
+                // request is handled by callbacks
+
+            } else {
+                httpRequest.setMessage(PrintString(F("HTTP client send error (%s)"), httpRequest.getUrl()));
+                httpRequest.finish(-101);
+            }
+        }
+        else {
+            httpRequest.setMessage(PrintString(F("HTTP client open error (%s)"), httpRequest.getUrl()));
+            httpRequest.finish(-100);
+        }
+
+    #endif
 }

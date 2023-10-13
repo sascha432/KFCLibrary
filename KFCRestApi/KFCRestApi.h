@@ -25,7 +25,6 @@
 #endif
 
 #if KFC_REST_API_USE_HTTP_CLIENT
-#    error not implemented
 #    include "ESP8266HttpClient.h"
 #else
 class asyncHTTPrequest;
