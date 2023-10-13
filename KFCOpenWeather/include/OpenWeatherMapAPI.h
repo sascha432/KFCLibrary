@@ -180,7 +180,7 @@ public:
     // return weather data
     WeatherInfo &getInfo();
 
-    // print all data and crc16
+    // debug print all data and crcs
     void dump(Print &output) const;
 
     // helpers

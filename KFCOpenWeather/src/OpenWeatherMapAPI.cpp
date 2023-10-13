@@ -54,20 +54,15 @@ void OpenWeatherMapAPI::WeatherInfo::dump(Print &output) const
         output.print(F("No Data"));
 
     }
-    output.printf_P(PSTR(" Daily: %u/%u/%d TZ: %d\n"), daily.size(), limit, limitReached, timezone);
-    output.flush();
-    delay(100);
+    output.printf_P(PSTR(" Forecast: %u/%u/%d TZ: %d\n"), daily.size(), limit, limitReached, timezone);
 
     output.print(F("Current "));
     output.printf_P(PSTR("Temp.: %.1fC (%.1f) (min/max %.1f/%.1f) "), current.temperature, current.feels_like, current.temperature_min, current.temperature_max);
     output.printf_P(PSTR("Humidity: %d %% Press.: %d hPa"), current.humidity, current.pressure);
     output.printf_P(PSTR(" Descr: %s\n"), current.descr.c_str());
-    output.flush();
-    delay(100);
 
     // calculate crc to compare changes
-    auto crc = current.crc16();
-
+    uint16_t crc = ~0;
     int day = 0;
     for(auto const &current: daily) {
         output.printf_P(PSTR("Day #%d "), day++);
@@ -79,11 +74,9 @@ void OpenWeatherMapAPI::WeatherInfo::dump(Print &output) const
         else {
             output.println();
         }
-    output.flush();
-    delay(100);
         crc = current.crc16(crc);
     }
-    output.printf_P(PSTR("CRC16: %04x\n"), crc);
+    output.printf_P(PSTR("CRCs: %04x %04x\n"), current.crc16(), crc);
 }
 
 void OpenWeatherMapAPI::dump(Print &output) const
