@@ -4,6 +4,8 @@
 
 #include "OpenWeatherMapAPI.h"
 #include "OpenWeatherMapJsonReader.h"
+// #include <StreamString.h>
+#include <HeapStream.h>
 #include <misc.h>
 
 #if DEBUG_OPENWEATHERMAPAPI
@@ -51,14 +53,19 @@ String OpenWeatherMapAPI::getApiUrl() const
 
 bool OpenWeatherMapAPI::parseData(const String &data)
 {
-    StreamString stream;
-    stream.print(data);
+    // StreamString stream;
+    // stream.print(data);
+    HeapStream stream(data);
     _info.clear();
     return parseData(reinterpret_cast<Stream &>(stream));
 }
 
 bool OpenWeatherMapAPI::parseData(Stream &stream)
 {
+    __LDBG_printf("data=%u", stream.available());
+    #if DEBUG_OPENWEATHERMAPAPI
+        _info._updated = time(nullptr);
+    #endif
     return OpenWeatherMapJsonReader(&stream, _info).parse();
 }
 
@@ -86,6 +93,9 @@ time_t OpenWeatherMapAPI::WeatherInfo::getSunSetAsGMT() const
 
 void OpenWeatherMapAPI::WeatherInfo::dump(Print &output) const
 {
+    #if DEBUG_OPENWEATHERMAPAPI
+        output.printf_P(PSTR("Updated: " TIME_T_FMT "\n"), _updated);
+    #endif
     output.printf_P(PSTR("Error: %s\n"), error.c_str());
     output.printf_P(PSTR("Timezone: %d\n"), timezone);
 
@@ -106,6 +116,9 @@ void OpenWeatherMapAPI::WeatherInfo::dump(Print &output) const
 
 void OpenWeatherMapAPI::dump(Print &output) const
 {
+    #if DEBUG_OPENWEATHERMAPAPI
+        __LDBG_printf("updated=" TIME_T_FMT, _info._updated);
+    #endif
     if (_info.hasData()) {
         _info.dump(output);
     }

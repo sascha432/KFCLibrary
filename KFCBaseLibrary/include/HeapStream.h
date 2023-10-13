@@ -25,7 +25,7 @@ public:
     HeapStream(const char *data) : HeapStream(data, strlen(data)) {
     }
     // String class
-    HeapStream(String &data) : HeapStream(data.c_str(), data.length()) {
+    HeapStream(const String &data) : HeapStream(data.c_str(), data.length()) {
     }
 
     void setLength(size_t length) {

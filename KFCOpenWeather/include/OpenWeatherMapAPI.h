@@ -10,7 +10,6 @@
 
 #include <Arduino_compat.h>
 #include <JsonBaseReader.h>
-#include <StreamString.h>
 #include <map>
 
 #ifndef DEBUG_OPENWEATHERMAPAPI
@@ -75,6 +74,7 @@ public:
 
         void clear()
         {
+            __LDBG_printf("size=%u", daily.size());
             *this = WeatherInfo();
         }
 
@@ -98,6 +98,9 @@ public:
         int32_t timezone;
         Weather_t current;
         std::vector<OpenWeatherMapAPI::Weather_t> daily;
+        #if DEBUG_OPENWEATHERMAPAPI
+            time_t _updated{0};
+        #endif
     };
 
     OpenWeatherMapAPI();

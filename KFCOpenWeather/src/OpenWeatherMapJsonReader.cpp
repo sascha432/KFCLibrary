@@ -15,6 +15,9 @@ OpenWeatherMapJsonReader::OpenWeatherMapJsonReader(OpenWeatherMapAPI::WeatherInf
 bool OpenWeatherMapJsonReader::beginObject(bool isArray)
 {
     if (getObjectPath(false) == F("daily[]")) {
+        #if DEBUG_OPENWEATHERMAPAPI
+            _info._updated = time(nullptr);
+        #endif
         _info.daily.emplace_back();
     }
     //auto pathStr = getObjectPath(false);
