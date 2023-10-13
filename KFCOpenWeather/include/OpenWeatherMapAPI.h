@@ -10,6 +10,7 @@
 
 #include <Arduino_compat.h>
 #include <JsonBaseReader.h>
+#include <crc16.h>
 #include <map>
 
 #ifndef DEBUG_OPENWEATHERMAPAPI
@@ -51,10 +52,21 @@ public:
             sunset(0),
             wind_speed(NAN),
             wind_deg(0)
-        {}
+        {
+        }
 
-        void clear() {
+        // reset to defaults
+        void clear()
+        {
             *this = Weather_t();
+        }
+
+        // calculate crc16 over all data
+        uint16_t crc16(uint16_t crc = ~0) const
+        {
+            auto newCrc = crc16_update(crc, this, offsetof(Weather_t, descr));
+            newCrc = crc16_update(newCrc, descr.c_str(), descr.length());
+            return crc16_update(newCrc, icon.c_str(), icon.length());
         }
     };
 
@@ -62,15 +74,35 @@ public:
 
     class WeatherInfo {
     public:
+        static constexpr uint32_t kDailyLimit = 31;
 
-        WeatherInfo() : error(WEATHER_INFO_NO_DATA_YET_FSTR) {}
+        WeatherInfo() :
+            error(WEATHER_INFO_NO_DATA_YET_FSTR),
+            limit(kDailyLimit),
+            limitReached(false),
+            getDailyDescr(true)
+        {
+        }
 
         time_t getSunRiseAsGMT() const;
         time_t getSunSetAsGMT() const;
+
+        // debug dump data
         void dump(Print &output) const;
 
+        // clear data
+        void clear()
+        {
+            __LDBG_printf("size=%u", daily.size());
+            error = WEATHER_INFO_NO_DATA_YET_FSTR;
+            timezone = 0;
+            current.clear();
+            daily.clear();
+            limitReached = false;
+        }
+
         // returns true if the data has not been loaded yet
-        bool noData() const
+        bool hasNoData() const
         {
             return (error == WEATHER_INFO_NO_DATA_YET_FSTR);
         }
@@ -78,62 +110,80 @@ public:
         // returns true if valid data is present
         bool hasData() const
         {
-            return hasError() == false && daily.size();
+            return !hasError();
         }
 
-        void clear()
+        // report error
+        // use hasNoData() to determine if an attempt was made to load data
+        bool hasError() const
         {
-            __LDBG_printf("size=%u", daily.size());
-            *this = WeatherInfo();
-        }
-
-        bool hasError() const {
             return daily.empty();
         }
 
-        const String &getError() const {
+        // get error message
+        // use hasError() to determine if an occur has occured
+        const String &getError() const
+        {
             return error;
         }
 
-        void setError(const String &message) {
-            clear();
+        // set error message
+        void setError(const String &message)
+        {
+            clear(); // clear data to indicate an error has occurred
             error = message;
-            current.clear();
-            daily.clear();
         }
 
     public:
         String error;
-        int32_t timezone;
-        Weather_t current;
-        std::vector<OpenWeatherMapAPI::Weather_t> daily;
-        #if DEBUG_OPENWEATHERMAPAPI
-            time_t _updated{0};
-        #endif
+        int32_t timezone;   // timezone of the weather data
+        Weather_t current;  // current weather info
+        std::vector<OpenWeatherMapAPI::Weather_t> daily; // daily weather info, starting with today
+        uint16_t limit;
+        bool limitReached;
+        bool getDailyDescr;
     };
 
     OpenWeatherMapAPI();
     OpenWeatherMapAPI(const String &apiKey);
 
+    // clear data
     void clear();
 
+    // set API key
     void setAPIKey(const String &key);
+    // set location
     void setLatitude(double lat);
+    // set location
     void setLongitude(double lng);
+    // set max. daily forecast to keep, must be >= 1
+    void setDailyLimit(uint32_t limit);
+    // set to true to read the description for forecasts
+    void setGetDailyDescr(bool value);
 
+    // get API url
     String getApiUrl() const;
-    String getWeatherApiUrl() const;
-    String getForecastApiUrl() const;
 
+    // parse data
+    // returns false on EOF, until then more data can be fed
+    // if any data is present, use clear before calling it the first time
     bool parseData(const String &data);
+
+    // parse data
+    // returns false on EOF, until then more data can be fed
+    // if any data is present, use clear before calling it the first time
     bool parseData(Stream &stream);
 
+    // create parser object dynamically. needs to be freed with delete
     KFCJson::JsonBaseReader *getParser();
 
-    WeatherInfo &getWeatherInfo();
+    // return weather data
+    WeatherInfo &getInfo();
 
+    // print all data and crc16
     void dump(Print &output) const;
 
+    // helpers
     static float CtoF(float temp);
     static float kmToMiles(float km);
 
@@ -141,9 +191,80 @@ private:
     double _lat;
     double _long;
     String _apiKey;
-public:
     WeatherInfo _info;
 };
+
+//
+// OpenWeatherMapAPI
+//
+
+inline OpenWeatherMapAPI::OpenWeatherMapAPI()
+{
+}
+
+inline OpenWeatherMapAPI::OpenWeatherMapAPI(const String &apiKey) :
+    _apiKey(apiKey)
+{
+}
+
+inline void OpenWeatherMapAPI::clear()
+{
+    _info.clear();
+}
+
+inline void OpenWeatherMapAPI::setAPIKey(const String &key)
+{
+    _apiKey = key;
+}
+
+inline void OpenWeatherMapAPI::setLatitude(double lat)
+{
+    _lat = lat;
+}
+
+inline void OpenWeatherMapAPI::setLongitude(double lon)
+{
+    _long = lon;
+}
+
+inline void OpenWeatherMapAPI::setDailyLimit(uint32_t limit)
+{
+    _info.limit = limit;
+}
+
+inline void OpenWeatherMapAPI::setGetDailyDescr(bool value)
+{
+    _info.getDailyDescr = value;
+}
+
+inline OpenWeatherMapAPI::WeatherInfo &OpenWeatherMapAPI::getInfo()
+{
+    return _info;
+}
+
+inline float OpenWeatherMapAPI::CtoF(float temp)
+{
+    return temp * (9.0f / 5.0f) + 32;
+}
+
+inline float OpenWeatherMapAPI::kmToMiles(float km)
+{
+    return km / 1.60934f;
+}
+
+//
+// OpenWeatherMapAPI::WeatherInfo
+//
+
+inline time_t OpenWeatherMapAPI::WeatherInfo::getSunRiseAsGMT() const
+{
+    return current.sunrise + timezone;
+}
+
+inline time_t OpenWeatherMapAPI::WeatherInfo::getSunSetAsGMT() const
+{
+    return current.sunset + timezone;
+}
 
 #if DEBUG_OPENWEATHERMAPAPI
 #    include "debug_helper_disable.h"

@@ -6,10 +6,15 @@
 
 using namespace KFCJson;
 
-OpenWeatherMapJsonReader::OpenWeatherMapJsonReader(Stream *stream, OpenWeatherMapAPI::WeatherInfo & info) : JsonBaseReader(stream), _info(info) {
+OpenWeatherMapJsonReader::OpenWeatherMapJsonReader(Stream *stream, OpenWeatherMapAPI::WeatherInfo & info) :
+    JsonBaseReader(stream),
+    _info(info)
+{
 }
 
-OpenWeatherMapJsonReader::OpenWeatherMapJsonReader(OpenWeatherMapAPI::WeatherInfo & info) : OpenWeatherMapJsonReader(nullptr, info) {
+OpenWeatherMapJsonReader::OpenWeatherMapJsonReader(OpenWeatherMapAPI::WeatherInfo & info) :
+    OpenWeatherMapJsonReader(nullptr, info)
+{
 }
 
 bool OpenWeatherMapJsonReader::beginObject(bool isArray)

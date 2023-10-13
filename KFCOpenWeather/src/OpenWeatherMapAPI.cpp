@@ -14,34 +14,6 @@
 #    include "debug_helper_disable.h"
 #endif
 
-OpenWeatherMapAPI::OpenWeatherMapAPI()
-{
-}
-
-OpenWeatherMapAPI::OpenWeatherMapAPI(const String &apiKey) : _apiKey(apiKey)
-{
-}
-
-void OpenWeatherMapAPI::clear()
-{
-    _info.clear();
-}
-
-void OpenWeatherMapAPI::setAPIKey(const String &key)
-{
-    _apiKey = key;
-}
-
-void OpenWeatherMapAPI::setLatitude(double lat)
-{
-    _lat = lat;
-}
-
-void OpenWeatherMapAPI::setLongitude(double lon)
-{
-    _long = lon;
-}
-
 String OpenWeatherMapAPI::getApiUrl() const
 {
     String url = F(OPENWEATHERMAP_ONECALL_API_URL);
@@ -53,19 +25,15 @@ String OpenWeatherMapAPI::getApiUrl() const
 
 bool OpenWeatherMapAPI::parseData(const String &data)
 {
-    // StreamString stream;
+    // StreamString stream; // create a copy of data
     // stream.print(data);
-    HeapStream stream(data);
-    _info.clear();
+    HeapStream stream(data); // use data directly
     return parseData(reinterpret_cast<Stream &>(stream));
 }
 
 bool OpenWeatherMapAPI::parseData(Stream &stream)
 {
     __LDBG_printf("data=%u", stream.available());
-    #if DEBUG_OPENWEATHERMAPAPI
-        _info._updated = time(nullptr);
-    #endif
     return OpenWeatherMapJsonReader(&stream, _info).parse();
 }
 
@@ -76,49 +44,50 @@ JsonBaseReader *OpenWeatherMapAPI::getParser()
     return parser;
 }
 
-OpenWeatherMapAPI::WeatherInfo &OpenWeatherMapAPI::getWeatherInfo()
-{
-    return _info;
-}
-
-time_t OpenWeatherMapAPI::WeatherInfo::getSunRiseAsGMT() const
-{
-    return current.sunrise + timezone;
-}
-
-time_t OpenWeatherMapAPI::WeatherInfo::getSunSetAsGMT() const
-{
-    return current.sunset + timezone;
-}
-
 void OpenWeatherMapAPI::WeatherInfo::dump(Print &output) const
 {
-    #if DEBUG_OPENWEATHERMAPAPI
-        output.printf_P(PSTR("Updated: " TIME_T_FMT "\n"), _updated);
-    #endif
-    output.printf_P(PSTR("Error: %s\n"), error.c_str());
-    output.printf_P(PSTR("Timezone: %d\n"), timezone);
+    if (hasError()) {
+        output.print(F("Error: "));
+        output.print(error);
+    }
+    if (hasNoData()) {
+        output.print(F("No Data"));
 
-    output.printf_P(PSTR("Temperature: %.1fC (%.1f) (min/max %.1f/%.1f)\n"), current.temperature, current.feels_like, current.temperature_min, current.temperature_max);
-    output.printf_P(PSTR("Humidity: %d %%\n"), current.humidity);
-    output.printf_P(PSTR("Pressure: %d hPa\n"), current.pressure);
-    output.printf_P(PSTR("Descr: %s\n"), current.descr.c_str());
+    }
+    output.printf_P(PSTR(" Daily: %u/%u/%d TZ: %d\n"), daily.size(), limit, limitReached, timezone);
+    output.flush();
+    delay(100);
+
+    output.print(F("Current "));
+    output.printf_P(PSTR("Temp.: %.1fC (%.1f) (min/max %.1f/%.1f) "), current.temperature, current.feels_like, current.temperature_min, current.temperature_max);
+    output.printf_P(PSTR("Humidity: %d %% Press.: %d hPa"), current.humidity, current.pressure);
+    output.printf_P(PSTR(" Descr: %s\n"), current.descr.c_str());
+    output.flush();
+    delay(100);
+
+    // calculate crc to compare changes
+    auto crc = current.crc16();
 
     int day = 0;
     for(auto const &current: daily) {
-        output.printf_P(PSTR("Day #%d:\n"), day++);
-        output.printf_P(PSTR("Temperature: %.1fC (%.1f) (min/max %.1f/%.1f)\n"), current.temperature, current.feels_like, current.temperature_min, current.temperature_max);
-        output.printf_P(PSTR("Humidity: %d %%\n"), current.humidity);
-        output.printf_P(PSTR("Pressure: %d hPa\n"), current.pressure);
-        output.printf_P(PSTR("Descr: %s\n"), current.descr.c_str());
+        output.printf_P(PSTR("Day #%d "), day++);
+        output.printf_P(PSTR("Temp.: %.1fC (%.1f) (min/max %.1f/%.1f) "), current.temperature, current.feels_like, current.temperature_min, current.temperature_max);
+        output.printf_P(PSTR("Humidity: %d %% Press.: %d hPa"), current.humidity, current.pressure);
+        if (getDailyDescr) {
+            output.printf_P(PSTR(" Descr: %s\n"), current.descr.c_str());
+        }
+        else {
+            output.println();
+        }
+    output.flush();
+    delay(100);
+        crc = current.crc16(crc);
     }
+    output.printf_P(PSTR("CRC16: %04x\n"), crc);
 }
 
 void OpenWeatherMapAPI::dump(Print &output) const
 {
-    #if DEBUG_OPENWEATHERMAPAPI
-        __LDBG_printf("updated=" TIME_T_FMT, _info._updated);
-    #endif
     if (_info.hasData()) {
         _info.dump(output);
     }
@@ -131,14 +100,3 @@ void OpenWeatherMapAPI::dump(Print &output) const
         }
     }
 }
-
-float OpenWeatherMapAPI::CtoF(float temp)
-{
-    return temp * (9.0f / 5.0f) + 32;
-}
-
-float OpenWeatherMapAPI::kmToMiles(float km)
-{
-    return km / 1.60934f;
-}
-
