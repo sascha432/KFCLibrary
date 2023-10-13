@@ -61,7 +61,7 @@ public:
             *this = Weather_t();
         }
 
-        // calculate crc16 over all data
+        // debug calculate crc16 over all data
         uint16_t crc16(uint16_t crc = ~0) const
         {
             auto newCrc = crc16_update(crc, this, offsetof(Weather_t, descr));
@@ -121,7 +121,7 @@ public:
         }
 
         // get error message
-        // use hasError() to determine if an occur has occured
+        // use hasError() to determine if an occur has occurred
         const String &getError() const
         {
             return error;
@@ -165,13 +165,11 @@ public:
     String getApiUrl() const;
 
     // parse data
-    // returns false on EOF, until then more data can be fed
-    // if any data is present, use clear before calling it the first time
+    // returns false on EOF, until then more data can be fed. the minimum size is one byte
     bool parseData(const String &data);
 
     // parse data
-    // returns false on EOF, until then more data can be fed
-    // if any data is present, use clear before calling it the first time
+    // returns false on EOF, until then more data can be fed. the minimum size is one byte
     bool parseData(Stream &stream);
 
     // create parser object dynamically. needs to be freed with delete

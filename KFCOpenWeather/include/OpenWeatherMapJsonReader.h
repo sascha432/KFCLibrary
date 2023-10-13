@@ -22,3 +22,19 @@ public:
 private:
     OpenWeatherMapAPI::WeatherInfo &_info;
 };
+
+inline OpenWeatherMapJsonReader::OpenWeatherMapJsonReader(Stream *stream, OpenWeatherMapAPI::WeatherInfo &info) :
+    JsonBaseReader(stream),
+    _info(info)
+{
+}
+
+inline OpenWeatherMapJsonReader::OpenWeatherMapJsonReader(OpenWeatherMapAPI::WeatherInfo &info) :
+    OpenWeatherMapJsonReader(nullptr, info)
+{
+}
+
+inline bool OpenWeatherMapJsonReader::recoverableError(JsonErrorEnum_t errorType)
+{
+    return true;
+}
