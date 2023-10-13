@@ -4,13 +4,18 @@
 
 #pragma once
 
+#if ASYNC_TCP_SSL_ENABLED || KFC_REST_API_USE_HTTP_CLIENT
+#    define OPENWEATHERMAP_ONECALL_API_SCHEME "https"
+#else
+#    define OPENWEATHERMAP_ONECALL_API_SCHEME "http"
+#endif
+
 #ifndef OPENWEATHERMAP_ONECALL_API_URL
-#    define OPENWEATHERMAP_ONECALL_API_URL "http://api.openweathermap.org/data/3.0/onecall?exclude=minutely,hourly,alerts&units=metric&lat={lat}&lon={lon}&appid={api_key}"
+#    define OPENWEATHERMAP_ONECALL_API_URL OPENWEATHERMAP_ONECALL_API_SCHEME "://api.openweathermap.org/data/3.0/onecall?exclude=minutely,hourly,alerts&units=metric&lat={lat}&lon={lon}&appid={api_key}"
 #endif
 
 #include <Arduino_compat.h>
 #include <JsonBaseReader.h>
-#include <crc16.h>
 #include <map>
 
 #ifndef DEBUG_OPENWEATHERMAPAPI
@@ -59,14 +64,6 @@ public:
         void clear()
         {
             *this = Weather_t();
-        }
-
-        // debug calculate crc16 over all data
-        uint16_t crc16(uint16_t crc = ~0) const
-        {
-            auto newCrc = crc16_update(crc, this, offsetof(Weather_t, descr));
-            newCrc = crc16_update(newCrc, descr.c_str(), descr.length());
-            return crc16_update(newCrc, icon.c_str(), icon.length());
         }
     };
 

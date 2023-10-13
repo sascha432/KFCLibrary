@@ -25,6 +25,7 @@
 #endif
 
 #if KFC_REST_API_USE_HTTP_CLIENT
+#    error not implemented
 #    include "ESP8266HttpClient.h"
 #else
 class asyncHTTPrequest;
@@ -34,7 +35,11 @@ using namespace KFCJson;
 
 class KFCRestAPI {
 public:
-    using HttpClient = asyncHTTPrequest;
+    #if KFC_REST_API_USE_HTTP_CLIENT
+        using HttpClient = ::HTTPClient;
+    #else
+        using HttpClient = asyncHTTPrequest;
+    #endif
 
     class HttpRequest {
     public:

@@ -61,8 +61,6 @@ void OpenWeatherMapAPI::WeatherInfo::dump(Print &output) const
     output.printf_P(PSTR("Humidity: %d %% Press.: %d hPa"), current.humidity, current.pressure);
     output.printf_P(PSTR(" Descr: %s\n"), current.descr.c_str());
 
-    // calculate crc to compare changes
-    uint16_t crc = ~0;
     int day = 0;
     for(auto const &current: daily) {
         output.printf_P(PSTR("Day #%d "), day++);
@@ -74,9 +72,7 @@ void OpenWeatherMapAPI::WeatherInfo::dump(Print &output) const
         else {
             output.println();
         }
-        crc = current.crc16(crc);
     }
-    output.printf_P(PSTR("CRCs: %04x %04x\n"), current.crc16(), crc);
 }
 
 void OpenWeatherMapAPI::dump(Print &output) const
