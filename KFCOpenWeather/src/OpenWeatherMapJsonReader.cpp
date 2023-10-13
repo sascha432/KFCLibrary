@@ -4,48 +4,46 @@
 
 #include "OpenWeatherMapJsonReader.h"
 
+// 0 for none, 1 for objects, 2 for each element
+#define DEBUG_OPENWEATHERMAPAPI_PARSER 0
+
 using namespace KFCJson;
-
-OpenWeatherMapJsonReader::OpenWeatherMapJsonReader(Stream *stream, OpenWeatherMapAPI::WeatherInfo & info) :
-    JsonBaseReader(stream),
-    _info(info)
-{
-}
-
-OpenWeatherMapJsonReader::OpenWeatherMapJsonReader(OpenWeatherMapAPI::WeatherInfo & info) :
-    OpenWeatherMapJsonReader(nullptr, info)
-{
-}
 
 bool OpenWeatherMapJsonReader::beginObject(bool isArray)
 {
-    if (getObjectPath(false) == F("daily[]")) {
-        if (_info.limitReached) { // limit has been reached, ignore data
-            return true;
-        }
-        if (_info.daily.size() == _info.limit) { // new daily record, check if we have reached the limit
+    auto path = getObjectPath(false);
+    if (path.length() == 0) {
+        _info.clear(); // outer most object/array starts, clear existing data
+        return true;
+    }
+    if (path == F("daily[]")) {
+        if (_info.limitReached || _info.daily.size() == _info.limit) { // new daily record, check if we have reached the limit
             _info.limitReached = true; // do not read anymore
             return true;
         }
         _info.daily.emplace_back();
     }
-    // auto pathStr = getObjectPath(false);
-    // auto path = pathStr.c_str();
-    // Serial.printf("begin path %s array=%u\n", path, isArray);
+    #if DEBUG_OPENWEATHERMAPAPI_PARSER
+        auto pathStr = getObjectPath(false);
+        auto path = pathStr.c_str();
+        Serial.printf("begin path %s array=%u\n", path, isArray);
+    #endif
     return true;
 }
 
-bool OpenWeatherMapJsonReader::processElement() {
-
+bool OpenWeatherMapJsonReader::processElement()
+{
     auto key = getKey();
-    auto path = getPath(false);
 
-    // Serial.printf("key %s value %s type %s path %s index %d\n", key.c_str(), getValue().c_str(), (PGM_P)jsonType2String(getType()), path.c_str(), getObjectIndex());
+    #if DEBUG_OPENWEATHERMAPAPI_PARSER > 1
+        Serial.printf("key %s value %s type %s path %s index %d\n", key.c_str(), getValue().c_str(), (PGM_P)jsonType2String(getType()), getPath(false).c_str(), getObjectIndex());
+    #endif
 
     if (key == (F("timezone_offset"))) {
         _info.timezone = getIntValue();
     }
     else {
+        auto path = getPath(false);
         bool getDescr = true;
         OpenWeatherMapAPI::Weather_t *item = nullptr;
         if (path.startsWith(F("daily[]."))) {
@@ -108,9 +106,5 @@ bool OpenWeatherMapJsonReader::processElement() {
         }
     }
 
-    return true;
-}
-
-bool OpenWeatherMapJsonReader::recoverableError(JsonErrorEnum_t errorType) {
     return true;
 }
