@@ -541,13 +541,16 @@ private:
         static uint32_t _nvs_key_handle(ConfigurationParameter::TypeEnum_t type, HandleType handle);
         String _nvs_key_handle_name(ConfigurationParameter::TypeEnum_t type, HandleType handle) const;
 
+    public:
         esp_err_t _nvs_open(bool readWrite);
         esp_err_t _nvs_commit();
         void _nvs_close();
 
+    private:
         void _nvs_init(); // must be called before any other method is used
         void _nvs_deinit(); // the nvs namespace must be closed before called deinit
 
+    public:
         esp_err_t _nvs_get_blob_with_open(const String &keyStr, void *out_value, size_t *length);
         esp_err_t _nvs_get_blob(const String &keyStr, void *out_value, size_t *length);
         esp_err_t _nvs_set_blob(const String &keyStr, const void *value, size_t length);
