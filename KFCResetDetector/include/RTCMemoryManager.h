@@ -82,7 +82,7 @@ public:
         static constexpr auto kBaseAddress = 0;
         static constexpr auto kBlockSize = 1;
         static constexpr auto kRTCMemorySize = kMemorySize * kBlockSize;
-        static_assert(kBaseAddress != 0, "invalid kBaseAddress");
+        static_assert(kBaseAddress == 0, "invalid kBaseAddress");
     #else
         #error invalid target
     #endif
