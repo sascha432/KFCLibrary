@@ -91,7 +91,7 @@ namespace STL_STD_EXT_NAMESPACE_EX {
                 return ce_assert(pos_ < Array::size), (*array_)[pos_];
             }
 
-#if __cplusplus >= 201402L // C++14
+#if __HAS_CPP14
             constexpr
 #endif
                 array_iterator &operator ++() noexcept
@@ -201,6 +201,103 @@ namespace STL_STD_EXT_NAMESPACE_EX {
 
     // static constexpr auto ExampleArrayInt = Array<16>::value;
     // static constexpr auto ExampleArrayUint8 = Array<16, UInt8ArrayFormatter>::value;
+
+#if __HAS_CPP17
+
+    // constexpr array/string functions
+
+    #define ARRAY_PSTRN(s,n)    (__extension__({static constexpr auto strArray __attribute__((__aligned__(n))) __attribute__((section( "\".irom0.pstr." __FILE__ "." __STRINGIZE(__LINE__) "."  __STRINGIZE(__COUNTER__) "\", \"aSM\", @progbits, 1 #"))) = (stdex::array_concat(s, stdex::char_to_array<0>())); &strArray.data()[0];}))
+    #define ARRAY_PSTR(s)       ARRAY_PSTRN(s, 1)
+    #define ARRAY_F(s)          FPSTR(ARRAY_PSTR(s))
+
+    // // example
+    // constexpr int NUMBER = -42;
+    // Serial.println(ARRAY_F(stdex::array_concat(stdex::str_to_array("Hello "), stdex::int_to_array<int, NUMBER>(), stdex::str_to_array("!"))));
+
+    template <typename T, T N, size_t BASE>
+    constexpr std::size_t __count_digit() {
+        if (N == 0) {
+            return 1;
+        }
+        std::size_t res = 0;
+        if (N < 0) {
+            ++res;
+        }
+        for (int i = N < 0 ? -N : N; i; i /= BASE) {
+            ++res;
+        }
+        return res;
+    }
+
+    template <typename T, T N>
+    constexpr auto int_to_array()
+    {
+        constexpr auto digit_count = __count_digit<T, N, 10>();
+        std::array<char, digit_count> res{};
+
+        auto n = N;
+        auto d = digit_count;
+        if (n < 0) {
+            n = -n;
+            res[0] = '-';
+            --d;
+        }
+        for (std::size_t i = 0; i != d; ++i) {
+            res[digit_count - 1 - i] = static_cast<char>('0' + n % 10);
+            n /= 10;
+        }
+        return res;
+    }
+
+    template<uintmax_t N, bool UPPERCASE = false>
+    constexpr auto hex_to_array()
+    {
+        constexpr auto digit_count = stdex::__count_digit<uintmax_t, N, 16>();
+        std::array<char, digit_count> res{};
+
+        auto n = N;
+        for (std::size_t i = 0; i != digit_count; ++i) {
+            auto ch = n % 16;
+            if (ch > 9) {
+                ch += (UPPERCASE ? 'A' : 'a') - 10;
+            }
+            else {
+                ch += '0';
+            }
+            res[digit_count - 1 - i] = static_cast<char>(ch);
+            n /= 16;
+        }
+        return res;
+    }
+
+    template <std::size_t N>
+    constexpr std::array<char, N - 1> str_to_array(const char (&a)[N])
+    {
+        std::array<char, N - 1> res{};
+        for (std::size_t i = 0; i != N - 1; ++i) {
+            res[i] = a[i];
+        }
+        return res;
+    }
+
+    template<char N>
+    constexpr auto char_to_array()
+    {
+        return std::array<char, 1>({N});
+    }
+
+    template <std::size_t ...Ns>
+    constexpr std::array<char, (Ns + ...)> array_concat(const std::array<char, Ns>&... as)
+    {
+        std::array<char, (Ns + ...)> res{};
+        std::size_t i = 0;
+        auto l = [&](const auto& a) { for (auto c : a) {res[i++] = c;} };
+
+        (l(as), ...);
+        return res;
+    }
+
+#endif
 
 }
 
