@@ -208,7 +208,7 @@ inline void Syslog::addMessage(String &&message)
     deliverQueue();
 }
 
-inline void addMessage(const String &message)
+inline void Syslog::addMessage(const String &message)
 {
     addMessage(std::move(String(message)));
 }
