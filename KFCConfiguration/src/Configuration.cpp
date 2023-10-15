@@ -76,7 +76,7 @@ Configuration::Configuration(uint16_t size) :
         auto key = keyStr.c_str();
         auto err = nvs_set_blob(_nvsHandle, key, value, length);
         if (err == ESP_ERR_NVS_READ_ONLY) {
-            __DBG_printf_E("nvs_set_blob on read only NVS, re-opening in write mode");
+            __LDBG_printf_E("nvs_set_blob on read only NVS, re-opening in write mode");
             nvs_close(_nvsHandle);
             _nvsHandle = 0;
             err = _nvs_open(true);
@@ -385,10 +385,10 @@ Configuration::WriteResultType Configuration::write()
                     }
                 #else
                     if ((err = nvs_get_stats(NULL, &stats)) == ESP_OK) {
-                        __DBG_printf_N("NVS namespace=%s stats free=%u ns_count=%u total=%u used=%u", _nvsNamespace, stats.free_entries, stats.namespace_count, stats.total_entries, stats.used_entries);
+                        __LDBG_printf_N("NVS namespace=%s stats free=%u ns_count=%u total=%u used=%u", _nvsNamespace, stats.free_entries, stats.namespace_count, stats.total_entries, stats.used_entries);
                     }
                     else {
-                        __DBG_printf_E("failed to get stats name=%s err=%08x", _nvsNamespace, err);
+                        __LDBG_printf_E("failed to get stats name=%s err=%08x", _nvsNamespace, err);
                     }
                 #endif
             #endif
