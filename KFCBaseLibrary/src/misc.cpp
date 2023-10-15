@@ -104,12 +104,12 @@ void printable_string(Print &output, const uint8_t *buffer, size_t length, size_
 int countDecimalPlaces(double value, uint8_t maxPrecision)
 {
     // NaN, inf, -inf ...
-    if (maxPrecision == 0 || !std::isnormal(value)) {
+    if (maxPrecision == 0 || !std::isfinite(value)) {
         return 0;
     }
     // check if we have any decimal places
     if (maxPrecision == 1 || value - static_cast<int>(value) == 0) {
-        return 1;
+        return 1; // '0' not '0.0' ?
     }
     char buf[std::numeric_limits<double>::digits + 1];
     auto len = snprintf_P(buf, sizeof(buf), PSTR("%.*f"), maxPrecision, value);
