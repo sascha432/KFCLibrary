@@ -217,7 +217,7 @@ namespace PinMonitor {
                     auto out = PrintString(F("time=%u pin=%u ("), getTime(), pin());
                     for(uint8_t i = 0; i < SOC_GPIO_PIN_COUNT; i++) {
                         if (GPIO_IS_VALID_GPIO(i)) {
-                            out.printf_P(PSTR("%u[%u]"), ((_value & GPIO_PIN_TO_MASK(i)) ? 1 : 0), i);
+                            out.printf_P(PSTR("%u[%u]"), ((_value & GPIO_PIN_TO_MASK(i)) != 0), i);
                         }
                     }
                     out.print(')');

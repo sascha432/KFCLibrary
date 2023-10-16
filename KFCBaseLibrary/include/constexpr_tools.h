@@ -153,7 +153,7 @@ namespace StringConstExpr {
     using SlowStrFuncs::strncmp;
 #endif
     constexpr int strcmp(const char *str1, const char *str2) {
-        return SlowStrFuncs::strings_equal(str1, str2) == true ? 1 : 0;
+        return SlowStrFuncs::strings_equal(str1, str2) == true;
     }
 
     // returns strlen() if endptr is null or the start_length of the string with endptr being the NUL character

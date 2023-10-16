@@ -36,7 +36,7 @@ namespace ConfigurationHelper {
 
     inline size_type WriteableData::size() const
     {
-        return length() + (_is_string ? 1 : 0);
+        return length() + bool(_is_string);
     }
 
     inline size_type WriteableData::length() const
