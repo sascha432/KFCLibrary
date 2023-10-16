@@ -88,5 +88,135 @@ namespace STL_STD_EXT_NAMESPACE_EX {
         _Ta _object;
     };
 
-}
+    template<typename _Enum>
+    struct enum_type {
+        using Type = enum_type<_Enum>;
+        using Enum = _Enum;
 
+        constexpr enum_type() : _enum(static_cast<_Enum>(0))  {
+        }
+
+        constexpr enum_type(_Enum e) : _enum(e) {
+        }
+
+        constexpr operator _Enum() const {
+            return _enum;
+        }
+
+        constexpr Type operator|(Type e) {
+            return static_cast<_Enum>(std::to_underlying<_Enum>(_enum) | std::to_underlying<_Enum>(e._enum));
+        }
+
+        // return *this & ~Type(e);
+        constexpr Type operator^(Type e) {
+            return static_cast<_Enum>(std::to_underlying<_Enum>(_enum) & ~std::to_underlying<_Enum>(e._enum));
+        }
+
+        constexpr operator bool() {
+            return std::to_underlying<_Enum>(_enum) != 0;
+        }
+
+        constexpr Type operator&(Type e) {
+            return static_cast<const _Enum>(std::to_underlying<_Enum>(_enum) & std::to_underlying<_Enum>(e._enum));
+        }
+
+        constexpr Type operator~() {
+            return static_cast<const _Enum>(~std::to_underlying<_Enum>(_enum));
+        }
+
+        constexpr Type &operator|=(Type e) {
+            _enum = (static_cast<_Enum>(std::to_underlying<_Enum>(_enum) | std::to_underlying<_Enum>(e._enum)));
+            return *this;
+        }
+
+        constexpr Type &operator&=(Type e) {
+            _enum = (static_cast<_Enum>(std::to_underlying<_Enum>(_enum) & std::to_underlying<_Enum>(e._enum)));
+            return *this;
+        }
+
+        // remove bits from e from this
+        // *this &= ~Type(e);
+        constexpr Type &operator^=(Type e) {
+            _enum = (static_cast<_Enum>(std::to_underlying<_Enum>(_enum) & ~std::to_underlying<_Enum>(e._enum)));
+            return *this;
+        }
+
+        //
+        // range methods
+        //
+        // for(auto type: enum_type<class Enum>) {}
+        // iterated from Enum::MIN to Enum::MAX
+        //
+        // for(auto type = enum_type(); type != type.end(); ++type) {}
+        //
+
+        constexpr Type &operator++() {
+            _enum = static_cast<_Enum>(std::to_underlying<_Enum>(_enum) + 1);
+            return *this;
+        }
+
+        constexpr Type &operator--() {
+            _enum = static_cast<_Enum>(std::to_underlying<_Enum>(_enum) - 1);
+            return *this;
+        }
+
+        constexpr Type operator++(int value) {
+            auto tmp = *this;
+            _enum = static_cast<_Enum>(std::to_underlying<_Enum>(_enum) + value);
+            return tmp;
+        }
+
+        constexpr Type operator--(int value) {
+            auto tmp = *this;
+            _enum = static_cast<_Enum>(std::to_underlying<_Enum>(_enum) - value);
+            return tmp;
+        }
+
+        constexpr void operator=(_Enum e) {
+            _enum = e;
+        }
+
+        constexpr void operator=(Type e) {
+            *this = e;
+        }
+
+        constexpr bool operator<(_Enum e) const {
+            return _enum < e;
+        }
+
+        constexpr bool operator>(_Enum e) const {
+            return _enum > e;
+        }
+
+        constexpr bool operator==(_Enum e) const {
+            return _enum == e;
+        }
+
+        constexpr bool operator!=(_Enum e) const {
+            return _enum != e;
+        }
+
+        constexpr Type begin() {
+            return _Enum::MIN;
+        }
+
+        constexpr Type begin() const {
+            return _Enum::MIN;
+        }
+
+        constexpr Type end() {
+            return _Enum::MAX;
+        }
+
+        constexpr Type end() const {
+            return _Enum::MAX;
+        }
+
+        constexpr Type &operator *() {
+            return *this;
+        }
+
+        _Enum _enum;
+    };
+
+}
