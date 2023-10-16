@@ -5,7 +5,7 @@
 #pragma once
 
 #include <Arduino_compat.h>
-#include <EnumHelper.h>
+#include <stl_ext/utility.h>
 #include <MicrosTimer.h>
 
 // #undef DEBUG_PIN_MONITOR
@@ -222,6 +222,7 @@ namespace PinMonitor {
     class PushButtonConfig {
     public:
         using EventType = PushButtonEventType;
+        using EventTypeEnum = stdex::enum_type<EventType>;
 
     public:
         // PushButtonConfig() :

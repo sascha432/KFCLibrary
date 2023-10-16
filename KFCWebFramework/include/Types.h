@@ -6,6 +6,7 @@
 
 #include <Arduino_compat.h>
 #include <vector>
+#include <stl_ext/utility.h>
 
 #ifndef KFC_FORMS_HAVE_VALIDATE_CALLBACK
 #define KFC_FORMS_HAVE_VALIDATE_CALLBACK                0
@@ -204,6 +205,8 @@ namespace FormUI {
             EMPTY_OR_HOST_OR_IP = HOSTNAME | IPADDRESS | EMPTY,
             EMPTY_OR_HOST_OR_IP_OR_ZEROCONF = EMPTY | HOST_OR_IP | ZEROCONF
         };
+
+        using AllowedTypeEnum = stdex::enum_type<AllowedType>;
 
     }
 

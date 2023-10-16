@@ -7,7 +7,7 @@
 #include <Arduino_compat.h>
 #include <functional>
 #include <vector>
-#include <EnumHelper.h>
+#include <stl_ext/utility.h>
 
 #ifndef _MSC_VER
 #    pragma GCC push_options
@@ -29,6 +29,8 @@ public:
         CONNECTION = CONNECTED|DISCONNECTED,
         ANY = CONNECTED|DISCONNECTED|MODE_CHANGE
     };
+
+    using EventTypeEnum = stdex::enum_type<EventType>;
 
     using Callback = std::function<void(EventType event, void *payload)>;
     typedef void(* CallbackPtr)(EventType event, void *payload);
@@ -76,14 +78,11 @@ inline WiFiCallbacks::EventType WiFiCallbacks::add(EventType events, Callback ca
 {
     __SLDBG_printf("events=%u callbackPtr=%p callback=%p", events, callbackPtr, lambda_target(callback));
 
-    // events &= EventType::ANY;
-    events = EnumHelper::Bitset::getAnd(events, EventType::ANY);
-
+    EventTypeEnum(events) &= EventTypeEnum(EventTypeEnum::Enum::ANY);
     for (auto &callback : _callbacks) {
         if (callbackPtr == callback.callbackPtr) {
             __SLDBG_printf("callbackPtr=%p, changed events from %u to %u", callbackPtr, callback.events, events);
-            // callback.events |= events;
-            return (callback.events = EnumHelper::Bitset::addBits(callback.events, events));
+            return EventTypeEnum(callback.events) |= EventTypeEnum(events);
         }
     }
     __SLDBG_printf("callbackPtr=%p new entry events %d", callbackPtr, events);
@@ -106,9 +105,8 @@ inline WiFiCallbacks::EventType WiFiCallbacks::remove(EventType events, Callback
     __SLDBG_printf("events=%u callbackPtr=%p", events, callbackPtr);
     for (auto iterator = _callbacks.begin(); iterator != _callbacks.end(); ++iterator) {
         if (callbackPtr == iterator->callbackPtr) {
-            __SLDBG_printf("callbackPtr=%p changed events from %u to %u", callbackPtr, iterator->events, EnumHelper::Bitset::removeBits(iterator->events, events));
-            // iterator->events &= ~events;
-            iterator->events = EnumHelper::Bitset::removeBits(iterator->events, events);
+            // __SLDBG_printf("callbackPtr=%p changed events from %u to %u", callbackPtr, iterator->events, EventTypeEnum(iterator->events) ^ EventTypeEnum((events));
+            EventTypeEnum(iterator->events) ^= EventTypeEnum(events);
             if (iterator->events == EventType::NONE) {
                 if (!_locked) {
                     _callbacks.erase(iterator);
@@ -131,7 +129,7 @@ inline void WiFiCallbacks::callEvent(EventType event, void *payload)
     __SLDBG_printf("event=%u payload=%p", event, payload);
     _locked = true;
     for (const auto &entry : _callbacks) {
-        if (EnumHelper::Bitset::hasAny(entry.events, event)) {
+        if (EventTypeEnum(entry.events) & EventTypeEnum(event)) {
             if (entry.callback) {
                 __SLDBG_printf("callback=%p", lambda_target(entry.callback));
                 entry.callback(event, payload);

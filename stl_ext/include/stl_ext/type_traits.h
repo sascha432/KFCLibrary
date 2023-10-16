@@ -87,6 +87,15 @@ namespace STL_STD_EXT_NAMESPACE {
 
 #endif
 
+#ifndef _HAS_CXX23
+
+    template<typename _Enum>
+    constexpr auto to_underlying(_Enum &e) noexcept {
+        return static_cast<typename std::underlying_type<_Enum>::type>(e);
+    }
+
+#endif
+
 }
 
 namespace STL_STD_EXT_NAMESPACE_EX {
@@ -298,7 +307,6 @@ namespace STL_STD_EXT_NAMESPACE_EX {
 
     template<int64_t _MinValue, uint64_t _MaxValue>
     using common_type_helper_t = typename common_type_helper<_MinValue, _MaxValue>::type;
-
 
 #if 0
     static_assert(std::is_same<unsigned_integral_type_helper_t<0>, uint8_t>::value, "test failed");

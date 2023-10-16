@@ -5,7 +5,7 @@
 #pragma once
 
 #include <Arduino_compat.h>
-#include <EnumHelper.h>
+#include <stl_ext/utility.h>
 #include "Validator/BaseValidator.h"
 #include "Field/BaseField.h"
 #include "Form/BaseForm.h"
@@ -26,7 +26,7 @@ namespace FormUI {
             {
                 // add default value if set to empty online
                 if (_allowedTypes == AllowedType::EMPTY) {
-                    _allowedTypes = EnumHelper::Bitset::addBits(_allowedTypes, AllowedType::HOST_OR_IP);
+                    AllowedTypeEnum(_allowedTypes) |= AllowedTypeEnum(AllowedTypeEnum::Enum::HOST_OR_IP);
                 }
                 __LDBG_assertf(allowedTypes != AllowedType::NONE, "allowed type NONE");
             }
@@ -42,21 +42,21 @@ namespace FormUI {
                     auto tmpStr = getField().getValue();
                     tmpStr.trim();
                     getField().setValue(tmpStr);
-                    if (EnumHelper::Bitset::has(_allowedTypes, AllowedType::EMPTY) && tmpStr.length() == 0) {
+                    if (AllowedTypeEnum(_allowedTypes) & AllowedTypeEnum(AllowedTypeEnum::Enum::EMPTY) && tmpStr.length() == 0) {
                         return true;
                     }
-                    if (EnumHelper::Bitset::has(_allowedTypes, AllowedType::ZEROCONF)) {
+                    if (AllowedTypeEnum(_allowedTypes) & AllowedTypeEnum(AllowedTypeEnum::Enum::ZEROCONF)) {
                         if (tmpStr.indexOf(FSPGM(_var_zeroconf)) != -1) { //TODO parse and validate zeroconf
                             return true;
                         }
                     }
-                    if (EnumHelper::Bitset::has(_allowedTypes, AllowedType::IPADDRESS)) {
+                    if (AllowedTypeEnum(_allowedTypes) & AllowedTypeEnum(AllowedTypeEnum::Enum::IPADDRESS)) {
                         IPAddress addr;
                         if (addr.fromString(tmpStr) && IPAddress_isValid(addr)) {
                             return true;
                         }
                     }
-                    if (EnumHelper::Bitset::has(_allowedTypes, AllowedType::HOSTNAME)) {
+                    if (AllowedTypeEnum(_allowedTypes) & AllowedTypeEnum(AllowedTypeEnum::Enum::HOSTNAME)) {
                         const char *str = tmpStr.c_str();
                         while(*str) {
                             if (!(isalnum(*str) || *str == '_' || *str == '-' || *str == '.')) {
