@@ -36,8 +36,8 @@ String urlEncode(const __FlashStringHelper *str, const __FlashStringHelper *set)
     uint8_t ch;
     while((ch = pgm_read_byte(ptr)) != 0) {
         if (
-            (set && (!isprint(ch) || strchr_P(reinterpret_cast<PGM_P>(set), ch))) ||
-            (!set && !isalnum(ch))
+            (set && (!isprint(ch) || strchr_P(reinterpret_cast<PGM_P>(set), ch))) || // if set is specified, encode all characters that are not printable or in the set
+            (!set && !isalnum(ch)) // if set is not specified, encode all characters that are not alphanumeric
         ) {
             out.printf_P(PSTR("%%%02X"), ch);
         }
