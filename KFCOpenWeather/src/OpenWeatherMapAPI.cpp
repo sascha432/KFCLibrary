@@ -23,6 +23,11 @@ String OpenWeatherMapAPI::getApiUrl() const
     return url;
 }
 
+bool OpenWeatherMapAPI::hasApiKey() const
+{
+    return _apiKey.length() != 0;
+}
+
 bool OpenWeatherMapAPI::parseData(const String &data)
 {
     // StreamString stream; // create a copy of data

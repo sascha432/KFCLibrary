@@ -160,6 +160,7 @@ public:
 
     // get API url
     String getApiUrl() const;
+    bool hasApiKey() const;
 
     // parse data
     // returns false on EOF, until then more data can be fed. the minimum size is one byte
