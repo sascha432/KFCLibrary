@@ -9,147 +9,6 @@
 #include <PrintString.h>
 #include "misc_string.h"
 
-// extern void progmem_str_func_test();
-
-// // #if DEBUG
-// // // test C library against PROGMEM to avoid any surprises if certain functions cannot handle PROGMEM
-// // extern void progmem_str_func_test();
-// // progmem_str_func_test();
-// // #endif
-
-
-
-
-
-// void progmem_str_func_test() {
-
-//     auto test1 = PSTR("test string test string test!string test string test string ");
-//     auto len1 = strlen_P(test1);
-//     auto test2 = PSTR("test string");
-//     auto len2 = strlen_P(test2);
-//     auto test3Str = String(FPSTR(test1));
-//     auto test3 = test3Str.c_str();
-
-//     {
-//         __DBG_printf("testing strrchr()");
-//         auto res = strrchr(test1, '!');
-//         res = strrchr(test1 + 1, '!');
-//         res = strrchr(test1 + 2, '!');
-//         res = strrchr(test1 + 3, '!');
-//         res = strrchr(test1 + 4, '!') ;
-//         res = strrchr(test1 + 5, '!');
-//         __DBG_printf("strrchr() = PROGMEM safe %p", res);
-//     }
-
-//     {
-//         __DBG_printf("testing strchr()");
-//         auto res = strchr(test1, '!');
-//         res = strchr(test1 + 1, '!');
-//         res = strchr(test1 + 2, '!');
-//         res = strchr(test1 + 3, '!');
-//         res = strchr(test1 + 4, '!') ;
-//         res = strchr(test1 + 5, '!');
-//         __DBG_printf("strchr() = PROGMEM safe %p", res);
-//     }
-
-//     // cannot handle PROGMEM
-//     // {
-//     //     __DBG_printf("testing strcmp_P(PGM_P, PGM_P)");
-//     //     auto res = strcmp_P(test1, test2 + 5);
-//     //     res = strcmp_P(test1 + 1, test2 + 4);
-//     //     res = strcmp_P(test1 + 2, test2 + 3);
-//     //     res = strcmp_P(test1 + 3, test2 + 2);
-//     //     res = strcmp_P(test1 + 4, test2 + 1);
-//     //     res = strcmp_P(test1 + 5, test2);
-//     //     __DBG_printf("strcmp_P() = PROGMEM safe %p", res);
-//     // }
-
-//     {
-//         __DBG_printf("testing strcmp_PP(PGM_P, PGM_P)");
-//         auto res = strcmp_PP(test1, test2 + 5);
-//         res = strcmp_PP(test1 + 1, test2 + 4);
-//         res = strcmp_PP(test1 + 2, test2 + 3);
-//         res = strcmp_PP(test1 + 3, test2 + 2);
-//         res = strcmp_PP(test1 + 4, test2 + 1);
-//         res = strcmp_PP(test1 + 5, test2);
-//         __DBG_printf("strcmp_PP() = PROGMEM safe %p", res);
-//     }
-
-//     // {
-//     //     __DBG_printf("testing memcmp_P(PGM_P, PGM_P)");
-//     //     auto res = memcmp_P(test1, test2 + 5, len2 - 5);
-//     //     res = memcmp_P(test1 + 1, test2 + 4, len2 - 4);
-//     //     res = memcmp_P(test1 + 2, test2 + 3, len2 - 3);
-//     //     res = memcmp_P(test1 + 3, test2 + 2, len2 - 2);
-//     //     res = memcmp_P(test1 + 4, test2 + 1, len2 - 1);
-//     //     res = memcmp_P(test1 + 5, test2, len2);
-//     //     __DBG_printf("memcmp_P() = PROGMEM safe %p", res);
-//     // }
-
-//     // {
-//     //     __DBG_printf("testing strcasecmp_P(PGM_P, PGM_P)");
-//     //     auto res = strcasecmp_P(test1, test2 + 5);
-//     //     res = strcasecmp_P(test1 + 1, test2 + 4);
-//     //     res = strcasecmp_P(test1 + 2, test2 + 3);
-//     //     res = strcasecmp_P(test1 + 3, test2 + 2);
-//     //     res = strcasecmp_P(test1 + 4, test2 + 1);
-//     //     res = strcasecmp_P(test1 + 5, test2);
-//     //     __DBG_printf("strcasecmp_P() = PROGMEM safe %p", res);
-//     // }
-
-//     // {
-//     //     __DBG_printf("testing strncasecmp_P(PGM_P, PGM_P)");
-//     //     auto res = strncasecmp_P(test1, test2 + 5, 10);
-//     //     res = strncasecmp_P(test1 + 1, test2 + 4, 10);
-//     //     res = strncasecmp_P(test1 + 2, test2 + 3, 10);
-//     //     res = strncasecmp_P(test1 + 3, test2 + 2, 10);
-//     //     res = strncasecmp_P(test1 + 4, test2 + 1, 10);
-//     //     res = strncasecmp_P(test1 + 5, test2, 10);
-//     //     __DBG_printf("strcasecmp_P() = PROGMEM safe %p", res);
-//     // }
-
-//     {
-//         __DBG_printf("testing memchr_P()");
-//         auto res2 = memchr_P(test1, '!', len1);
-//         res2 = memchr_P(test1 + 1, '!', len1 - 1);
-//         res2 = memchr_P(test1 + 2, '!', len1 - 2);
-//         res2 = memchr_P(test1 + 3, '!', len1 - 3);
-//         res2 = memchr_P(test1 + 4, '!', len1 - 4) ;
-//         res2 = memchr_P(test1 + 5, '!', len1 * 5);
-//         __DBG_printf("memchr_P() = PROGMEM safe %p", res2);
-
-//     }
-
-
-
-
-
-//     // strcasestr cannot take progmem for either argument
-//     // __DBG_printf("testing strcasestr(PGM_P, char *)");
-//     // res = strcasestr(test1, "!");
-//     // res = strcasestr(test1 + 1, "!");
-//     // res = strcasestr(test1 + 3, "!");
-//     // res = strcasestr(test1 + 4, "!") ;
-//     // res = strcasestr(test1 + 5, "!");
-//     // __DBG_printf("testing strcasestr(PGM_P, PGM_P)");
-//     // res = strcasestr(test1, test2 + 5);
-//     // res = strcasestr(test1 + 1, test2 + 4);
-//     // res = strcasestr(test1 + 3, test2 + 3);
-//     // res = strcasestr(test1 + 4, test2 + 2) ;
-//     // res = strcasestr(test1 + 5, test2 + 1);
-//     // res = strcasestr(test1 + 6, test2);
-//     // __DBG_printf("testing strcasestr(char *, PGM_P)");
-//     // res = strcasestr(test3, test2 + 5);
-//     // res = strcasestr(test3 + 1, test2 + 4);
-//     // res = strcasestr(test3 + 3, test2 + 3);
-//     // res = strcasestr(test3 + 4, test2 + 2) ;
-//     // res = strcasestr(test3 + 5, test2 + 1);
-//     // res = strcasestr(test3 + 6, test2);
-//     // __DBG_printf("strcasestr() = PROGMEM safe %p", res);
-
-
-// }
-
 int stringlist_find_P_P(PGM_P list, PGM_P find, PGM_P separator/*, int &position*/)
 {
     if (!list || !find || !separator) {
@@ -201,7 +60,6 @@ int stringlist_find_P_P(PGM_P list, PGM_P find, PGM_P separator/*, int &position
     return -1;
 }
 
-
 int stringlist_ifind_P_P(PGM_P list, PGM_P find, PGM_P separator/*, int &position*/)
 {
     if (!list || !find || !separator) {
@@ -244,10 +102,6 @@ char *strichr(char *str, int c)
     if (!c) {
         // special case: find end of string
         return str + strlen(str);
-    }
-    if (toupper(c) == c) {
-        // special case: lower and upercase are the same
-        return strchr(str, c);
     }
     c = tolower(static_cast<uint8_t>(c)); // cast to uint8_t since pgm_read_byte returns unsigned
     int ch;

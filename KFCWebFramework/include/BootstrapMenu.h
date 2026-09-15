@@ -156,7 +156,7 @@ public:
     typedef std::vector<Item>::iterator ItemsVectorIterator;
 
 public:
-    BootstrapMenu() : _unqiueId(0) {}
+    BootstrapMenu() : _uniqueId(0) {}
     ~BootstrapMenu() {}
 
     inline bool isValid(ItemsVectorIterator iterator) const {
@@ -228,7 +228,7 @@ private:
 
 private:
     ItemsVector _items;
-    menu_item_id_t _unqiueId;
+    menu_item_id_t _uniqueId;
 };
 
 #include "pop_pack.h"

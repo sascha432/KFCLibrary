@@ -18,33 +18,6 @@
 #include <debug_helper_disable.h>
 #endif
 
-// BoostrapMenuItem_t bootstrap_items[] PROGMEM = {
-// 	{ SPGM(Home), SPGM(index_html), 1, 0, },
-// 	{ SPGM(Status), SPGM(status_html), 2, 0, },
-// 	{ SPGM(Configuration), nullptr, 3, 0 },
-// 	{ SPGM(Device), nullptr, 4, 0 },
-// 	{ SPGM(Admin), nullptr, 5, 0 },
-// 	{ SPGM(Utilities), nullptr, 6, 0 },
-
-// 	{ SPGM(Home), SPGM(index_html), 100, 1, },
-// 	{ SPGM(Status), SPGM(status_html), 101, 1, },
-
-
-// 	{ nullptr, nullptr, 0, 0  }
-// };
-
-//BootstrapMenu::menu_item_id_t BootstrapMenu::getItemCount(menu_item_id_t menuId) const
-//{
-//	uint8_t count = 0;
-//	for (auto &item : _items) {
-//		if (item.getParentMenuId() == menuId) {
-//			count++;
-//		}
-//	}
-//	__LDBG_printf("BootstrapMenu::getItemCount(menuId=%d): count=%d", menuId, count);
-//	return count;
-//}
-
 void BootstrapMenu::html(PrintInterface &output, ItemsVectorIterator top, uint8_t level)
 {
 	if (isValid(top)) {
@@ -138,11 +111,6 @@ void BootstrapMenu::htmlSubMenu(PrintInterface &output, ItemsVectorIterator top,
 #endif
 }
 
-// BootstrapMenu::menu_item_id_t BootstrapMenu::_add(const Item &item, menu_item_id_t afterId)
-// {
-// 	return _add(item, afterId);
-// }
-
 BootstrapMenu::menu_item_id_t BootstrapMenu::_add(Item &&item, menu_item_id_t afterId)
 {
 	auto insertAfter = std::find(_items.begin(), _items.end(), FindHelper(afterId, FindHelper::MenuIdType()));
@@ -154,5 +122,5 @@ BootstrapMenu::menu_item_id_t BootstrapMenu::_add(Item &&item, menu_item_id_t af
 
 BootstrapMenu::menu_item_id_t BootstrapMenu::_getUniqueId()
 {
-	return ++_unqiueId;
+	return ++_uniqueId;
 }

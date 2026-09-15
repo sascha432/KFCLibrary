@@ -8,7 +8,15 @@
         "workbench.colorCustomizations": {
             "activityBar.background": "#34127E",
             "titleBar.activeBackground": "#481AB0",
-            "titleBar.activeForeground": "#FBFAFE"
+            "titleBar.activeForeground": "#FBFAFE",
+            "titleBar.inactiveBackground": "#34127E",
+            "titleBar.inactiveForeground": "#FBFAFE",
+            "statusBar.background": "#34127E",
+            "statusBar.foreground": "#FBFAFE",
+            "statusBar.debuggingBackground": "#34127E",
+            "statusBar.debuggingForeground": "#FBFAFE",
+            "statusBar.noFolderBackground": "#34127E",
+            "statusBar.noFolderForeground": "#FBFAFE"
         },
         "files.associations": {
             "algorithm": "cpp",

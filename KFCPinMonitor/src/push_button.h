@@ -54,7 +54,7 @@ namespace PinMonitor {
 
         // the first HOLD_REPEAT is HOLD_START
         HOLD_START                      = _BV(8),
-        // if HOLD_START was sent, HOLD_RELEASE will be sent before UP/RELASED
+        // if HOLD_START was sent, HOLD_RELEASE will be sent before UP/RELEASED
         HOLD_RELEASE                    = _BV(9),
 
         // after EventType::UP before EventType::DOWN
