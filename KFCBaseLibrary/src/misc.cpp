@@ -29,8 +29,6 @@ void formatBytes(char *buf, size_t size, size_t bytes)
     }
 }
 
-static const char hexChars[] PROGMEM = "0123456789ABCDEF";
-
 String urlEncode(const __FlashStringHelper *str, const __FlashStringHelper *set)
 {
     PrintString out;
@@ -46,8 +44,8 @@ String urlEncode(const __FlashStringHelper *str, const __FlashStringHelper *set)
         ) {
             char encoded[3];
             encoded[0] = '%';
-            encoded[1] = pgm_read_byte(&hexChars[(ch >> 4) & 0x0f]);
-            encoded[2] = pgm_read_byte(&hexChars[ch & 0x0f]);
+            encoded[1] = pgm_read_byte(SPGM(hex_chars) + ((ch >> 4) & 0x0f));
+            encoded[2] = pgm_read_byte(SPGM(hex_chars) + (ch & 0x0f));
             out.write(encoded, 3);
         }
         else {
@@ -61,14 +59,14 @@ String urlEncode(const __FlashStringHelper *str, const __FlashStringHelper *set)
 void appendUrlEncoded(Print &out, const char *str, size_t len)
 {
     while (len--) {
-        auto ch = static_cast<uint8_t>(*str++);
+        auto ch = static_cast<uint8_t>(pgm_read_byte(str++));
         if (isalnum(ch)) {
             out.write(ch);
         }
         else {
             out.write('%');
-            out.write(pgm_read_byte(&hexChars[(ch >> 4) & 0x0f]));
-            out.write(pgm_read_byte(&hexChars[ch & 0x0f]));
+            out.write(pgm_read_byte(SPGM(hex_chars) + ((ch >> 4) & 0x0f)));
+            out.write(pgm_read_byte(SPGM(hex_chars) + (ch & 0x0f)));
         }
     }
 }
