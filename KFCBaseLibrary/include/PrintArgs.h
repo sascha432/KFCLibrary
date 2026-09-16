@@ -353,7 +353,7 @@ protected:
             uint16_t fillBuffer;
             uint16_t copyString;
             uint16_t vprintf;
-            uint16_t numArgs[kMaximumPrintfArguments + 1];
+            uint16_t numArgs[kMaximumPrintfArguments + 2];
         } calls;
         struct {
             uint16_t copyString;
