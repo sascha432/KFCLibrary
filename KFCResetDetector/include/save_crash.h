@@ -177,6 +177,9 @@ namespace SaveCrash {
         }
 
         inline String getTimeStr() const {
+            if (_time == 0 || _time == kInvalidUint32) {
+                return F("unknown");
+            }
             PrintString timeStr;
             timeStr.strftime(FSPGM(strftime_date_time_zone), static_cast<time_t>(_time));
             return timeStr;
@@ -204,7 +207,7 @@ namespace SaveCrash {
 
     inline Data::operator bool() const
     {
-        return (_stack.size() <= kMaxDataSize) && static_cast<bool>(_stack) && (_time != 0) && (_time != kInvalidUint32);
+        return (_stack.size() <= kMaxDataSize) && static_cast<bool>(_stack);
     }
 
     struct CrashLogEntry {

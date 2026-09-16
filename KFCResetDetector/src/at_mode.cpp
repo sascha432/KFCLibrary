@@ -11,7 +11,7 @@
 #include "save_crash.h"
 #include "at_mode.h"
 
-#define LIST_SAVE_CASH_COMMANDS "info|list|print|clear|format"
+#define LIST_SAVE_CASH_COMMANDS "info|list|print|clear|format|test"
 
 PROGMEM_AT_MODE_HELP_COMMAND_DEF_PNPP(RD, "RD", "Reset detector clear counter", "Display information");
 PROGMEM_AT_MODE_HELP_COMMAND_DEF_PPPN(SAVECRASH, "SAVECRASH", "<" LIST_SAVE_CASH_COMMANDS ">", "Manage SaveCrash");
@@ -95,8 +95,8 @@ bool ResetDetectorPlugin::atModeHandler(AtModeArgs &args)
         } break;
         case 'i': {
             auto info = SaveCrash::createFlashStorage().getInfo();
-            args.printf_P(PSTR("entries=%u size=%u capacity=%u"), info.numTraces(), info.size(), info.capacity());
-            args.printf_P(PSTR("free space=%u largest block=%u"), info.available(), info.getLargestBlock());
+            args.print(F("entries=%u size=%u capacity=%u"), info.numTraces(), info.size(), info.capacity());
+            args.print(F("free space=%u largest block=%u"), info.available(), info.getLargestBlock());
         } break;
         case 'l': {
             int16_t count = 0;
@@ -131,6 +131,10 @@ bool ResetDetectorPlugin::atModeHandler(AtModeArgs &args)
                     args.invalidArgument(1, reinterpret_cast<const __FlashStringHelper *>(PrintString(F("%u-%u"), 1, counter).c_str()));
                 }
             }
+        } break;
+        case 't': {
+            volatile uint32_t *address = nullptr;
+            *address = 0x12345678;
         } break;
         default:
             args.invalidArgument(0, F(LIST_SAVE_CASH_COMMANDS), '|');
