@@ -122,6 +122,7 @@ using StringVector = std::vector<String>;
 
 // pretty format for bytes and unix time
 String formatBytes(size_t bytes);
+void formatBytes(char *buf, size_t size, size_t bytes);
 
 //
 // example
@@ -166,6 +167,7 @@ inline String formatTimeMicrosShort(const String &sep, const String &lastSep, in
 // set = nullptr, encode all characters except alphanueric
 // set = string of characters to encode
 String urlEncode(const __FlashStringHelper *str, const __FlashStringHelper *set = nullptr);
+void appendUrlEncoded(Print &out, const char *str, size_t len);
 
 inline String urlEncode(const String &str, const __FlashStringHelper *set = nullptr)
 {

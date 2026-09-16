@@ -54,7 +54,7 @@ public:
 
     File openFile(const char *mode);
 
-    String fileName();
+    const String &fileName();
     size_t fileSize();
     time_t fileTime();
 
@@ -100,7 +100,7 @@ File ListDir::openFile(const char* mode)
     return _dir.openFile(mode);
 }
 
-inline String ListDir::fileName()
+inline const String &ListDir::fileName()
 {
     if (_vfs.valid) {
         return _vfs.filename;

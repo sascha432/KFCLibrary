@@ -12,19 +12,24 @@
 String formatBytes(size_t bytes)
 {
     char buf[16];
-    if (bytes < 1024) {
-        snprintf_P(buf, sizeof(buf), PSTR("%dB"), bytes);
-        return buf;
-    } else if (bytes < (1024 * 1024)) {
-        snprintf_P(buf, sizeof(buf), PSTR("%.2fKB"), bytes / 1024.0);
-        return buf;
-    } else if (bytes < (1024 * 1024 * 1024)) {
-        snprintf_P(buf, sizeof(buf), PSTR("%.2fMB"), bytes / 1024.0 / 1024.0);
-        return buf;
-    }
-    snprintf_P(buf, sizeof(buf), PSTR("%.2fGB"), bytes / 1024.0 / 1024.0 / 1024.0);
+    formatBytes(buf, sizeof(buf), bytes);
     return buf;
 }
+
+void formatBytes(char *buf, size_t size, size_t bytes)
+{
+    if (bytes < 1024) {
+        snprintf_P(buf, size, PSTR("%uB"), static_cast<unsigned>(bytes));
+    } else if (bytes < (1024 * 1024)) {
+        snprintf_P(buf, size, PSTR("%.2fKB"), bytes / 1024.0);
+    } else if (bytes < (1024 * 1024 * 1024)) {
+        snprintf_P(buf, size, PSTR("%.2fMB"), bytes / 1024.0 / 1024.0);
+    } else {
+        snprintf_P(buf, size, PSTR("%.2fGB"), bytes / 1024.0 / 1024.0 / 1024.0);
+    }
+}
+
+static const char hexChars[] PROGMEM = "0123456789ABCDEF";
 
 String urlEncode(const __FlashStringHelper *str, const __FlashStringHelper *set)
 {
@@ -39,7 +44,11 @@ String urlEncode(const __FlashStringHelper *str, const __FlashStringHelper *set)
             (set && (!isprint(ch) || strchr_P(reinterpret_cast<PGM_P>(set), ch))) || // if set is specified, encode all characters that are not printable or in the set
             (!set && !isalnum(ch)) // if set is not specified, encode all characters that are not alphanumeric
         ) {
-            out.printf_P(PSTR("%%%02X"), ch);
+            char encoded[3];
+            encoded[0] = '%';
+            encoded[1] = pgm_read_byte(&hexChars[(ch >> 4) & 0x0f]);
+            encoded[2] = pgm_read_byte(&hexChars[ch & 0x0f]);
+            out.write(encoded, 3);
         }
         else {
             out += static_cast<char>(ch);
@@ -47,6 +56,21 @@ String urlEncode(const __FlashStringHelper *str, const __FlashStringHelper *set)
         ptr++;
     }
     return out;
+}
+
+void appendUrlEncoded(Print &out, const char *str, size_t len)
+{
+    while (len--) {
+        auto ch = static_cast<uint8_t>(*str++);
+        if (isalnum(ch)) {
+            out.write(ch);
+        }
+        else {
+            out.write('%');
+            out.write(pgm_read_byte(&hexChars[(ch >> 4) & 0x0f]));
+            out.write(pgm_read_byte(&hexChars[ch & 0x0f]));
+        }
+    }
 }
 
 String printable_string(const uint8_t *buffer, size_t length, size_t maxLength, PGM_P extra, bool crlfAsText)
