@@ -20,8 +20,9 @@ size_t SSIProxyStream::_copy(uint8_t *buffer, size_t length)
 {
     __DBG_validatePointerCheck(buffer, VP_HPS);
     __LDBG_assert(_template.marker == -1);
-    if (length > _available()) {
-        length = _available();
+    const size_t available = _available();
+    if (length > available) {
+        length = available;
     }
     std::copy_n(_buffer.begin() + _position, length, buffer);
     //memcpy(buffer, _buffer.begin() + _position, length);
@@ -192,7 +193,7 @@ size_t SSIProxyStream::_readBuffer(bool templateCheck)
 
                 }
                 else {
-                    // no delimter found, end loop
+                    // no delimiter found, end loop
                     _template.position = _buffer.end();
                 }
 
