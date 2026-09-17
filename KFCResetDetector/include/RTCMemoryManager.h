@@ -181,7 +181,7 @@ public:
     };
 
 public:
-    enum class SyncStatus : uint8_t {
+    enum class SyncStatus : uint32_t {
         NO = 0,
         YES,
         UNKNOWN,
@@ -317,9 +317,12 @@ private:
 inline void RTCMemoryManager::storeTime()
 {
     #if RTC_SUPPORT == 0
-        auto rtc = _readTime();
-        rtc.time = time(nullptr);
-        _writeTime(rtc);
+        const time_t now = time(nullptr);
+        if (now >= TIME_T_MIN) {
+            auto rtc = _readTime();
+            rtc.time = now;
+            _writeTime(rtc);
+        }
     #endif
 }
 

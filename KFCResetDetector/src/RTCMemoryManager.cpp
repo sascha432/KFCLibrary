@@ -190,7 +190,7 @@ RTCMemoryManager::ReadReturn_t RTCMemoryManager::_read(RTCMemoryId id)
                 break;
             }
             ptr += sizeof(entry);
-            if (ptr + entry.length >= endPtr) {
+            if (entry.length > static_cast<size_t>(endPtr - ptr)) {
                 __LDBG_printf_E("read OOB id=0x%02x len=%d", entry.mem_id, entry.length);
                 break;
             }
