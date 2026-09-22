@@ -100,9 +100,9 @@ void dumpTimers(Print &output)
 {
     for(const auto timer: *timer_list) {
         void *callback = nullptr;
-        for(const auto timer: __Scheduler.__getTimers()) {
-            if (&timer->_etsTimer == reinterpret_cast<void *>(timer)) {
-                callback = lambda_target(timer->_callback);
+        for(const auto schedulerTimer: __Scheduler.__getTimers()) {
+            if (&schedulerTimer->_etsTimer == timer) {
+                callback = lambda_target(schedulerTimer->_callback);
                 break;
             }
         }
