@@ -11,24 +11,10 @@
 #include "save_crash.h"
 #include "at_mode.h"
 
-#define LIST_SAVE_CASH_COMMANDS "info|list|print|clear|format|test"
+#define LIST_SAVE_CASH_COMMANDS "info|list|print|clear|format"
 
 PROGMEM_AT_MODE_HELP_COMMAND_DEF_PNPP(RD, "RD", "Reset detector clear counter", "Display information");
 PROGMEM_AT_MODE_HELP_COMMAND_DEF_PPPN(SAVECRASH, "SAVECRASH", "<" LIST_SAVE_CASH_COMMANDS ">", "Manage SaveCrash");
-
-#if AT_MODE_HELP_SUPPORTED
-
-ATModeCommandHelpArrayPtr ResetDetectorPlugin::atModeCommandHelp(size_t &size) const
-{
-    static ATModeCommandHelpArray tmp PROGMEM = {
-        PROGMEM_AT_MODE_HELP_COMMAND(RD),
-        PROGMEM_AT_MODE_HELP_COMMAND(SAVECRASH)
-    };
-    size = sizeof(tmp) / sizeof(tmp[0]);
-    return tmp;
-}
-
-#endif
 
 bool ResetDetectorPlugin::atModeHandler(AtModeArgs &args)
 {
@@ -131,10 +117,6 @@ bool ResetDetectorPlugin::atModeHandler(AtModeArgs &args)
                     args.invalidArgument(1, reinterpret_cast<const __FlashStringHelper *>(PrintString(F("%u-%u"), 1, counter).c_str()));
                 }
             }
-        } break;
-        case 't': {
-            volatile uint32_t *address = nullptr;
-            *address = 0x12345678;
         } break;
         default:
             args.invalidArgument(0, F(LIST_SAVE_CASH_COMMANDS), '|');

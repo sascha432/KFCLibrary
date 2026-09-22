@@ -8,35 +8,6 @@
 #include <PrintString.h>
 #include "JsonString.h"
 
-#define DEBUG_COLLECT_STRING_ENABLE 0
-
-#if DEBUG_COLLECT_STRING_ENABLE
-
-#    include <type_traits>
-#    include <vector>
-
-extern void __debug_json_string_dump(Stream &out);
-extern int __debug_json_string_skip(const String &str);
-extern int __debug_json_string_add(const String &str);
-extern int __debug_json_string_add(const char *str);
-extern int __debug_json_string_add(const __FlashStringHelper *);
-
-template <typename T>
-int __debug_json_string_add(T str)
-{
-    return 0;
-}
-
-extern std::vector<String> __debug_json_string_list;
-
-#    define DEBUG_COLLECT_STRING(str) __debug_json_string_add(str)
-
-#else
-
-#    define DEBUG_COLLECT_STRING(str)
-
-#endif
-
 namespace KFCJson {
 
     class JsonTools {

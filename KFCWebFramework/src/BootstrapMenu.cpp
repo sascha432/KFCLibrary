@@ -47,7 +47,7 @@ void BootstrapMenu::html(PrintInterface &output, ItemsVectorIterator top, uint8_
 			for (auto dropdown = top + 1; dropdown != _items.end(); ++dropdown) {
                 if (dropdown->getParentMenuId() == menuId) {
                     if (!dropdown->hasLabel()) {
-                        output.printf_P(PSTR("<li><div class=\"dropdown-divider\"></div>"));
+                        output.print(F("<li><div class=\"dropdown-divider\"></div>"));
                     }
                     else if (dropdown->hasURI()) {
                         output.printf_P(PSTR("<li><a class=\"dropdown-item\" href=\"/%s\">%s</a></li>" BOOTSTRAP_MENU_CRLF), dropdown->getUri().c_str(), dropdown->getLabel().c_str());

@@ -271,7 +271,7 @@ void WebUI::BaseUI::_renderInputField(Type type, PrintInterface &output, const c
         case Type::NUMBER_RANGE:
             output.printf_P(PSTR("<div class=\"form-control input-text-range\"><input type=\"text\" name=\"%s\" id=\"%s\" value=\"%s\""), name, name, encodeHtmlEntities(value));
             _printAttributeTo(output);
-            output.printf_P(PSTR("<input type=\"range\" class=\"custom-range\"></div>"));
+            output.print(F("<input type=\"range\" class=\"custom-range\"></div>"));
             break;
 
         // ---------------------------------------------------------------

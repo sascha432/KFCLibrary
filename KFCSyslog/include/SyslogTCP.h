@@ -79,12 +79,12 @@ private:
 
 inline void SyslogTCP::_reconnect()
 {
-    __DBG_printf("reconnect in %ums", kReconnectDelay);
+    __LDBG_printf("reconnect in %ums", kReconnectDelay);
     _clear();
     if (!_reconnectTimer) {
         // add new timer
         _Timer(_reconnectTimer).add(Event::milliseconds(kReconnectDelay), false, [this](Event::CallbackTimerPtr) {
-            __DBG_printf("reconnecting");
+            __LDBG_printf("reconnecting");
             _connect();
         });
     }
@@ -112,7 +112,9 @@ inline uint16_t SyslogTCP::getPort() const
 inline void SyslogTCP::_disconnect()
 {
     _Timer(_reconnectTimer).remove();
-    _client->close();
+    if (_client) {
+        _client->close();
+    }
 }
 
 inline bool SyslogTCP::hasQueue() const

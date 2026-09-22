@@ -282,7 +282,7 @@ void Form::BaseForm::createJavascript(PrintInterface &output)
     #endif
     if (!isValid()) {
         __LDBG_printf("errors=%d", _errors->size());
-        output.printf_P(PSTR("<script> $(function() { $.formValidator.addErrors("));
+        output.print(F("<script> $(function() { $.formValidator.addErrors("));
         uint16_t idx = 0;
         for (auto &error: *_errors) {
             output.printf_P(PSTR("%c{'name':'%s','target':'#%s','error':'%s'}"), idx++ ? ',' : '[',
@@ -291,7 +291,7 @@ void Form::BaseForm::createJavascript(PrintInterface &output)
                 jsonEncodeString(error.getMessage(), output)
             );
         }
-        output.printf_P(PSTR("]); }); </script>"));
+        output.print(F("]); }); </script>"));
     }
 }
 

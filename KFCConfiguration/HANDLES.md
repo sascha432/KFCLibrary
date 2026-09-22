@@ -19,7 +19,6 @@ ffff <INVALID>
 db24 MainConfig().system.webserver.cfg
 655b MainConfig().network.settings.cfg
 5f1a MainConfig().plugins.alarm.cfg
-4c3d MainConfig().plugins.serial2tcp.cfg
 88b3 MainConfig().plugins.mqtt.cfg
 eb69 MainConfig().plugins.syslog.cfg
 f83a MainConfig().plugins.ntpclient.cfg

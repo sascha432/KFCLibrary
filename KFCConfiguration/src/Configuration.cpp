@@ -374,18 +374,18 @@ Configuration::WriteResultType Configuration::write()
                 return WriteResultType::NVS_COMMIT_ERROR;
             }
 
-            #if DEBUG_CONFIGURATION || 1
+            #if DEBUG_CONFIGURATION
                 nvs_stats_t stats;
                 #ifdef KFC_CFG_NVS_PARTITION_NAME
                     if ((err = nvs_get_stats(KFC_CFG_NVS_PARTITION_NAME, &stats)) == ESP_OK) {
-                        __DBG_printf_N("NVS part=%s namespace=%s stats free=%u ns_count=%u total=%u used=%u", PSTR(KFC_CFG_NVS_PARTITION_NAME), _nvsNamespace, stats.free_entries, stats.namespace_count, stats.total_entries, stats.used_entries);
+                        __DBG_printf("NVS part=%s namespace=%s stats free=%u ns_count=%u total=%u used=%u", PSTR(KFC_CFG_NVS_PARTITION_NAME), _nvsNamespace, stats.free_entries, stats.namespace_count, stats.total_entries, stats.used_entries);
                     }
                     else {
                         __DBG_printf_E("failed to get stats part=%s name=%s err=%08x", PSTR(KFC_CFG_NVS_PARTITION_NAME), _nvsNamespace, err);
                     }
                 #else
                     if ((err = nvs_get_stats(NULL, &stats)) == ESP_OK) {
-                        __LDBG_printf_N("NVS namespace=%s stats free=%u ns_count=%u total=%u used=%u", _nvsNamespace, stats.free_entries, stats.namespace_count, stats.total_entries, stats.used_entries);
+                        __LDBG_printf("NVS namespace=%s stats free=%u ns_count=%u total=%u used=%u", _nvsNamespace, stats.free_entries, stats.namespace_count, stats.total_entries, stats.used_entries);
                     }
                     else {
                         __LDBG_printf_E("failed to get stats name=%s err=%08x", _nvsNamespace, err);

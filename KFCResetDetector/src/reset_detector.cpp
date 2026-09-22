@@ -374,14 +374,14 @@ PROGMEM_DEFINE_PLUGIN_OPTIONS(
     "",                 // reconfigure_dependencies
     PluginComponent::PriorityType::RESET_DETECTOR,
     PluginComponent::RTCMemoryId::RESET_DETECTOR,
-#if ESP8266
+#if ESP8266 || ESP32
     static_cast<uint8_t>(PluginComponent::MenuType::CUSTOM),
 #else
     static_cast<uint8_t>(PluginComponent::MenuType::NONE),
 #endif
     true,               // allow_safe_mode
     true,               // setup_after_deep_sleep
-#if ESP8266
+#if ESP8266 || ESP32
     true,               // has_get_status
 #else
     false,              // has_get_status
@@ -398,19 +398,34 @@ ResetDetectorPlugin::ResetDetectorPlugin() : PluginComponent(PROGMEM_GET_PLUGIN_
     REGISTER_PLUGIN(this, "ResetDetectorPlugin");
 }
 
-#if ESP8266
+#if ESP8266 || ESP32
 
     void ResetDetectorPlugin::getStatus(Print &output)
     {
-        auto info = SaveCrash::createFlashStorage().getInfo();
-        output.printf_P(PSTR("%u crash report(s), total size "), info.numTraces());
-        output.print(formatBytes(info.size()));
-        output.printf_P(PSTR(HTML_S(br) "%s of %s available"), formatBytes(info.available()).c_str(), formatBytes(info.capacity()).c_str());
+        #if ESP32
+            // crash reports are stored as an ESP-IDF core dump, the savecrash flash storage stays empty
+            auto coreDumpSize = SaveCrash::CoreDump::getSize();
+            if (coreDumpSize) {
+                output.printf_P(PSTR("Core dump: %s"), formatBytes(coreDumpSize).c_str());
+            }
+            else {
+                output.print(F("No core dump"));
+            }
+        #else
+            auto info = SaveCrash::createFlashStorage().getInfo();
+            output.printf_P(PSTR("%u crash report(s), total size "), info.numTraces());
+            output.print(formatBytes(info.size()));
+            output.printf_P(PSTR(HTML_S(br) "%s of %s available"), formatBytes(info.available()).c_str(), formatBytes(info.capacity()).c_str());
+        #endif
     }
 
     void ResetDetectorPlugin::createMenu()
     {
-        bootstrapMenu.addMenuItem(F("SaveCrash Log"), F("savecrash.html"), navMenu.util);
+        #if ESP32
+            bootstrapMenu.addMenuItem(F("Core Dump"), F("savecrash.html"), navMenu.util);
+        #else
+            bootstrapMenu.addMenuItem(F("SaveCrash Log"), F("savecrash.html"), navMenu.util);
+        #endif
     }
 
 #endif

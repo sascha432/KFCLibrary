@@ -9,10 +9,20 @@
 #include "save_crash.h"
 #include "section_defines.h"
 
+#if ESP32
+#include <memory>
+#include <esp_core_dump.h>
+#include <esp_partition.h>
+#endif
+
 #if DEBUG_SAVE_CRASH
 #    include <debug_helper_enable.h>
 #else
 #    include <debug_helper_disable.h>
+#endif
+
+#if IOT_LED_MATRIX_OUTPUT_PIN
+extern "C" void ClockPluginClearPixels();
 #endif
 
 extern "C" {
@@ -112,9 +122,7 @@ namespace SaveCrash {
         return createFlashStorage().clear(type, options);
     }
 
-#if ESP8266
-
-    inline static const __FlashStringHelper *getExceptionFPStr(uint32_t exception)
+    const __FlashStringHelper *getExceptionFPStr(uint32_t exception)
     {
         switch(exception) {
             case 0: return F("IllegalInstructionCause");
@@ -147,6 +155,8 @@ namespace SaveCrash {
         }
         return F("N/A");
     }
+
+#if ESP8266
 
     void Data::printReason(Print &output) const
     {
@@ -262,7 +272,7 @@ namespace SaveCrash {
         for (auto i = 0; i < 15; i++ ) {
             output.write('-');
         }
-        output.printf_P(PSTR(" CUT HERE FOR EXCEPTION DECODER "));
+        output.print(F(" CUT HERE FOR EXCEPTION DECODER "));
         for (auto i = 0; i < 15; i++ ) {
             output.write('-');
         }
@@ -371,13 +381,11 @@ inline static bool append_crash_data(SaveCrash::FlashStorage &fs, SPIFlash::Flas
     return true;
 }
 
-#if 1
+#if ESP8266
 
-#if IOT_LED_MATRIX_OUTPUT_PIN
-extern "C" void ClockPluginClearPixels();
-#endif
-
-inline __attribute__((__always_inline__)) static void _custom_crash_callback(struct rst_info *rst_info, uint32_t stack, uint32_t stack_end)
+// the ESP8266 core declares custom_crash_callback as a weak alias of an empty implementation and
+// calls it from the postmortem code before rebooting, this definition overrides it
+void custom_crash_callback(struct rst_info *rst_info, uint32_t stack, uint32_t stack_end)
 {
     register uint32_t sp asm("a1");
     uint32_t sp_dump = sp;
@@ -441,13 +449,141 @@ inline __attribute__((__always_inline__)) static void _custom_crash_callback(str
     }
 }
 
-#if !ESP32 //TODO
-
-void custom_crash_callback(struct rst_info *rst_info, uint32_t stack, uint32_t stack_end)
-{
-    _custom_crash_callback(rst_info, stack, stack_end);
-}
-
 #endif
+
+// ------------------------------------------------------------------------
+// ESP32 core dump
+// ------------------------------------------------------------------------
+
+#if ESP32
+
+namespace SaveCrash {
+
+    CoreDumpSummary::CoreDumpSummary()
+    {
+        clear();
+    }
+
+    void CoreDumpSummary::clear()
+    {
+        memset(this, 0, sizeof(*this));
+    }
+
+    static const esp_partition_t *getCoreDumpPartition()
+    {
+        return esp_partition_find_first(ESP_PARTITION_TYPE_DATA, ESP_PARTITION_SUBTYPE_DATA_COREDUMP, nullptr);
+    }
+
+    size_t CoreDump::getPartitionSize()
+    {
+        auto partition = getCoreDumpPartition();
+        return partition ? partition->size : 0;
+    }
+
+    size_t CoreDump::getSize()
+    {
+        if (!getCoreDumpPartition()) {
+            return 0;
+        }
+        size_t address = 0;
+        size_t size = 0;
+        auto result = esp_core_dump_image_get(&address, &size);
+        if (result != ESP_OK) {
+            if (result != ESP_ERR_NOT_FOUND) {
+                __LDBG_printf("esp_core_dump_image_get() failed: %d", result);
+            }
+            return 0;
+        }
+        return size;
+    }
+
+    bool CoreDump::exists()
+    {
+        return getSize() != 0;
+    }
+
+    bool CoreDump::getSummary(CoreDumpSummary &summary)
+    {
+        summary.clear();
+#if CONFIG_ESP_COREDUMP_ENABLE_TO_FLASH && CONFIG_ESP_COREDUMP_DATA_FORMAT_ELF
+        auto size = getSize();
+        if (!size) {
+            return false;
+        }
+        auto info = std::unique_ptr<esp_core_dump_summary_t>(new (std::nothrow) esp_core_dump_summary_t());
+        if (!info) {
+            __DBG_printf_E("memory allocation failed");
+            return false;
+        }
+        memset(info.get(), 0, sizeof(esp_core_dump_summary_t));
+        auto result = esp_core_dump_get_summary(info.get());
+        if (result != ESP_OK) {
+            __LDBG_printf("esp_core_dump_get_summary() failed: %d", result);
+            return false;
+        }
+        summary._valid = true;
+        summary._size = size;
+        summary._version = info->core_dump_version;
+        summary._pc = info->exc_pc;
+        summary._cause = info->ex_info.exc_cause;
+        summary._vaddr = info->ex_info.exc_vaddr;
+        summary._backtraceDepth = std::min<uint32_t>(info->exc_bt_info.depth, CoreDumpSummary::kBacktraceSize);
+        summary._backtraceCorrupted = info->exc_bt_info.corrupted;
+        memcpy(summary._backtrace, info->exc_bt_info.bt, summary._backtraceDepth * sizeof(summary._backtrace[0]));
+        // the task name does not need to be 0 terminated
+        strncpy(summary._task, info->exc_task, sizeof(summary._task) - 1);
+        summary._task[sizeof(summary._task) - 1] = 0;
+        memcpy(summary._elfSha256, info->app_elf_sha256, std::min(sizeof(summary._elfSha256) - 1, sizeof(info->app_elf_sha256)));
+        summary._elfSha256[sizeof(summary._elfSha256) - 1] = 0;
+        __LDBG_printf("coredump size=%u task=%s pc=%08x cause=%u vaddr=%08x depth=%u sha=%s", summary._size, summary._task, summary._pc, summary._cause, summary._vaddr, summary._backtraceDepth, summary._elfSha256);
+        return true;
+#else
+        return false;
+#endif
+    }
+
+    size_t CoreDump::read(size_t offset, void *buffer, size_t len)
+    {
+        auto partition = getCoreDumpPartition();
+        auto size = getSize();
+        if (!partition || !len || !size || offset >= size) {
+            return 0;
+        }
+        len = std::min(len, size - offset);
+
+        // esp_partition_read() requires an aligned destination and size
+        alignas(4) uint8_t tmp[128];
+        auto dst = reinterpret_cast<uint8_t *>(buffer);
+        size_t copied = 0;
+        while (copied < len) {
+            auto pos = offset + copied;
+            auto alignedPos = pos & ~static_cast<size_t>(3);
+            auto skip = pos - alignedPos;
+            auto available = std::min<size_t>(sizeof(tmp), partition->size - alignedPos);
+            auto chunk = std::min(len - copied, available - skip);
+            if (!chunk) {
+                break;
+            }
+            auto readSize = ((skip + chunk) + 3U) & ~static_cast<size_t>(3);
+            if (esp_partition_read(partition, alignedPos, tmp, readSize) != ESP_OK) {
+                break;
+            }
+            memcpy(dst + copied, tmp + skip, chunk);
+            copied += chunk;
+        }
+        return copied;
+    }
+
+    bool CoreDump::erase()
+    {
+        auto result = esp_core_dump_image_erase();
+        if (result != ESP_OK) {
+            __LDBG_printf("esp_core_dump_image_erase() failed: %d", result);
+            return false;
+        }
+        return true;
+    }
+
+}
 
 #endif

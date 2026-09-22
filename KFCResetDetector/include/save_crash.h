@@ -292,6 +292,8 @@ namespace SaveCrash {
 
     FlashStorage createFlashStorage();
     bool clearStorage(ClearStorageType type, uint32_t options = 50);
+    // returns the name of the Xtensa exception cause, used by Data::printReason() and CoreDumpSummary
+    const __FlashStringHelper *getExceptionFPStr(uint32_t exception);
     uint8_t getCrashCounter();
     void removeCrashCounterAndSafeMode();
     void removeCrashCounter(); // calling KFCFS.begin()
@@ -302,7 +304,74 @@ namespace SaveCrash {
         // in web_server.cpp
         static AsyncWebServerResponse *json(AsyncWebServerRequest *request, HttpHeaders &httpHeaders);
 
+#if ESP32
+        // in web_server.cpp
+        static AsyncWebServerResponse *coreDump(AsyncWebServerRequest *request, HttpHeaders &httpHeaders);
+#endif
+
     };
+
+#if ESP32
+
+    // ------------------------------------------------------------------------
+    // ESP32 core dump
+    //
+    // ESP-IDF's panic handler stores the core dump (registers and the stack of every task) in the
+    // `coredump` data partition. No application code is involved in writing it, the stored data can
+    // be downloaded and decoded on a PC with `esp-coredump info_corefile`.
+    // The savecrash flash storage is not used by this, it is a different partition.
+
+    // CONFIG_APP_RETRIEVE_LEN_ELF_SHA + 1, the hex characters of the ELF SHA256 stored in the dump
+    // header (33 for ESP32, 17 for ESP32-S2/S3)
+    static constexpr size_t kElfSha256Size = 65;
+
+    class CoreDumpSummary {
+    public:
+        static constexpr uint8_t kBacktraceSize = 16;
+
+        CoreDumpSummary();
+        void clear();
+
+        inline bool isValid() const {
+            return _valid;
+        }
+
+        inline bool hasBacktrace() const {
+            return _backtraceDepth != 0;
+        }
+
+    public:
+        bool _valid;
+        bool _backtraceCorrupted;
+        uint8_t _backtraceDepth;
+        uint8_t __reserved;
+        uint32_t _size;
+        uint32_t _version;
+        uint32_t _pc;
+        uint32_t _cause;
+        uint32_t _vaddr;
+        char _task[16];
+        uint32_t _backtrace[kBacktraceSize];
+        char _elfSha256[kElfSha256Size];
+    };
+
+    class CoreDump {
+    public:
+        // size of the `coredump` partition or 0 if it does not exist
+        static size_t getPartitionSize();
+        // size of the stored core dump in byte, 0 if it is not available
+        static size_t getSize();
+        // true if a core dump is available
+        static bool exists();
+        // reads task name, exception cause and backtrace from the stored core dump
+        static bool getSummary(CoreDumpSummary &summary);
+        // reads data from the stored core dump, returns the number of bytes copied
+        static size_t read(size_t offset, void *buffer, size_t len);
+        // removes the stored core dump
+        static bool erase();
+    };
+
+#endif
 
 };
 

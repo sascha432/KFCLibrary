@@ -176,7 +176,7 @@ void ___DBG_printEtsTimer(const ETSTimerEx &timer, const char *msg)
 
 void ___DBG_printEtsTimer_E(const ETSTimerEx &timer, const char *msg)
 {
-    DEBUG_OUTPUT.printf_P(PSTR(_VT100(bold_red)));
+    DEBUG_OUTPUT.print(F(_VT100(bold_red)));
     ___DBG_printEtsTimerRaw(timer, msg);
     DEBUG_OUTPUT.print(F(_VT100(reset) __DBG_newline));
     DEBUG_OUTPUT.flush();
