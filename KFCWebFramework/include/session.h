@@ -125,6 +125,7 @@ public:
 
         inline SHA256::SHA256()
         {
+            mbedtls_sha256_init(&_context);
             reset();
         }
 
