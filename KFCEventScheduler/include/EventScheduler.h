@@ -10,5 +10,6 @@
 #include "CallbackTimer.h"
 #include "OSTimer.h"
 #include "LoopFunctions.h"
+#include "TaskQueue.h"
 #include "WiFiCallbacks.h"
 
