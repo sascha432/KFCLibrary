@@ -6,6 +6,11 @@
 
 #include <new>
 
+#if ESP32 && defined(CONFIG_HEAP_POISONING_COMPREHENSIVE)
+    // heap_caps_check_integrity_all(), see process()
+    #    include <esp_heap_caps.h>
+#endif
+
 #if DEBUG_TASK_QUEUE
 #    include <debug_helper_enable.h>
 #else
@@ -46,10 +51,12 @@ TaskQueue::TaskQueue(size_t capacity) :
     _head(nullptr),
     _tail(nullptr),
     _capacity(capacity == kUnlimited ? kUnlimited : (capacity < 1 ? 1 : capacity)),
-    _size(0),
-    _dropped(0),
-    _processed(0),
-    _peak(0)
+    _size(0)
+    #if DEBUG_TASK_QUEUE
+        , _dropped(0)
+        , _processed(0)
+        , _peak(0)
+    #endif
 {
     __LDBG_printf("this=%p capacity=%u", this, (unsigned)_capacity);
     TASK_QUEUE_ASSERT(_capacity == kUnlimited || _capacity >= 1);
@@ -109,13 +116,17 @@ TaskQueue::ResultType TaskQueue::push(ItemPtr item)
     if (_queue) {
         if (xQueueSend(_queue, &item, 0) != pdTRUE) {
             __LDBG_printf("this=%p capacity=%u full", this, (unsigned)_capacity);
-            _dropped++;
+            #if DEBUG_TASK_QUEUE
+                _dropped++;
+            #endif
             return ResultType::FULL;
         }
-        auto count = static_cast<size_t>(uxQueueMessagesWaiting(_queue));
-        if (count > _peak) {
-            _peak = count;
-        }
+        #if DEBUG_TASK_QUEUE
+            auto count = static_cast<size_t>(uxQueueMessagesWaiting(_queue));
+            if (count > _peak) {
+                _peak = count;
+            }
+        #endif
         return ResultType::SUCCESS;
     }
 #endif
@@ -136,15 +147,19 @@ TaskQueue::ResultType TaskQueue::pushFromISR(ItemPtr item)
     if (_queue) {
         BaseType_t higherPriorityTaskWoken = pdFALSE;
         if (xQueueSendFromISR(_queue, &item, &higherPriorityTaskWoken) != pdTRUE) {
-            _dropped++;
+            #if DEBUG_TASK_QUEUE
+                _dropped++;
+            #endif
             return ResultType::FULL;
         }
         // the item might have been queued while a task was waiting (not used by the loop consumer)
         portYIELD_FROM_ISR(higherPriorityTaskWoken);
-        auto count = static_cast<size_t>(uxQueueMessagesWaiting(_queue));
-        if (count > _peak) {
-            _peak = count;
-        }
+        #if DEBUG_TASK_QUEUE
+            auto count = static_cast<size_t>(uxQueueMessagesWaiting(_queue));
+            if (count > _peak) {
+                _peak = count;
+            }
+        #endif
         return ResultType::SUCCESS;
     }
 #endif
@@ -156,7 +171,9 @@ TaskQueue::ResultType TaskQueue::_pushIntrusive(ItemPtr item)
     ResultType result = ResultType::SUCCESS;
     _lock();
     if (_capacity != kUnlimited && _size >= _capacity) {
-        _dropped++;
+        #if DEBUG_TASK_QUEUE
+            _dropped++;
+        #endif
         result = ResultType::FULL;
     }
     else {
@@ -169,9 +186,11 @@ TaskQueue::ResultType TaskQueue::_pushIntrusive(ItemPtr item)
         }
         _tail = item;
         _size++;
-        if (_size > _peak) {
-            _peak = _size;
-        }
+        #if DEBUG_TASK_QUEUE
+            if (_size > _peak) {
+                _peak = _size;
+            }
+        #endif
     }
     _unlock();
     return result;
@@ -225,13 +244,18 @@ size_t TaskQueue::process(size_t maxItems, uint32_t maxRuntimeMillis)
             break;
         }
         task();
+        #if ESP32 && defined(CONFIG_HEAP_POISONING_COMPREHENSIVE)
+            heap_caps_check_integrity_all(true);
+        #endif
         count++;
         if (maxRuntimeMillis && (millis() - startTime) >= maxRuntimeMillis) {
             __LDBG_printf("this=%p runtime limit reached, executed=%u", this, (unsigned)count);
             break;
         }
     }
-    _processed += count;
+    #if DEBUG_TASK_QUEUE
+        _processed += count;
+    #endif
     return count;
 }
 
@@ -265,6 +289,8 @@ size_t TaskQueue::capacity() const
     return _capacity;
 }
 
+#if DEBUG_TASK_QUEUE
+
 size_t TaskQueue::dropped() const
 {
     return _dropped;
@@ -286,6 +312,8 @@ void TaskQueue::resetStatistics()
     _processed = 0;
     _peak = size();
 }
+
+#endif
 
 void TaskQueue::_lock()
 {

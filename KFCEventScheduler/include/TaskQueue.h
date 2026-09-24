@@ -15,7 +15,7 @@
 #endif
 
 #ifndef DEBUG_TASK_QUEUE
-#    define DEBUG_TASK_QUEUE (0 || defined(DEBUG_ALL))
+#    define DEBUG_TASK_QUEUE (1 || defined(DEBUG_ALL))
 #endif
 
 #ifndef TASK_QUEUE_ASSERT
@@ -53,8 +53,9 @@
 // The queue is bounded (kDefaultCapacity entries) and push() fails with ResultType::FULL instead
 // of silently dropping entries. Use kUnlimited for a queue that grows as needed.
 //
-// size() is exact, the counters returned by dropped()/processed()/peakSize() are advisory and
-// might be off by a few counts while multiple producers are pushing concurrently.
+// size() is exact. The counters returned by dropped()/processed()/peakSize() and the members behind
+// them are only compiled in with DEBUG_TASK_QUEUE (1 by default with DEBUG_ALL), they are advisory
+// and might be off by a few counts while multiple producers are pushing concurrently.
 //
 class TaskQueue {
 public:
@@ -110,12 +111,21 @@ public:
     size_t size() const;
     // configured capacity, kUnlimited if there is no limit
     size_t capacity() const;
+
+    #if DEBUG_TASK_QUEUE
+
+    // ---- statistics (DEBUG_TASK_QUEUE only) ----
+
     // number of items rejected because the queue was full
     size_t dropped() const;
     // number of tasks executed by process()
     size_t processed() const;
+    // highest number of queued items so far
     size_t peakSize() const;
+    // clears dropped()/processed() and sets peakSize() to the current size()
     void resetStatistics();
+
+    #endif
 
     inline bool empty() const {
         return size() == 0;
@@ -140,9 +150,11 @@ private:
     ItemPtr _tail;
     size_t _capacity;
     size_t _size;
-    size_t _dropped;
-    size_t _processed;
-    size_t _peak;
+    #if DEBUG_TASK_QUEUE
+        size_t _dropped;
+        size_t _processed;
+        size_t _peak;
+    #endif
 };
 
 #ifndef _MSC_VER

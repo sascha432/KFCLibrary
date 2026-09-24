@@ -19,7 +19,7 @@ inside a WiFi/sys/ISR callback. It closes the two gaps of the existing helpers:
 | --- | --- | --- | --- |
 | push from another task | ESP8266 yes (interrupt lock), ESP32 not thread safe (`std::vector`) | no (`Scheduler::_run()` iterates without a lock) | yes |
 | push from an ISR | ESP8266 yes (max. 32 entries), ESP32 no | no | yes (`allocItem()` + `pushFromISR()`) |
-| bounded / backpressure | silently drops after 32 entries | n/a | returns `FULL`, `dropped()` counter |
+| bounded / backpressure | silently drops after 32 entries | n/a | returns `FULL` (+ `dropped()` with `DEBUG_TASK_QUEUE`) |
 | cancel / discard pending items | no | only the timer itself | `clear()` |
 
 Typical use cases:
@@ -174,6 +174,11 @@ Notes:
 | `size_t size()` | number of queued items (exact) |
 | `bool empty()` | `size() == 0` |
 | `size_t capacity()` | configured capacity, `kUnlimited` if there is no limit |
+
+Statistics - only compiled in with `DEBUG_TASK_QUEUE` (1 with `DEBUG_ALL`), see `TaskQueue.h`:
+
+| Method | Description |
+| --- | --- |
 | `size_t dropped()` | items rejected with `FULL` |
 | `size_t processed()` | tasks executed by `process()` |
 | `size_t peakSize()` | highest `size()` that has been observed |
@@ -200,7 +205,8 @@ length). The destructor clears the queue and deletes the FreeRTOS queue.
 | `push(ItemPtr)` | yes | yes | use `pushFromISR()` instead |
 | `pushFromISR(ItemPtr)` | - | no (documented as ISR only) | yes |
 | `pop()`, `process()`, `clear()` | yes (consumer) | no | no |
-| `size()`, `capacity()`, `dropped()`, `processed()`, `peakSize()`, `empty()` | yes | yes (advisory) | no |
+| `size()`, `capacity()`, `empty()` | yes | yes | no |
+| `dropped()`, `processed()`, `peakSize()` | yes | yes (advisory, `DEBUG_TASK_QUEUE`) | no |
 
 ## Examples
 
@@ -220,7 +226,11 @@ public:
     void onWiFiEvent(WiFiCallbacks::EventType event, void *payload) {
         if (_queue.push([this, payload]{ _handleBanner(payload); }) != TaskQueue::ResultType::SUCCESS) {
             // queue full, the work has been discarded
-            __LDBG_printf("MyPlugin: queue full, dropped=%u", (unsigned)_queue.dropped());
+            #if DEBUG_TASK_QUEUE
+                __LDBG_printf("MyPlugin: queue full, dropped=%u", (unsigned)_queue.dropped());
+            #else
+                __LDBG_printf("MyPlugin: queue full");
+            #endif
         }
     }
 
