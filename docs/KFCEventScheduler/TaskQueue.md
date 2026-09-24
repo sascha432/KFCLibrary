@@ -5,7 +5,8 @@
 context, a single consumer task drains the queue - and works the same way on **ESP32** and
 **ESP8266**.
 
-- Sources: `KFCEventScheduler/include/TaskQueue.h`, `KFCEventScheduler/src/TaskQueue.cpp`
+- Sources: `include/TaskQueue.h`, `src/TaskQueue.cpp` (paths are relative to the `KFCEventScheduler`
+  folder)
 - Included by `EventScheduler.h`, so `#include <EventScheduler.h>` is enough
 - Header: `class TaskQueue` (global namespace, like `LoopFunctions` and `WiFiCallbacks`)
 
@@ -336,8 +337,8 @@ the capacity small and use `pushFromISR()` with a pre-allocated item for interru
 
 ## See also
 
-- `KFCEventScheduler/include/EventScheduler.h` - umbrella header of the library
-- `KFCEventScheduler/include/LoopFunctions.h` - loop functions (`LOOP_FUNCTION_ADD()`,
+- `include/EventScheduler.h` - umbrella header of the library
+- `include/LoopFunctions.h` - loop functions (`LOOP_FUNCTION_ADD()`,
   `LOOP_FUNCTION_ADD_ARG()`, `LoopFunctions::remove()`) and `callOnce()`
 - kfc_fw firmware project: `src/kfc_firmware.cpp` (the main loop that runs the loop functions and the
   event scheduler) and `docs/AtModeHelp.md` (`+DUMPT` prints the event scheduler timers)
