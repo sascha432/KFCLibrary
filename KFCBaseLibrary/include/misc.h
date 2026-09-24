@@ -34,6 +34,7 @@ PROGMEM_READ_ALIGNED_CHUNK(var)
 #include "misc_string.h"
 #include "misc_safestring.h"
 #include "misc_time.h"
+#include "StrView.h"
 
 #ifdef __cplusplus
 extern "C" {
