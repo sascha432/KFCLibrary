@@ -7,10 +7,8 @@
 #include <Arduino_compat.h>
 #include "Event.h"
 
-#ifndef _MSC_VER
-#    pragma GCC push_options
-#    pragma GCC optimize("O3")
-#endif
+#pragma GCC push_options
+#pragma GCC optimize("O3")
 
 namespace Event {
 
@@ -52,9 +50,6 @@ namespace Event {
         void __list(bool debug = true);
 
     private:
-#if _MSC_VER
-    public:
-#endif
         friend CallbackTimer;
         friend Timer;
         friend ManagedCallbackTimer;
@@ -140,6 +135,4 @@ namespace Event {
 
 #include "Scheduler.hpp"
 
-#ifndef _MSC_VER
-#    pragma GCC pop_options
-#endif
+#pragma GCC pop_options

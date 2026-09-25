@@ -9,13 +9,11 @@
 #include <time.h>
 #include <Mutex.h>
 
-#ifndef _MSC_VER
-#    pragma GCC push_options
-#    pragma GCC optimize("O3")
-#endif
+#pragma GCC push_options
+#pragma GCC optimize("O3")
 
 #ifndef DEBUG_OSTIMER
-#    define DEBUG_OSTIMER (0 || defined(DEBUG_ALL)/* || _MSC_VER*/)
+#    define DEBUG_OSTIMER (0 || defined(DEBUG_ALL))
 #endif
 
 #ifndef DEBUG_EVENT_SCHEDULER
@@ -58,7 +56,7 @@
 // 56bit 833999.930995 days or 2283.367368 years
 
 #ifndef SCHEDULER_HAVE_REMAINING_DELAY
-#    if ESP8266 || _MSC_VER
+#    if ESP8266
 #        define SCHEDULER_HAVE_REMAINING_DELAY 1
 #    endif
 #endif
@@ -243,6 +241,4 @@ namespace Event {
 #pragma pop_macro("HIGH")
 #pragma pop_macro("LOW")
 
-#ifndef _MSC_VER
-#    pragma GCC pop_options
-#endif
+#pragma GCC pop_options

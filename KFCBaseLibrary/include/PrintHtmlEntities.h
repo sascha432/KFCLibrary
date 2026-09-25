@@ -6,10 +6,8 @@
 
 #include <Arduino_compat.h>
 
-#ifndef _MSC_VER
 #pragma GCC push_options
 #pragma GCC optimize ("O3")
-#endif
 
 // it is recommended to use PRINTHTMLENTITIES_* for supported entities
 
@@ -206,6 +204,4 @@ inline int8_t PrintHtmlEntities::__getKeyIndex_P(char find, PGM_P keys)
     return -1;
 }
 
-#ifndef _MSC_VER
 #pragma GCC pop_options
-#endif

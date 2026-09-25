@@ -7,14 +7,12 @@ A collection of my ESP8266/ESP32 libraries... Both the ESP8266_NONOS_SDK and the
 ### ESP8266
 
 - GCC 10.x
-- Modified [framework-arduinoespressif8266](https://github.com/sascha432/Arduino) 
-- [v3.1.2-mod](https://github.com/sascha432/Arduino/releases/tag/3.1.2-mod)
+- https://github.com/platformio/platform-espressif8266.git
 
 ### ESP32
 
 - GCC 8.4.x with gnu++17
-- Modified [framework-arduinoespressif32](https://github.com/sascha432/arduino-esp32) 
-- [v2.0.9-mod](https://github.com/sascha432/arduino-esp32/releases/tag/2.0.9-mod)
+- https://github.com/platformio/platform-espressif32.git
 
 ### KFCWebBuilder
 
@@ -85,7 +83,7 @@ An extension for Adafruit_GFX and supported TFT/OLED displays. If offers fullscr
 
 ### KFCBaseLibrary
 
-- ``Arduino_compat.h`` cross platform support (ESP32/ESP8266/Win32 Console)
+- ``Arduino_compat.h`` cross platform support (ESP8266/ESP32)
 - ``asyncHTTPrequest`` for ESP32/ESP8266
 - ``debug_helper.h`` for local and global debugging messages
 - ``ReadADC.h`` offer a wrapper to read the ESP8266 ADC safely

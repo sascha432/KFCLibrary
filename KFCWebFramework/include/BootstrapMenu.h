@@ -18,17 +18,6 @@
 #    define DEBUG_BOOTSTRAP_MENU_RENDER_TIME 0 //DEBUG_BOOTSTRAP_MENU
 #endif
 
-#include "push_pack.h"
-
-// typedef struct __attribute__packed__ {
-//     PGM_P _label;
-//     PGM_P _uri;
-//     uint8_t _id;
-//     uint8_t _parent_id;
-// } BoostrapMenuItem_t;
-
-// extern BoostrapMenuItem_t bootstrap_items[] PROGMEM;
-
 class BootstrapMenu {
 public:
     using PrintInterface = PrintArgs::PrintInterface;
@@ -230,5 +219,3 @@ private:
     ItemsVector _items;
     menu_item_id_t _uniqueId;
 };
-
-#include "pop_pack.h"

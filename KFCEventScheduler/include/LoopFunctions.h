@@ -21,12 +21,10 @@
 #include <functional>
 #include <vector>
 
-#ifndef _MSC_VER
-#    pragma GCC push_options
-#    pragma GCC optimize("O3")
-#endif
+#pragma GCC push_options
+#pragma GCC optimize("O3")
 
-#if defined(ESP32) || defined(_MSC_VER)
+#if defined(ESP32)
 bool IRAM_ATTR schedule_function(const std::function<void(void)> &fn);
 void run_scheduled_functions();
 #endif
@@ -180,7 +178,7 @@ inline void LoopFunctions::add(Callback callback, CallbackPtr callbackPtr LOOP_F
     iterator->deleteCallback = false;
 }
 
-#if _MSC_VER || ESP32
+#if ESP32
 
 extern std::vector<std::function<void(void)>> scheduled_functions;
 
@@ -190,7 +188,7 @@ inline void run_scheduled_functions()
         fn();
         #if ESP32 && defined(CONFIG_HEAP_POISONING_COMPREHENSIVE)
             heap_caps_check_integrity_all(true);
-        #elif _MSC_VER
+        #elif 0 // MSVC
             _ASSERTE(_CrtCheckMemory());
         #endif
     }
@@ -201,6 +199,4 @@ inline void run_scheduled_functions()
 
 #include <debug_helper_disable.h>
 
-#ifndef _MSC_VER
-#    pragma GCC pop_options
-#endif
+#pragma GCC pop_options

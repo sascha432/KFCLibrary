@@ -128,7 +128,7 @@ struct ETSTimerEx {
 
 | Platform | `create()` | `isNew()` / `isDone()` | `lock()` |
 | --- | --- | --- | --- |
-| ESP8266 / `_MSC_VER` | `ets_timer_disarm()` if needed + `ets_timer_setfn()` | derived from `timer_next`/`timer_arg`/`timer_period` and `kUnusedMagic` | replaces `timer_func` with `_EtsTimerLockedCallback` (no extra memory is used) |
+| ESP8266 | `ets_timer_disarm()` if needed + `ets_timer_setfn()` | derived from `timer_next`/`timer_arg`/`timer_period` and `kUnusedMagic` | replaces `timer_func` with `_EtsTimerLockedCallback` (no extra memory is used) |
 | ESP32 | `esp_timer_create()` with `ESP_TIMER_TASK` dispatch | both mean `_timer == nullptr` | sets the `_locked` flag |
 
 Platform notes:

@@ -96,7 +96,7 @@ namespace KFCJson {
         }
 
         // using buffer_size 8, length might overlap with the type stored in the last byte
-        // works with ESP8266 and MSVC/win32
+        // works with ESP8266 and ESP32
         inline length_t _getLength() const {
             return _str.length;
             //return *(length_t *)&_raw[offsetof(_str_t, length)];

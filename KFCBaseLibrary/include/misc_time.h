@@ -8,21 +8,7 @@
 #include <pgmspace.h>
 
 // use TIME_T_FMT for sprintf and time_t
-#if defined(_MSC_VER)
-
-#ifdef _WIN32
-
-#define TIME_T_FMT "%ld"
-#define TIME_T_MIN 946684800L       // Sat Jan 01 2000 00:00:00 GMT+0000
-#define TIME_T_MAX 0x7FFFFFFFL      // Tue Jan 19 2038 03:14:07 GMT+0000
-
-#else
-
-#erro TODO
-
-#endif
-
-#elif __GNUG__ && __GNUC__ < 10
+#if __GNUG__ && __GNUC__ < 10
 
 #define TIME_T_FMT "%ld"
 #define TIME_T_MIN 946684800L       // Sat Jan 01 2000 00:00:00 GMT+0000

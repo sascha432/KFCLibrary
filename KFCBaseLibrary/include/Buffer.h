@@ -8,10 +8,8 @@
 #include <stl_ext/type_traits.h>
 #include <stl_ext/non_std.h>
 
-#ifndef _MSC_VER
 #pragma GCC push_options
 #pragma GCC optimize ("O3")
-#endif
 
 #ifndef DEBUG_BUFFER
 #    define DEBUG_BUFFER (0 || defined(DEBUG_ALL))
@@ -191,7 +189,6 @@ public:
         _buffer = nullptr;
         _length = 0;
         _size = 0;
-        CHECK_MEMORY();
     }
 
     Buffer(const __FlashStringHelper *str) : Buffer()
@@ -507,6 +504,4 @@ protected:
 #include "debug_helper_disable.h"
 #endif
 
-#ifndef _MSC_VER
 #pragma GCC pop_options
-#endif

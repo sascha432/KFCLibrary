@@ -25,10 +25,8 @@
 #    include <MicrosTimer.h>
 #endif
 
-#ifndef _MSC_VER
-#    pragma GCC push_options
-#    pragma GCC optimize("O3")
-#endif
+#pragma GCC push_options
+#pragma GCC optimize("O3")
 
 #if !DISABLE_GLOBAL_EVENT_SCHEDULER
 Event::Scheduler __Scheduler;
@@ -142,24 +140,6 @@ bool Scheduler::_removeTimer(CallbackTimerPtr timer)
     return false;
 }
 
-#if _MSC_VER
-
-static void __dump(Event::TimerVector &timers)
-{
-    Serial.printf("--- %u\n", timers.size());
-    int i = 0;
-    for (auto &timer : timers) {
-        if (timer) {
-            Serial.printf("%03d %u\n", i, timer->_priority);
-        }
-        else {
-            Serial.printf("%03d null\n", i);
-        }
-        i++;
-    }
-}
-
-#endif
 
 void Event::Scheduler::_sort()
 {
@@ -367,6 +347,4 @@ void Scheduler::__list(bool debug)
 
 #endif
 
-#ifndef _MSC_VER
-#    pragma GCC pop_options
-#endif
+#pragma GCC pop_options

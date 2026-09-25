@@ -40,10 +40,8 @@ namespace STL_STD_EXT_NAMESPACE {
     template <bool _Test, class _Ta, class _Tb>
     using conditional_t = typename conditional<_Test, _Ta, _Tb>::type;
 
-#ifndef _MSC_VER
     template <class _Ta>
     using add_pointer_t = typename add_pointer<_Ta>::type;
-#endif
 
     template <class _Ta>
     using remove_const_t = typename remove_const<_Ta>::type;

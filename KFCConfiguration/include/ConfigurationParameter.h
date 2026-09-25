@@ -24,11 +24,6 @@
 class Buffer;
 class Configuration;
 
-#ifdef _MSC_VER
-#pragma warning(push)
-#pragma warning(disable : 26812)
-#endif
-
 namespace ConfigurationHelper {
 
     class ParameterInfo {
@@ -348,9 +343,5 @@ inline String ConfigurationParameter::toString() const
 
     #endif
 }
-
-#ifdef _MSC_VER
-#pragma warning(pop)
-#endif
 
 #include <debug_helper_disable.h>

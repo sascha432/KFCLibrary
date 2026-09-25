@@ -23,11 +23,6 @@
 #include "Configuration.hpp"
 #include "DebugHandle.h"
 
-#ifdef _MSC_VER
-#    pragma warning(push)
-#    pragma warning(disable : 26812)
-#endif
-
 Configuration::Configuration(uint16_t size) :
     #if defined(HAVE_NVS_FLASH)
         _nvsHandle(0),

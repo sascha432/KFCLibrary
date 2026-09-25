@@ -24,8 +24,6 @@ using namespace fs;
 #    define FS_MAPPING_MAX_FILENAME_LEN KFCFS_MAX_FILE_LEN
 #endif
 
-#include <push_pack.h>
-
 // CRC32 PHP (tested with 7.2.9) is using
 uint32_t crc32b(const void *message, size_t length, uint32_t crc = ~0);
 
@@ -98,8 +96,6 @@ private:
         uint32_t ___reserved : 7;
     };
 };
-
-#include <pop_pack.h>
 
 class FSWrapper {
 public:

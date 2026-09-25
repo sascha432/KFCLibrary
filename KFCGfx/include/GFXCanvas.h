@@ -10,8 +10,6 @@
 #include "GFXCanvasConfig.h"
 #include <bitmap_header.h>
 
-#include <push_pack.h>
-
 #if DEBUG_GFXCANVAS
 #    include "debug_helper_enable.h"
 #else
@@ -344,5 +342,3 @@ namespace GFXCanvas {
 #if DEBUG_GFXCANVAS
 #    include "debug_helper_disable.h"
 #endif
-
-#include <pop_pack.h>

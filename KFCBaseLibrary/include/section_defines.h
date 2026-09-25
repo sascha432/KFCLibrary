@@ -25,25 +25,9 @@
 
 #endif
 
-#if _MSC_VER
-
-#    ifndef FLASH_MEMORY_STORAGE_FILE
-#        define FLASH_MEMORY_STORAGE_FILE "EspFlashMemory.4m2m.dat"
-#    endif
-
-#    ifndef FLASH_MEMORY_STORAGE_MAX_SIZE
-#        define FLASH_MEMORY_STORAGE_MAX_SIZE (4096 * 1024) // 4MByte
-#    endif
-
-#endif
-
-#if _MSC_VER || ESP32
+#if ESP32
 
 // linker address emulation
-#    if _MSC_VER
-#        include <eagle_soc.h>
-#    endif
-
 #    define EAGLE_SOC_ADDRESSchar(name)     extern "C" char *&name;
 #    define EAGLE_SOC_ADDRESSuint32_t(name) extern "C" uint32_t &name;
 #    define EAGLE_SOC_ADDRESSvoid(name)     extern "C" void &*name;

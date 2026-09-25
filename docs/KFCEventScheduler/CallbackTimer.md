@@ -108,7 +108,7 @@ Details:
   pointer afterwards.
 - `Scheduler::remove(timer)` or `Event::Timer::remove()` removes the timer from outside the callback.
 - Longer intervals than `Event::kMaxDelay` are split into `kMaxDelay` sized chunks (`_remainingDelay`)
-  on the platforms with `SCHEDULER_HAVE_REMAINING_DELAY` (ESP8266/`_MSC_VER`) and rescheduled
+  on the platforms with `SCHEDULER_HAVE_REMAINING_DELAY` (ESP8266) and rescheduled
   manually. On ESP32 the native `esp_timer` handles the full 64 bit range.
 - `Event::CallbackTimerSize` is `sizeof(CallbackTimer)` for memory budgeting.
 

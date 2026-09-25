@@ -14,7 +14,7 @@
 #    include <debug_helper_disable.h>
 #endif
 
-#if defined(ESP8266) || defined(_MSC_VER)
+#if defined(ESP8266)
 #    include "spi_flash.h"
 #endif
 

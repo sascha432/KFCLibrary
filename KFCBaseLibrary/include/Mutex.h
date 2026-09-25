@@ -15,8 +15,6 @@
 #    include "Mutex_esp32.h"
 #elif ESP8266
 #    include "Mutex_esp8266.h"
-#elif _MSC_VER
-#    include "Mutex_win32.h"
 #endif
 
 template<typename _SemaphoreType>

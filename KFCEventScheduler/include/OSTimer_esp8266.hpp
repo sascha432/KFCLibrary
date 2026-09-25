@@ -8,12 +8,10 @@
 
 #include <Arduino_compat.h>
 
-#ifndef _MSC_VER
-#    pragma GCC push_options
-#    pragma GCC optimize("O3")
-#endif
+#pragma GCC push_options
+#pragma GCC optimize("O3")
 
-#if ESP8266 || _MSC_VER
+#if ESP8266
 
 #include "OSTimer.h"
 
@@ -236,9 +234,6 @@ inline void ETSTimerEx::end()
         auto next = cur->timer_next;
         if (cur->timer_func == reinterpret_cast<ETSTimerFunc *>(_EtsTimerLockedCallback) || cur->timer_func == reinterpret_cast<ETSTimerFunc *>(OSTimer::_OSTimerCallback)) {
             ets_timer_disarm(cur);
-            #if _MSC_VER
-                ets_timer_done(cur);
-            #endif
         }
         cur = next;
     }
@@ -253,6 +248,4 @@ inline void ICACHE_FLASH_ATTR ETSTimerEx::_EtsTimerLockedCallback(OSTimer *timer
 
 #endif
 
-#ifndef _MSC_VER
-#    pragma GCC pop_options
-#endif
+#pragma GCC pop_options

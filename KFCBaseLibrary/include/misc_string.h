@@ -183,13 +183,8 @@ constexpr const SafeStringWrapper __safeCString(nullptr_t ptr) {
 // additional low level PROGMEM string functions
 // ---------------------------------------------------------------------------
 
-#if defined(ESP8266) || defined(ESP32)
-
 char *strdup_P(PGM_P src);
-
 PGM_P strchr_P(PGM_P str, int c);
-
-#endif
 
 // size == 0: returns ESZEROL
 // str1 == nullptr: returns ESNULLP

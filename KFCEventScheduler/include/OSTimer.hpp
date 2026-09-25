@@ -4,16 +4,14 @@
 
 #pragma once
 
-#ifndef _MSC_VER
-#    pragma GCC push_options
-#    pragma GCC optimize("O3")
-#endif
+#pragma GCC push_options
+#pragma GCC optimize("O3")
 
 #if ESP32
 
 #include "OSTimer_esp32.hpp"
 
-#elif ESP8266 || _MSC_VER
+#elif ESP8266
 
 #include "OSTimer_esp8266.hpp"
 
@@ -139,6 +137,4 @@ inline SemaphoreMutex &OSTimer::getLock()
 }
 
 
-#ifndef _MSC_VER
-#    pragma GCC pop_options
-#endif
+#pragma GCC pop_options

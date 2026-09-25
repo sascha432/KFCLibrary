@@ -36,11 +36,6 @@
 #    include <debug_helper_disable.h>
 #endif
 
-#if _MSC_VER
-#    pragma warning(push)
-#    pragma warning(disable : 26812)
-#endif
-
 #ifndef NVS_DEINIT_PARTITION_ON_CLOSE
 #    if ESP8266
 #        define NVS_DEINIT_PARTITION_ON_CLOSE 1     // release all memory used by the partition. requires to reinitialize the partition for each read/write, which is pretty slow
@@ -647,9 +642,5 @@ public:
     }
 
 };
-
-#if _MSC_VER
-#    pragma warning(pop)
-#endif
 
 #include <debug_helper_disable.h>

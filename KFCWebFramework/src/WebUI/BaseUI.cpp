@@ -2,11 +2,6 @@
 * Author: sascha_lammers@gmx.de
 */
 
-//#if !_MSC_VER
-//#pragma GCC diagnostic push
-//#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
-//#endif
-
 #include <PrintHtmlEntities.h>
 #include <PrintHtmlEntitiesString.h>
 #include <misc.h>
@@ -142,10 +137,6 @@ bool WebUI::BaseUI::_hasAttributes() const
 {
     return _storage.find_if(_storage.begin(), _storage.end(), Storage::Vector::isAttribute) != _storage.end();
 }
-
-//#if !_MSC_VER
-//#pragma GCC diagnostic pop
-//#endif
 
 #if KFC_FORMS_INCLUDE_HPP_AS_INLINE == 0
 

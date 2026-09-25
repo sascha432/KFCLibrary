@@ -11,9 +11,7 @@ class ListDir
 public:
     static constexpr uint32_t kDirectoryUUID = ~0U;
 
-    #include <push_pack.h>
-
-    struct __attribute__packed__ ListingsHeader {
+    struct __attribute__((packed)) ListingsHeader {
         uint32_t uuid;
         uint32_t size;
         uint32_t orgSize;
@@ -37,8 +35,6 @@ public:
             return reinterpret_cast<char *>(this);
         }
     };
-
-    #include <pop_pack.h>
 
     struct Listing {
         bool valid;

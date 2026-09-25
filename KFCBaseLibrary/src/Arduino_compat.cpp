@@ -28,28 +28,13 @@ int ___debugbreak_and_panic(const char *filename, int line, const char *function
     ::delay(5000);
     DEBUG_OUTPUT.flush();
 #endif
-#if _MSC_VER
-    bool doPanic = false;
-    __try {
-        __debugbreak();
-    }
-    __except (GetExceptionCode() == EXCEPTION_BREAKPOINT ? EXCEPTION_EXECUTE_HANDLER : EXCEPTION_CONTINUE_SEARCH) {
-        doPanic = true;
-    }
-    if (doPanic) {
-        panic();
-    }
-#else
     #if ESP32
         ::printf_P("panic() called in %s:%u - %s\n", filename, line, function);
         ::delay(5000);
     #endif
     panic();
-#endif
     return 1;
 }
-
-#ifndef _MSC_VER
 
 String __class_from_String(const char* str) {
     String name;
@@ -71,5 +56,3 @@ String __class_from_String(const char* str) {
     }
     return name;
 }
-
-#endif

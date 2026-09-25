@@ -34,9 +34,6 @@ namespace KFCJson {
         _lastError.message = message;
         _lastError.position = position();
         _lastError.type = type;
-        //#if _WIN32 || _WIN64
-        //    throw JsonException(getLastErrorMessage().c_str());
-        //#endif
     }
 
     void JsonBaseReader::clearLastError()

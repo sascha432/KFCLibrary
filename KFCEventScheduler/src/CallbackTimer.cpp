@@ -15,10 +15,8 @@
 #    include <debug_helper_disable.h>
 #endif
 
-#ifndef _MSC_VER
-#    pragma GCC push_options
-#    pragma GCC optimize("O3")
-#endif
+#pragma GCC push_options
+#pragma GCC optimize("O3")
 
 using namespace Event;
 
@@ -126,6 +124,4 @@ String CallbackTimer::__getFilePos()
 
 #endif
 
-#ifndef _MSC_VER
-#    pragma GCC pop_options
-#endif
+#pragma GCC pop_options

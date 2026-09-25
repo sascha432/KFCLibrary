@@ -113,8 +113,6 @@ PGM_P strichr_P(PGM_P str, int c)
     return str;
 }
 
-#if defined(ESP8266) || defined(ESP32)
-
 PGM_P strchr_P(PGM_P str, int c)
 {
     uint8_t ch;
@@ -127,9 +125,6 @@ PGM_P strchr_P(PGM_P str, int c)
     }
     return str;
 }
-
-#endif
-
 
 int strncasecmp_P_P(PGM_P str1, PGM_P str2, size_t size)
 {
@@ -195,8 +190,6 @@ size_t printTrimmedDouble(Print *output, double value, int digits)
     return size;
 }
 
-#if defined(ESP8266) || defined(ESP32)
-
 char *strdup_P(PGM_P src)
 {
     if (!src) {
@@ -210,6 +203,3 @@ char *strdup_P(PGM_P src)
     memcpy_P(dst, src, len);
     return dst;
 }
-
-
-#endif

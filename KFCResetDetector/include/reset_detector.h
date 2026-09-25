@@ -36,12 +36,10 @@
 #    if ESP8266
 #        include <osapi.h>
 #        include <user_interface.h>
-#    elif ESP32 || _WIN32 || _WIN64
+#    elif ESP32
 #    else
 #        error Platform not supported
 #    endif
-
-#    include <push_pack.h>
 
 #    define RESET_DETECTOR_TIMEOUT 5000
 
@@ -178,8 +176,6 @@ extern "C" void reset_detector_setup_global_ctors();
 #    if RESET_DETECTOR_INCLUDE_HPP_INLINE
 #        include "reset_detector.hpp"
 #    endif
-
-#    include <pop_pack.h>
 
 #    undef __RESET_DETECTOR_INSIDE_INCLUDE
 #endif

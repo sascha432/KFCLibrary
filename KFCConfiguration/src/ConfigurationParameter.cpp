@@ -7,11 +7,6 @@
 #include <DumpBinary.h>
 #include <JsonTools.h>
 
-#ifdef _MSC_VER
-#    pragma warning(push)
-#    pragma warning(disable : 26812)
-#endif
-
 #if DEBUG_CONFIGURATION
 #    include <debug_helper_enable.h>
 #else

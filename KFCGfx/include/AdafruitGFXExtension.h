@@ -4,10 +4,8 @@
 
 #pragma once
 
-#ifndef _MSC_VER
 #pragma GCC push_options
 #pragma GCC optimize ("O3")
-#endif
 
 #include <Arduino_compat.h>
 #include "Adafruit_GFX.h"
@@ -198,6 +196,4 @@ public:
 
 using AdafruitGFXExtension = GFXExtension<Adafruit_GFX>;
 
-#ifndef _MSC_VER
 #pragma GCC pop_options
-#endif

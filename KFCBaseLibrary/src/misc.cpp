@@ -317,7 +317,7 @@ const __FlashStringHelper *WiFi_disconnect_reason(WiFiDisconnectReason reason)
             default:
                 break;
         }
-    #elif ESP8266 || _WIN32 || _WIN64
+    #elif ESP8266
         switch(reason) {
             case WIFI_DISCONNECT_REASON_UNSPECIFIED:
                 return F("UNSPECIFIED");
@@ -608,7 +608,7 @@ size_t strftime_P(char *buf, size_t size, PGM_P format, const struct tm *tm)
     return strftime(buf, size, fmt, tm);
 }
 
-#if defined(ESP8266) || defined(ESP32) || defined(_MSC_VER)
+#if defined(ESP8266) || defined(ESP32)
 
 uint32_t getSystemUptime()
 {
@@ -622,8 +622,6 @@ uint64_t getSystemUptimeMillis()
 
 #else
 
-#include <push_pack.h>
-
 typedef union {
     uint64_t value;
     struct __attribute__packed__ {
@@ -633,8 +631,6 @@ typedef union {
 } UptimeInfo_t;
 
 static UptimeInfo_t uptimeInfo = { 0 };
-
-#include <pop_pack.h>
 
 // fallback if micros64() is not available
 #warning these functions do not work properly if not called at least once every 49 days

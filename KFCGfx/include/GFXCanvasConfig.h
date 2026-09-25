@@ -24,12 +24,6 @@
 #    define DEBUG_GFXCANVAS_STATS_DETAILS DEBUG_GFXCANVAS_STATS
 #endif
 
-#if _MSC_VER
-#    define DEBUG_GFXCANVAS_BOUNDS_CHECK 1
-#    define GFXCANVAS_MAX_CACHED_LINES 1
-// #    define GFXCANVAS_MAX_CACHED_LINES 16
-#endif
-
 // max. number of cached lines
 #ifndef GFXCANVAS_MAX_CACHED_LINES
 #    define GFXCANVAS_MAX_CACHED_LINES 1
@@ -44,8 +38,6 @@
 #ifndef DEBUG_GFXCANVAS_BOUNDS_CHECK
 #    define DEBUG_GFXCANVAS_BOUNDS_CHECK DEBUG_GFXCANVAS_BOUNDS
 #endif
-
-#include <push_pack.h>
 
 namespace GFXCanvas {
 
@@ -80,5 +72,3 @@ namespace GFXCanvas {
 }
 
 #include "GFXCanvasDebug.h"
-
-#include <pop_pack.h>

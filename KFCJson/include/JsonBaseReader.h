@@ -15,17 +15,6 @@
 
 namespace KFCJson {
 
-    #if _WIN32 || _WIN64
-
-    class JsonException : public std::exception {
-    public:
-        JsonException(const char *message) : exception(message) {
-        }
-    };
-
-    #endif
-
-
     class JsonBaseReader {
     public:
         typedef struct  {

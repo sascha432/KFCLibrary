@@ -6,10 +6,8 @@
 #include <Arduino_compat.h>
 #include "OSTimer.h"
 
-#ifndef _MSC_VER
-#    pragma GCC push_options
-#    pragma GCC optimize("O3")
-#endif
+#pragma GCC push_options
+#pragma GCC optimize("O3")
 
 void ICACHE_FLASH_ATTR OSTimer::_OSTimerCallback(OSTimer *timer)
 {
@@ -27,13 +25,11 @@ void ICACHE_FLASH_ATTR OSTimer::_OSTimerCallback(OSTimer *timer)
     }
 }
 
-#ifndef _MSC_VER
-#    pragma GCC pop_options
-#endif
+#pragma GCC pop_options
 
 #include "Scheduler.h"
 
-#if ESP8266 || _MSC_VER
+#if ESP8266
 
 void dumpTimers(Print &output)
 {

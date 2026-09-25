@@ -10,11 +10,7 @@
 #include "stl_ext/array.h"
 #include "stl_ext/utility.h"
 
-#if _MSC_VER
-#define STL_STD_EXT_CONV_UTF8_ASSERT 1
-#else
 #define STL_STD_EXT_CONV_UTF8_ASSERT 0
-#endif
 
 #if STL_STD_EXT_CONV_UTF8_ASSERT
 #include <assert.h>
@@ -29,10 +25,8 @@
 #define _ASSERTE(...)
 #endif
 
-#ifndef _MSC_VER
 #pragma GCC push_options
 #pragma GCC optimize ("O2")
-#endif
 
 //
 // examples
@@ -621,9 +615,7 @@ namespace STL_STD_EXT_NAMESPACE_EX {
 
 }
 
-#ifndef _MSC_VER
 #pragma GCC pop_options
-#endif
 
 
 #if STL_STD_EXT_CONV_UTF8_ASSERT

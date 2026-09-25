@@ -6,8 +6,6 @@
 
 #include <Arduino_compat.h>
 
-#include <push_pack.h>
-
 // provides a timer based on millis that doesn't suffer from unsigned long overflow and doesn't use 64bit counters
 
 class MillisTimer {
@@ -117,6 +115,3 @@ inline void MillisTimer::restart()
 {
     set(_delay);
 }
-
-
-#include <pop_pack.h>

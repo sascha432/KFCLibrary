@@ -5,7 +5,6 @@
 #pragma once
 
 #include <Arduino_compat.h>
-#include <push_pack.h>
 
 #if HAVE_KFC_FIRMWARE_VERSION
 #    include <EventScheduler.h>
@@ -391,8 +390,6 @@ inline void RTCMemoryManager::updateTimeOffset(uint32_t offset)
         }
     #endif
 }
-
-#include <pop_pack.h>
 
 #if DEBUG_RTC_MEMORY_MANAGER
 #    include "debug_helper_disable.h"

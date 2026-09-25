@@ -29,10 +29,8 @@
 #    include <debug_helper_disable.h>
 #endif
 
-#ifndef _MSC_VER
-#    pragma GCC push_options
-#    pragma GCC optimize("O3")
-#endif
+#pragma GCC push_options
+#pragma GCC optimize("O3")
 
 //
 // TaskQueue
@@ -48,7 +46,6 @@
 //   ESP32    xQueueCreate()/xQueueSend()/xQueueReceive() (capacity != kUnlimited)
 //            intrusive list + portENTER_CRITICAL() (capacity == kUnlimited)
 //   ESP8266  intrusive list + ets_intr_lock() (ISR safe)
-//   _MSC_VER intrusive list + std::mutex
 //
 // The queue is bounded (kDefaultCapacity entries) and push() fails with ResultType::FULL instead
 // of silently dropping entries. Use kUnlimited for a queue that grows as needed.
@@ -142,10 +139,7 @@ private:
     QueueHandle_t _queue;
     portMUX_TYPE _mux = portMUX_INITIALIZER_UNLOCKED;
 #endif
-#if _MSC_VER
-    SemaphoreMutex _mutex;
-#endif
-    // used by ESP8266/_MSC_VER and by ESP32 if capacity is kUnlimited
+    // used by ESP8266 and by ESP32 if capacity is kUnlimited
     ItemPtr _head;
     ItemPtr _tail;
     size_t _capacity;
@@ -157,6 +151,4 @@ private:
     #endif
 };
 
-#ifndef _MSC_VER
-#    pragma GCC pop_options
-#endif
+#pragma GCC pop_options

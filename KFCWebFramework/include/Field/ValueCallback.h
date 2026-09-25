@@ -65,10 +65,8 @@ namespace FormUI {
                 _initValue();
             }
 
-        #ifndef _MSC_VER
         #pragma GCC diagnostic push
         #pragma GCC diagnostic ignored "-Wstrict-aliasing"
-        #endif
 
             virtual void copyValue() override {
                 VarType tmp;
@@ -105,9 +103,7 @@ namespace FormUI {
             uint8_t _insideCallback;
         };
 
-#ifndef _MSC_VER
 #pragma GCC diagnostic pop
-#endif
 
 
     }

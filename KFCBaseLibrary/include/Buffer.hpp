@@ -14,10 +14,8 @@
 #include "debug_helper_disable.h"
 #endif
 
-#ifndef _MSC_VER
 #pragma GCC push_options
 #pragma GCC optimize ("O3")
-#endif
 
 inline size_t Buffer::available() const
 {
@@ -86,14 +84,7 @@ inline void Buffer::_remove(size_t index, size_t count)
 
 inline String Buffer::toString() const
 {
-#if _WIN32 || _WIN64
-    String tmp;
-    tmp.reserve(_length);
-    for (size_t i = 0; i < _length; i++) {
-        tmp += (char)_buffer[i];
-    }
-    return tmp;
-#elif 1
+#if 1
     return PrintString(_buffer, _length);
 #else
     String tmp;
@@ -265,6 +256,4 @@ inline void Buffer::removeAndShrink(size_t index, size_t count, size_t minFree)
 #include "debug_helper_disable.h"
 #endif
 
-#ifndef _MSC_VER
 #pragma GCC pop_options
-#endif

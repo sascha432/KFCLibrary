@@ -4,11 +4,6 @@
 
 #pragma once
 
-//#if !_MSC_VER
-//#pragma GCC diagnostic push
-//#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
-//#endif
-
 #include <Arduino_compat.h>
 #include <vector>
 #include <PrintArgs.h>

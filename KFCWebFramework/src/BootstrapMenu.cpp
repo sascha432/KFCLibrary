@@ -6,11 +6,7 @@
 #include <PrintHtmlEntitiesString.h>
 #include <SHA1.h>
 
-#if _WIN32
-#define BOOTSTRAP_MENU_CRLF "\n"
-#else
 #define BOOTSTRAP_MENU_CRLF ""
-#endif
 
 #if DEBUG_BOOTSTRAP_MENU
 #include <debug_helper_enable.h>

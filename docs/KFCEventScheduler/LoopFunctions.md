@@ -100,7 +100,7 @@ erase happens at the end of the pass.
 (`loop_end`) and is then gone. It is the recommended way to leave an event handler or an ISR
 callback.
 
-| | ESP8266 | ESP32 / `_MSC_VER` |
+| | ESP8266 | ESP32 |
 | --- | --- | --- |
 | implementation | core `schedule_function()` (`cores/esp8266/Schedule.cpp`) | `LoopFunctions.cpp` (`scheduled_functions` vector) |
 | called from an ISR | yes (pre-allocated nodes, interrupt lock) | no (plain `std::vector`, no lock) |

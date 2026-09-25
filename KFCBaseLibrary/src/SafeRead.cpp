@@ -1,9 +1,8 @@
+/**
+ * Author: sascha_lammers@gmx.de
+ */
 
 #include "SafeRead.h"
-
-#if 0
-#    include <debug_helper_disable_ptr_validation.h>
-#endif
 
 static uint8_t *buffer = nullptr;
 static size_t pos;
@@ -28,12 +27,8 @@ static void __check_buffer()
 bool is_safe_ptr(const uint8_t *ptr)
 {
     __DBG_validatePointerCheck(ptr, VP_HPS);
-    #if _MSC_VER
-        return true;
-    #else
-        uintptr_t addr = (uintptr_t)ptr;
-        return (addr >= SECTION_HEAP_START_ADDRESS && addr <= SECTION_HEAP_END_ADDRESS) || (addr >= SECTION_FLASH_START_ADDRESS && addr < SECTION_FLASH_END_ADDRESS);
-    #endif
+    uintptr_t addr = (uintptr_t)ptr;
+    return (addr >= SECTION_HEAP_START_ADDRESS && addr <= SECTION_HEAP_END_ADDRESS) || (addr >= SECTION_FLASH_START_ADDRESS && addr < SECTION_FLASH_END_ADDRESS);
 }
 
 bool is_safe_ptr(const void *ptr)
@@ -67,9 +62,6 @@ size_t safe_read(uint8_t *buffer, const uint8_t *data, size_t len, uint16_t stop
 const char *safe_read(const char *ptr, size_t len)
 {
     __DBG_validatePointerCheck(ptr, VP_HPS);
-#if _MSC_VER
-    return ptr;
-#else
     __check_buffer();
     if (pos + len >= buffer_size - 2) {
         pos = 0;
@@ -80,16 +72,12 @@ const char *safe_read(const char *ptr, size_t len)
     pos += len;
     buffer[pos++] = 0;
     return (const char *)start;
-#endif
 }
 
 
 const char *safe_read(const char *ptr)
 {
     __DBG_validatePointerCheck(ptr, VP_HPS);
-#if _MSC_VER
-    return ptr;
-#else
     __check_buffer();
     size_t len = 64;
     if (pos + len >= buffer_size - 2) {
@@ -101,29 +89,20 @@ const char *safe_read(const char *ptr)
     pos += len;
     buffer[pos++] = 0;
     return (const char *)start;
-#endif
 }
 
 uint32_t safe_read(const uint32_t *ptr)
 {
     __DBG_validatePointerCheck(ptr, VP_HPS);
-#if _MSC_VER
-    return *ptr;
-#else
     uint32_t result = 0;
     safe_read((uint8_t *)&result, (const uint8_t *)ptr, sizeof(result), 0xffff);
     return result;
-#endif
 }
 
 uintptr_t safe_read_uintptr(const uintptr_t *ptr)
 {
     __DBG_validatePointerCheck(ptr, VP_HPS);
-#if _MSC_VER
-    return *ptr;
-#else
     uintptr_t result = 0;
     safe_read((uint8_t *)&result, (const uint8_t *)ptr, sizeof(result), 0xffff);
     return result;
-#endif
 }

@@ -7,10 +7,8 @@
 #include "PrintString.h"
 #include "PrintHtmlEntities.h"
 
-#ifndef _MSC_VER
 #pragma GCC push_options
 #pragma GCC optimize ("O3")
-#endif
 
 class PrintHtmlEntitiesString : public PrintString, public PrintHtmlEntities {
 public:
@@ -108,6 +106,4 @@ inline size_t PrintHtmlEntitiesString::printRaw(const __FlashStringHelper *str)
     return 0;
 }
 
-#ifndef _MSC_VER
 #pragma GCC pop_options
-#endif

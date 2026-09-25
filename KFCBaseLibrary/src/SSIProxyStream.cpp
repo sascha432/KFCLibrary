@@ -154,17 +154,6 @@ size_t SSIProxyStream::_readBuffer(bool templateCheck)
 
                         // get position inside the file after the template name without %
                         size_t filePos = _file.position() - (_buffer.end() - name.end) + 1;
-                        #if HAVE_DEBUG_ASSERT && _WIN32
-                            if (name.begin) {
-                                // verify position
-                                auto savePos = _file.position();
-                                _file.seek(filePos - name.len() - 1, SeekSet);
-                                uint8_t tmp[128];
-                                auto len = _file.readBytes(tmp, sizeof(tmp));
-                                __LDBG_assert(memcmp(tmp, name.begin, name.len()) == 0);
-                                _file.seek(savePos, SeekSet);
-                            }
-                        #endif
                         // check if data provider can resolve the name
                         if (_provider.begin(_template.name)) {
                             _template.start_length = _length;

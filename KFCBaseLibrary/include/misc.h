@@ -16,7 +16,7 @@
 #include <float.h>
 #include <limits>
 
-#if defined(ESP8266) || defined(ESP32) || _WIN32
+#if defined(ESP8266) || defined(ESP32)
 #ifndef PROGMEM_DWORD_ALIGNED
 #define PROGMEM_DWORD_ALIGNED                       1
 typedef uint32_t                                    progmem_aligned_t;
@@ -360,20 +360,16 @@ public:
     }
 
     unsigned char concat(const void *str, size_t size) {
-#if _MSC_VER
-        return String::concat((const char *)str, size);
-#else
-        auto len = length();
-        if (reserve(len + size)) {
-            auto buf = begin();
-            memmove_P(buf + len, str, size);
-            len += size;
-            setLen(len);
-            buf[len] = 0;
-            return 1;
-        }
-        return 0;
-#endif
+    auto len = length();
+    if (reserve(len + size)) {
+        auto buf = begin();
+        memmove_P(buf + len, str, size);
+        len += size;
+        setLen(len);
+        buf[len] = 0;
+        return 1;
+    }
+    return 0;
     }
 };
 
@@ -476,7 +472,7 @@ void *lambda_target(T callback) {
 // auto address = convertToIPAddress("192.168.0.1");
 // if (IPAddress_isValid(address)) { //we can use the address }
 
-#if ESP8266 || _MSC_VER
+#if ESP8266
 
 // use instead of address.isSet()
 // performs additional checks to validate the stored IP address

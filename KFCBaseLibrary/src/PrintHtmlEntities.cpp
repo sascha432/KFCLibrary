@@ -24,9 +24,7 @@ const char __keys_javascript_P[] PROGMEM = { "'\"\\\b\f\n\r\t\v" };
 // // index of the character must match the index of string in the values array
 // const char __keys_html_P[] PROGMEM =  { "'\"<>&%=?#" PRINTHTMLENTITIES_COPY PRINTHTMLENTITIES_DEGREE PRINTHTMLENTITIES_PLUSM PRINTHTMLENTITIES_ACUTE PRINTHTMLENTITIES_MICRO };
 
-// #ifndef _MSC_VER
 // static_assert(strncmp(__keys_attribute_all_P, __keys_html_P, strlen(__keys_attribute_all_P)) == 0, "invalid order");
-// #endif
 
 // https://en.wikipedia.org/wiki/Windows-1252
 const char *__values_P[] PROGMEM = {

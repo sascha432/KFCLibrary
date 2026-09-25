@@ -384,10 +384,8 @@ namespace FormUI {
             // specialized add methds for ARM
             // --------------------------------------------------------------------
 
-        #ifndef _MSC_VER
         #pragma GCC diagnostic push
         #pragma GCC diagnostic ignored "-Wstrict-aliasing"
-        #endif
 
         // For accessing unaligned member variables in packed structures
             template<typename ObjType, typename VarType, typename MemberVarType = stdex::member_pointer_value_t<VarType ObjType::*>>
@@ -430,9 +428,7 @@ namespace FormUI {
                 return addPointerTriviallyCopyable<VarType>(name, reinterpret_cast<void *>(valuePtr), type);
             }
 
-        #ifndef _MSC_VER
         #pragma GCC diagnostic pop
-        #endif
 
             template <typename VarType>
             Field::ValueCallback<VarType> &addCallbackGetterSetter(const __FlashStringHelper *name, typename Field::ValueCallback<VarType>::GetterSetterCallback callback, InputFieldType type = InputFieldType::SELECT) {

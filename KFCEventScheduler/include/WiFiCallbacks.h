@@ -9,10 +9,8 @@
 #include <vector>
 #include <stl_ext/utility.h>
 
-#ifndef _MSC_VER
-#    pragma GCC push_options
-#    pragma GCC optimize("O3")
-#endif
+#pragma GCC push_options
+#pragma GCC optimize("O3")
 
 #ifndef DEBUG_WIFICALLBACKS
 #    define DEBUG_WIFICALLBACKS 0
@@ -144,6 +142,4 @@ inline void WiFiCallbacks::callEvent(EventType event, void *payload)
     _locked = false;
 }
 
-#ifndef _MSC_VER
-#    pragma GCC pop_options
-#endif
+#pragma GCC pop_options

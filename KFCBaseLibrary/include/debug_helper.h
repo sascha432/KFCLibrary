@@ -11,15 +11,7 @@
 #include "constexpr_tools.h"
 #include "section_defines.h"
 
-#if _MSC_VER
-#ifndef DEBUG_INCLUDE_SOURCE_INFO
-#define DEBUG_INCLUDE_SOURCE_INFO                           1
-#endif
-extern unsigned long millis(void);
-#define __DEBUG_FUNCTION__                                  DebugContext::pretty_function(__FUNCSIG__)
-#else
 #define __DEBUG_FUNCTION__                                  __FUNCTION__
-#endif
 
 #ifndef DEBUG_VT100_SUPPORT
 #define DEBUG_VT100_SUPPORT                                 1
@@ -122,12 +114,7 @@ inline _Ta *__validatePointer(const _Ta *ptr, ValidatePointerType type, const ch
 
 #endif
 
-#if _MSC_VER
-#define __DBG_newline                                       "\r\n"
-#else
 #define __DBG_newline                                       "\n"
-#endif
-
 
 // regular debug functions
 #define __DBG_print(arg)                                    debug_print(F(arg __DBG_newline))
@@ -151,31 +138,12 @@ inline _Ta *__validatePointer(const _Ta *ptr, ValidatePointerType type, const ch
         __VA_ARGS__; \
         __DBG_printf("returned '%s'", PSTR(_STRINGIFY(__VA_ARGS__)));
 
-// MSVC version
-
-#ifndef _ASSERTE
-#define _ASSERTE(cond)                                      __DBG_assert(cond)
-#endif
-#ifndef _ASSERT_EXPR
-#define _ASSERT_EXPR(cond, fmt, ...)                        __DBG_assertf(cond, fmt, ##__VA_ARGS__)
-#endif
-
 // memory management
 
 #include "DebugContext.h"
 
 // validate pointers from alloc
-#if _MSC_VER
-
-#define ___IsValidStackPointer(ptr)                         _CrtIsValidHeapPointer(ptr)
-#define ___IsValidHeapPointer(ptr)                          _CrtIsValidHeapPointer(ptr)
-#define ___IsValidDRAMPointer(ptr)                          _CrtIsValidHeapPointer(ptr)
-#define ___IsValidStaticRAMPointer(ptr)                     _CrtIsValidHeapPointer(ptr)
-#define ___IsValidPROGMEMPointer(ptr)                       _CrtIsValidHeapPointer(ptr)
-#define ___IsValidPointer(ptr)                              _CrtIsValidHeapPointer(ptr)
-#define ___isValidPointerAlignment(ptr)                     true
-
-#elif defined(ESP8266)
+#if defined(ESP8266)
 
 #include <mmu_iram.h>
 
@@ -340,10 +308,10 @@ static inline int DEBUG_OUTPUT_flush() {
 // MSVC version
 
 #ifndef _ASSERTE
-#define _ASSERTE(...)
+#define _ASSERTE(cond)                                      __DBG_assert(cond)
 #endif
 #ifndef _ASSERT_EXPR
-#define _ASSERT_EXPR(...)
+#define _ASSERT_EXPR(cond, fmt, ...)                        __DBG_assertf(cond, fmt, ##__VA_ARGS__)
 #endif
 
 // new functions

@@ -23,22 +23,6 @@ using namespace GFXCanvas;
 
 BufferPool *BufferPool::_instance = nullptr;
 
-// void BufferPool::moveTempTo(ByteBuffer &buffer)
-// {
-//     auto iterator = add(&buffer);
-//     __LDBG_printf("iterator ptr=%p", &(*iterator));
-//     auto &header = *iterator;
-//     buffer._capacity = 0;
-//     buffer._size = header.dataSize();
-//     buffer._data = header.data();
-//     _temp.setLength(0);
-//     _temp.resize(kTempBufferInitSize);
-//     // #if _MSC_VER || DEBUG_GFXCANVAS
-//     //     std::fill_n(_temp.begin(), _temp.size(), 0xcc);
-//     // #endif
-//     // std::fill(_temp.begin(), _temp.end(), 0);
-// }
-
 BufferPool::BufferIterator BufferPool::find(BufferTypePtr id)
 {
     __LDBG_printf("ptr=%p", id);
@@ -110,7 +94,7 @@ BufferPool::BufferIterator BufferPool::add(BufferTypePtr id)
         }
         // copy new data
         // std::copy(_temp.begin(), _temp.end(), header.data());
-        #if _MSC_VER || DEBUG_GFXCANVAS
+        #if DEBUG_GFXCANVAS
             std::fill(iterator->end(), iterator->begin() + iterator->size(), 0xcc);
         #endif
         return iterator;
@@ -134,7 +118,7 @@ BufferPool::BufferIterator BufferPool::add(BufferTypePtr id)
 
     iterator->push_back(header);
     // iterator->write(_temp.begin(), _temp.length());
-    #if _MSC_VER || DEBUG_GFXCANVAS
+    #if DEBUG_GFXCANVAS
         std::fill(iterator->end(), iterator->begin() + iterator->size(), 0xcc);
     #endif
     return iterator;

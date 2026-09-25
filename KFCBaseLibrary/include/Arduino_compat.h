@@ -3,7 +3,7 @@
  */
 
 /**
- * Quick and dirty library to compile ESP8266 and ESP32 code with MSVC++ as native Win32 Console Application
+ * Compatibility layer for the ESP8266 and ESP32 Arduino cores
  */
 
 #pragma once
@@ -21,49 +21,6 @@
 #    define WSTRING_HAVE_EXTENDED_API 0
 #endif
 
-#if DEBUG && _MSC_VER
-#ifndef _DEBUG
-#error _DEBUG required
-#endif
-
-#if ARDUINO <= 100
-#error ARDUINO>100 required
-#endif
-
-#if !UNICODE || !_UNICODE
-#error UNICODE and _UNICODE required
-#endif
-
-#if !_CRT_SECURE_NO_WARNINGS
-#error _CRT_SECURE_NO_WARNINGS required
-#endif
-
-#if _CRTDBG_MAP_ALLOC
-#define new                                             new( _NORMAL_BLOCK , __FILE__ , __LINE__ )
-#define CHECK_MEMORY(...)                               if (_CrtCheckMemory() == false) { __debugbreak(); }
-#else
-#define CHECK_MEMORY(...)                               ;
-//#warning _CRTDBG_MAP_ALLOC=0
-#endif
-
-#else
-#define CHECK_MEMORY(...)                               ;
-#endif
-
-#if _MSC_VER
-
-#ifndef __attribute__
-#define __attribute__(...)
-#endif
-
-// place on heap for memory check
-#define stack_array(name, type, size)                   size_t name##_unique_ptr_size = sizeof(type[size]); auto name##_unique_ptr = std::unique_ptr<type[]>(new type[size]); auto *name = (name##_unique_ptr).get()
-#define sizeof_stack_array(name)                        name##_unique_ptr_size
-#else
-#define stack_array(name, type, size)                   auto name[size]
-#define sizeof_stack_array(name)                        sizeof(name)
-#endif
-
 //
 // NOTE:
 // if a flash string is not defined, run
@@ -72,24 +29,15 @@
 //
 #define PROGMEM_STRING_ID(name)                         SPGM_##name
 
-#if _MSC_VER
+#if ESP32
 
-#    define PROGMEM_STRING_DECL(name)       extern const char *PROGMEM_STRING_ID(name) PROGMEM;
-#    define PROGMEM_STRING_DEF(name, value) const char *PROGMEM_STRING_ID(name) PROGMEM = (const char *)__register_flash_memory(value, constexpr_strlen(value) + 1, PSTR_ALIGN);
+#define PROGMEM_STRING_DECL(name)       extern const char PROGMEM_STRING_ID(name)[] PROGMEM;
+#define PROGMEM_STRING_DEF(name, value) const char PROGMEM_STRING_ID(name)[] PROGMEM = { value };
 
 #else
 
-#    if ESP32
-
-#        define PROGMEM_STRING_DECL(name)       extern const char PROGMEM_STRING_ID(name)[] PROGMEM;
-#        define PROGMEM_STRING_DEF(name, value) const char PROGMEM_STRING_ID(name)[] PROGMEM = { value };
-
-#    else
-
-#        define PROGMEM_STRING_DECL(name)       extern const char PROGMEM_STRING_ID(name)[] __attribute__((__aligned__(PSTR_ALIGN))) PROGMEM;
-#        define PROGMEM_STRING_DEF(name, value) const char PROGMEM_STRING_ID(name)[] __attribute__((__aligned__(PSTR_ALIGN))) PROGMEM = { value };
-
-#    endif
+#define PROGMEM_STRING_DECL(name)       extern const char PROGMEM_STRING_ID(name)[] __attribute__((__aligned__(PSTR_ALIGN))) PROGMEM;
+#define PROGMEM_STRING_DEF(name, value) const char PROGMEM_STRING_ID(name)[] __attribute__((__aligned__(PSTR_ALIGN))) PROGMEM = { value };
 
 #endif
 
@@ -143,13 +91,13 @@ class __FlashStringHelper;
 
 #include "esp32_compat.h"
 
-// the project's own PROGMEM string/pointer helpers (__S(), is_HEAP_P/is_PGM_P, strcasecmp_P_P, strchr_P, ...)
-// the header has an #if ESP32 branch, on ESP32 they are plain libc calls
-#include "misc_string.h"
-
 #    define SPGM(name, ...)  PROGMEM_STRING_ID(name)
 #    define FSPGM(name, ...) reinterpret_cast<const __FlashStringHelper *>(SPGM(name))
 #    define PSPGM(name, ...) (PGM_P)(SPGM(name))
+
+// the project's own PROGMEM string/pointer helpers (__S(), is_HEAP_P/is_PGM_P, strcasecmp_P_P, strchr_P, ...)
+// the header has an #if ESP32 branch, on ESP32 they are plain libc calls
+#include "misc_string.h"
 
 #    ifndef __attribute__packed__
 #        define __attribute__packed__    __attribute__((packed))
@@ -218,84 +166,6 @@ extern "C" bool gdb_present(void);
 #    include "misc_string.h"
 #    include "debug_helper.h"
 #    include "misc.h"
-
-#elif _MSC_VER
-
-#define NOMINMAX
-#if !defined(_CRTDBG_MAP_ALLOC) && DEBUG
-#define _CRTDBG_MAP_ALLOC
-#endif
-
-#define DEBUGV(...) ;
-
-#include <stdint.h>
-#include <crtdbg.h>
-#include <string.h>
-#include <time.h>
-#include <winsock2.h>
-#include <WS2tcpip.h>
-#include <strsafe.h>
-#include <vector>
-#include <iostream>
-#include <Psapi.h>
-#include <assert.h>
-#include <CRTDBG.h>
-#include <pgmspace.h>
-
-#include "win32_compat.h"
-#include "WString.h"
-
-#define KFCFS                                           SPIFFS
-#define KFCFS_MAX_FILE_LEN                              31
-// includes directory slashes and filename
-#define KFCFS_MAX_PATH_LEN                              KFCFS_MAX_FILE_LEN
-
-#include <ets_sys_win32.h>
-#include <ets_timer_win32.h>
-
-#define __attribute__(a)
-
-#ifndef DEBUG_OUTPUT
-#define DEBUG_OUTPUT Serial
-#endif
-
-#include <global.h>
-
-void init_winsock();
-
-extern "C" uint32_t crc32(const void *data, size_t length, uint32_t crc = ~0U);
-
-#ifndef strdup
-#define strdup _strdup
-#endif
-
-uint16_t __builtin_bswap16(uint16_t);
-
-#include "Arduino.h"
-
-#define PROGMEM
-
-#define SPGM(name, ...)                                 PROGMEM_STRING_ID(name)
-#define FSPGM(name, ...)                                FPSTR(SPGM(name))
-#define PSPGM(name, ...)                                (PGM_P)(SPGM(name))
-
-#include <pgmspace.h>
-
-void throwException(PGM_P message);
-
-#include "WString.h"
-#include "Print.h"
-#include "Stream.h"
-#include "FS.h"
-#include "Serial.h"
-#include "WiFi.h"
-#include "WiFiUDP.h"
-#include "ESP.h"
-
-#include "debug_helper.h"
-#include "misc.h"
-
-extern const String emptyString;
 
 #else
 
@@ -440,19 +310,11 @@ void KFCFS_begin_func() {
     }
 }
 
-#if _MSC_VER
-
-#include "../../../include/spgm_auto_strings.h"
-
-#else
-
 #include <spgm_auto_strings.h>
 #include <spgm_auto_def.h>
 
 #if ESP8266
 #include <coredecls.h>
-#endif
-
 #endif
 
 // ----------------------------------------------------------------------------

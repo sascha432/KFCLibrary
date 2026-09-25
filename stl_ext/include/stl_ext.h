@@ -12,10 +12,6 @@
 #define STL_STD_EXT_NAMESPACE_EX        std_ex
 #endif
 
-#if _MSC_VER
-#include <vcruntime.h>
-#endif
-
 #if (__cplusplus > 201703L) || (_HAS_CXX20)
 #define __HAS_CPP20		1
 #define __HAS_CPP17		1

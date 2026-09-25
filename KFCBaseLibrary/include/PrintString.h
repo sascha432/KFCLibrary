@@ -10,15 +10,13 @@
 
 #include <Arduino_compat.h>
 
-#ifndef _MSC_VER
-#    pragma GCC push_options
-#    pragma GCC optimize("O3")
-#endif
+#pragma GCC push_options
+#pragma GCC optimize("O3")
 
 #ifndef WSTRING_HAVE_SETLEN
 #    if ESP8266
 #        define WSTRING_HAVE_SETLEN 1
-#    elif defined(_MSC_VER)
+#    elif 0 // MSVC
 #        define WSTRING_HAVE_SETLEN 0
 #    else
 #        define WSTRING_HAVE_SETLEN 1
@@ -267,6 +265,4 @@ PrintString &PrintString::operator+=(long long value)
     return *this;
 }
 
-#ifndef _MSC_VER
-#    pragma GCC pop_options
-#endif
+#pragma GCC pop_options

@@ -16,7 +16,7 @@
 #include <debug_helper.h>
 
 #ifndef GFXCANVAS_BUFFER_POOL_PACK_PTR
-#    if _MSC_VER
+#    if 0 // MSVC
 #        define UMM_MALLOC_CFG_HEAP_ADDR            0x100000
 #        define UMM_MALLOC_CFG_HEAP_SIZE            0xffff
 #        define GFXCANVAS_BUFFER_POOL_PACK_PTR      0
@@ -27,8 +27,6 @@
 #        define GFXCANVAS_BUFFER_POOL_PACK_PTR      0
 #    endif
 #endif
-
-#include <push_pack.h>
 
 namespace GFXCanvas {
 
@@ -118,11 +116,7 @@ namespace GFXCanvas {
     protected:
         BufferPool() {}
 
-#if _MSC_VER
-    public:
-#else
     private:
-#endif
         struct BufferHeader_t {
 
         private:
@@ -309,18 +303,12 @@ namespace GFXCanvas {
         bool remove(BufferTypePtr id);
         BufferIterator add(BufferTypePtr id);
 
-#if _MSC_VER
-    public:
-#else
     private:
-#endif
         static BufferPool *_instance;
         BufferList _list;
         // Buffer _temp;
     };
 
 }
-
-#include <pop_pack.h>
 
 #endif

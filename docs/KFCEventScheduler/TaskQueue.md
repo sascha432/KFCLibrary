@@ -30,13 +30,13 @@ Typical use cases:
 
 ## Platform mapping
 
-| | ESP32 | ESP8266 | `_MSC_VER` (mock) |
-| --- | --- | --- | --- |
-| bounded queue (`capacity > 0`) | `xQueueCreate()` / `xQueueSend()` / `xQueueReceive()` / `uxQueueMessagesWaiting()` / `vQueueDelete()` | intrusive list | intrusive list |
-| `kUnlimited` | intrusive list + `portENTER_CRITICAL()` / `portEXIT_CRITICAL()` | intrusive list | intrusive list |
-| task context lock | FreeRTOS queue lock | `ets_intr_lock()` / `ets_intr_unlock()` | `std::mutex` |
-| ISR push | `xQueueSendFromISR()` + `portYIELD_FROM_ISR()` | append under `ets_intr_lock()` | not applicable |
-| item type in the queue | `TaskQueue::Item *` (pointer, always trivially copyable) | | |
+| | ESP32 | ESP8266 |
+| --- | --- | --- |
+| bounded queue (`capacity > 0`) | `xQueueCreate()` / `xQueueSend()` / `xQueueReceive()` / `uxQueueMessagesWaiting()` / `vQueueDelete()` | intrusive list |
+| `kUnlimited` | intrusive list + `portENTER_CRITICAL()` / `portEXIT_CRITICAL()` | intrusive list |
+| task context lock | FreeRTOS queue lock | `ets_intr_lock()` / `ets_intr_unlock()` |
+| ISR push | `xQueueSendFromISR()` + `portYIELD_FROM_ISR()` | append under `ets_intr_lock()` |
+| item type in the queue | `TaskQueue::Item *` (pointer, always trivially copyable) | |
 
 Both implementations are FIFO, the queue stores **pointers to items** - that is why an entry can be
 queued from an ISR without any allocation.
@@ -343,7 +343,6 @@ the capacity small and use `pushFromISR()` with a pre-allocated item for interru
 - `push(ItemPtr)`/`pushFromISR(ItemPtr)` that fail with `FULL` or `INVALID` leave the item owned by
   the caller - free it from the loop task, not from an ISR.
 - `EMPTY` is currently reserved; `pop()` reports an empty queue with `false`.
-- The `_MSC_VER` (win32 mock) backend uses `std::mutex`; the ISR functions are not usable there.
 
 ## See also
 

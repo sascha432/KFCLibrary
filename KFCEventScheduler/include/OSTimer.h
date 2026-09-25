@@ -72,10 +72,8 @@ inline void ___DBG_printEtsTimer_E(const ETSTimerEx &timer, const String &msg)
 
 #endif
 
-#ifndef _MSC_VER
-#    pragma GCC push_options
-#    pragma GCC optimize("O3")
-#endif
+#pragma GCC push_options
+#pragma GCC optimize("O3")
 
 #if ESP32
 
@@ -86,7 +84,7 @@ inline void ___DBG_printEtsTimer_E(const ETSTimerEx &timer, const String &msg)
     using ETSTimerExTimerVector = std::list<ETSTimerEx *>;
     extern "C" ETSTimerExTimerVector *timer_list;
 
-#elif ESP8266 || _MSC_VER
+#elif ESP8266
 
     #if ESP8266
         #include <osapi.h>
@@ -102,7 +100,7 @@ inline void ___DBG_printEtsTimer_E(const ETSTimerEx &timer, const String &msg)
 // EventScheduler
 
 struct ETSTimerEx
-    #if ESP8266 || _MSC_VER
+    #if ESP8266
         : ETSTimer
     #endif
 {
@@ -193,7 +191,7 @@ struct ETSTimerEx
         bool _running;
         bool _locked;
 
-    #elif ESP8266 || _MSC_VER
+    #elif ESP8266
 
         using ETSTimerExCallback = ETSTimerFunc *;
 
@@ -242,8 +240,6 @@ protected:
     SemaphoreMutex _lock;
 };
 
-#ifndef _MSC_VER
-#    pragma GCC pop_options
-#endif
+#pragma GCC pop_options
 
 #include "OSTimer.hpp"
