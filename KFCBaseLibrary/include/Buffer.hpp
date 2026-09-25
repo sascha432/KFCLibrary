@@ -206,6 +206,8 @@ inline Buffer &Buffer::operator =(Buffer&&buffer) noexcept
 
 inline Buffer &Buffer::operator=(String &&str)
 {
+#if WSTRING_HAVE_EXTENDED_API
+    // the patched core hands the buffer over, no copy is required
     __LDBG_printf("len=%u size=%u ptr=%p", _length, _size, _buffer);
     if (_buffer) {
         free(_buffer);
@@ -216,6 +218,11 @@ inline Buffer &Buffer::operator=(String &&str)
         _length = (_size == 0) ? 0 : (_size - 1);
     }
     return *this;
+#else
+    // the stock Arduino core cannot hand over the buffer of a String (String::__release() does
+    // not exist), the content is copied
+    return operator=(static_cast<const String &>(str));
+#endif
 }
 
 inline Buffer &Buffer::operator=(const String &str)

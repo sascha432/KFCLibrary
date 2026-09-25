@@ -905,7 +905,7 @@ String Configuration::__debugDumper(ConfigurationParameter &param, const uint8_t
         DumpBinary dump(str);
         dump.setPerLine((uint8_t)len);
         dump.dump(data, len);
-        str.rtrim();
+        StrWrapper(str).rtrim();
     }
     return str;
 }

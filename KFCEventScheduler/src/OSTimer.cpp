@@ -149,7 +149,7 @@ static void ___DBG_printEtsTimerRaw(const ETSTimerEx &timer, const char *msg)
     if (msg) {
         DEBUG_OUTPUT.print(FPSTR(msg));
         // append space if it does not a trailing space
-        if (pgm_read_byte(msg) && !str_endswith_P(msg, ' ')) {
+        if (pgm_read_byte(msg) && !StrView(msg).endsWith(' ')) {
             DEBUG_OUTPUT.print(' ');
         }
     }

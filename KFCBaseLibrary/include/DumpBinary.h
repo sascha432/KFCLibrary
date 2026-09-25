@@ -25,10 +25,10 @@ public:
     DumpBinary(const String &title, Print &output, uint8_t groupBytes = kGroupBytesDefault, uint8_t perLine = kPerLineDefault, uintptr_t displayOffset = 0) :
         DumpBinary(output, groupBytes, perLine, displayOffset)
     {
-        if (title.endsWith('\n')) {
+        if (StrView(title).endsWith('\n')) {
             output.print(title);
         }
-        else if (title.endsWith(':')) {
+        else if (StrView(title).endsWith(':')) {
             output.println(title);
         }
         else {

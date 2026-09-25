@@ -44,7 +44,7 @@ const char *StringBuffer::findStr(const char *str, size_t len) const
         auto pend = (const char *)SECTION_IROM0_TEXT_END_ADDRESS;
         auto start = micros();
         while (pbegin < pend) {
-            if (!strcmp_P_P(pbegin, str)) {
+            if (StrView(FPSTR(pbegin)).equals(FPSTR(str))) {
                 auto dur = micros() - start;
                 __DBG_printf("%u: found %p for %p(%s)", dur, pbegin, str, str);
                 return pbegin;

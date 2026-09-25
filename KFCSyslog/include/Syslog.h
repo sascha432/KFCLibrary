@@ -195,7 +195,12 @@ inline void Syslog::addMessage(String &&message)
     MUTEX_LOCK_BLOCK(_lock) {
         size_t size = _queue.capacity() * sizeof(SyslogItem);
         for(const auto &item: _queue) {
+#if WSTRING_HAVE_EXTENDED_API
             size += item.__getAllocSize();
+#else
+            // the stock Arduino core has no String::__getAllocSize(), the length is used instead
+            size += item.length() + 1;
+#endif
             if (size > kMaxQueueSize) {
                 __LDBG_printf("dropped=%u", size);
                 _dropped++;

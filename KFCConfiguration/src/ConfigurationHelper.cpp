@@ -100,7 +100,8 @@ namespace ConfigurationHelper {
             uint32_t count = 0;
             while (file.available()) {
                 auto line = file.readStringUntil('\n');
-                if (line.trim().length()) {
+                line.trim();
+                if (line.length()) {
                     ConfigurationHelper::registerHandleName(line.c_str() + 5/* skip crc16 hash */, __DBG__TYPE_NONE);
                     count++;
                 }

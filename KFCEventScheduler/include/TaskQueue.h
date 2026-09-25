@@ -15,7 +15,7 @@
 #endif
 
 #ifndef DEBUG_TASK_QUEUE
-#    define DEBUG_TASK_QUEUE (1 || defined(DEBUG_ALL))
+#    define DEBUG_TASK_QUEUE (0 || defined(DEBUG_ALL))
 #endif
 
 #ifndef TASK_QUEUE_ASSERT

@@ -16,7 +16,7 @@ bool OpenWeatherMapJsonReader::beginObject(bool isArray)
         _info.clear(); // outer most object/array starts, clear existing data
         return true;
     }
-    if (path == F("daily[]")) {
+    if (F("daily[]") == path) {
         if (_info.limitReached || _info.daily.size() == _info.limit) { // new daily record, check if we have reached the limit
             _info.limitReached = true; // do not read anymore
             return true;
@@ -56,13 +56,13 @@ bool OpenWeatherMapJsonReader::processElement()
             item = &_info.current;
         }
         if (item) {
-            if (key.equals(F("dt"))) {
+            if (F("dt") == key) {
                 item->dt = getIntValue();
             }
-            else if (key.equals(F("temp")) || path.endsWith(F("temp.day"))) {
+            else if (F("temp") == key || path.endsWith(F("temp.day"))) {
                 item->temperature = getFloatValue();
             }
-            else if (key.equals(F("feels_like")) || path.endsWith(F("feels_like.day"))) {
+            else if (F("feels_like") == key || path.endsWith(F("feels_like.day"))) {
                 item->feels_like = getFloatValue();
             }
             else if (path.endsWith(F("temp.min"))) {
@@ -77,22 +77,22 @@ bool OpenWeatherMapJsonReader::processElement()
                     _info.current.temperature_max = item->temperature_max;
                 }
             }
-            else if (key.equals(F("pressure"))) {
+            else if (F("pressure") == key) {
                 item->pressure = (uint16_t)getIntValue();
             }
-            else if (key.equals(F("humidity"))) {
+            else if (F("humidity") == key) {
                 item->humidity = (uint8_t)getIntValue();
             }
-            else if (key.equals(F("wind_speed"))) {
+            else if (F("wind_speed") == key) {
                 item->wind_speed = getFloatValue();
             }
-            else if (key.equals(F("wind_deg"))) {
+            else if (F("wind_deg") == key) {
                 item->wind_deg = (uint16_t)getIntValue();
             }
-            else if (key.equals(F("sunrise"))) {
+            else if (F("sunrise") == key) {
                 item->sunrise = getIntValue();
             }
-            else if (key.equals(F("sunset"))) {
+            else if (F("sunset") == key) {
                 item->sunset = getIntValue();
             }
             else if (path.endsWith(F("weather[].description"))) {

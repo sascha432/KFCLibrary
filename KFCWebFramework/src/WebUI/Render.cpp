@@ -134,7 +134,7 @@ void WebUI::BaseUI::_printLabelTo(PrintInterface &output, const char *forLabel) 
     auto label = _getLabel();
     if (pgm_read_byte(label)) {
         if (forLabel) {
-            output.printf_P(str_endswith_P(label, ':') ? PrintArgs::FormatType::HTML_LABEL_FOR : PrintArgs::FormatType::HTML_LABEL_FOR_COLON, forLabel, label);
+            output.printf_P(StrView(label).endsWith(':') ? PrintArgs::FormatType::HTML_LABEL_FOR : PrintArgs::FormatType::HTML_LABEL_FOR_COLON, forLabel, label);
         }
         else {
             output.print(label);

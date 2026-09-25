@@ -110,9 +110,9 @@ bool ListDir::next()
             if (_dir.isDirectory()) {
                 append_slash(_filename);
             }
-            __LDBG_printf("filename=%s is_dir=%d mapping=%u", _filename.c_str(), _dir.isDirectory(), _filename.startsWithIgnoreCase(FSPGM(fs_mapping_dir)));
+            __LDBG_printf("filename=%s is_dir=%d mapping=%u", _filename.c_str(), _dir.isDirectory(), StrView(_filename).startsWithIgnoreCase(FSPGM(fs_mapping_dir)));
 
-            if (!_filename.startsWithIgnoreCase(FSPGM(fs_mapping_dir))) {
+            if (!StrView(_filename).startsWithIgnoreCase(FSPGM(fs_mapping_dir))) {
                 __LDBG_printf("file=%s is_dir=%d size=%u time=%u", _filename.c_str(), _dir.isDirectory(), _dir.fileSize(), _dir.fileTime());
                 return true;
             }

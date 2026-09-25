@@ -45,7 +45,7 @@ uint32_t crc32b(const void *message, size_t length, uint32_t crc)
 void FileMapping::_openByFilename()
 {
     String overrides = F("/.wor");
-    if (!_filename.startsWith('/')) {
+    if (!StrView(_filename).startsWith('/')) {
         overrides += '/';
     }
     overrides += _filename;
@@ -94,11 +94,6 @@ File FileMapping::open(const char *mode) const
     else {
         fnPtr = _filename.c_str();
     }
-    // if (strcmp_P(mode, PSTR("w+")) == 0 || strcmp_P(mode, PSTR("wb+")) || strcmp_P(mode, PSTR("w+b"))) {
-    //     // file will be replaced
-    //     // TODO update mappings file
-    // }
-    // else
     if (strchr(mode, 'w') || strchr(mode, 'a') || strchr(mode, '+')) {
         // deny any write/append access
         __DBG_printf("write access denied to mapped file=%s", fnPtr);

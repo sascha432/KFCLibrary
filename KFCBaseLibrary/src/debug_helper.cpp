@@ -39,7 +39,7 @@ void *__validatePointer(const void *ptr, ValidatePointerType type, const char *f
         }
     }
     if (static_cast<int>(type) & static_cast<int>(ValidatePointerType::P_HEAP)) {
-        if (___IsValidHeapPointer(ptr) || ___IsValidIRAMPointer(ptr)) {
+        if (___IsValidHeapPointer(ptr) || ___IsValidIRAMPointer(ptr) || ___IsValidStaticRAMPointer(ptr)) {
             return const_cast<void *>(ptr);
         }
     }

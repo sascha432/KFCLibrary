@@ -141,7 +141,7 @@ inline const char *StringDeduplicator::attachString(const char *str)
 
     #if DEBUG_STRING_DEDUPLICATOR
         for (const auto str2 : _fpStrings) {
-            if (strcmp_P_P(str, str2) == 0) {
+            if (StrView(FPSTR(str)) == FPSTR(str2)) {
                 _fpDupesCount++;
             }
         }

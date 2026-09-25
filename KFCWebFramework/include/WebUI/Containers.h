@@ -686,7 +686,9 @@ namespace FormUI {
         }
 
         inline StringAttribute PlaceHolder(double placeholder, uint8_t digits) {
-            return StringAttribute(F("placeholder"), String(placeholder, digits));
+            // the decimalPlaces parameter of the stock ESP32 core is unsigned int (unsigned char on
+            // ESP8266), an exact match keeps the String(double, ...) overload unambiguous
+            return StringAttribute(F("placeholder"), String(placeholder, static_cast<unsigned int>(digits)));
         }
 
         inline FPStringAttribute PlaceHolder(const __FlashStringHelper *placeholder) {

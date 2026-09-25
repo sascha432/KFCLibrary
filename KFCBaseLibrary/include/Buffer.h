@@ -199,13 +199,24 @@ public:
         write(str, strlen_P(reinterpret_cast<PGM_P>(str)));
     }
 
-    Buffer(String &&str) : _length(str.length())
+    Buffer(String &&str)
+#if WSTRING_HAVE_EXTENDED_API
+        : _length(str.length())
     {
+        // the patched core hands the buffer over, no copy is required
         _buffer = reinterpret_cast<uint8_t *>(str.__release(_size));
         if (_length > _size - 1) { // _size == str.capacity() + 1
             _length = (_size == 0) ? 0 : (_size - 1);
         }
     }
+#else
+        : Buffer()
+    {
+        // the stock Arduino core cannot hand over the buffer of a String (String::__release()
+        // does not exist), the content is copied
+        write(str);
+    }
+#endif
 
     Buffer(const String &str) : Buffer()
     {

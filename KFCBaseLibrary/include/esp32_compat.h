@@ -36,6 +36,15 @@ extern "C" {
 
 #define isFlashInterfacePin(p) false
 
+// the stock core stores the VFS mount point inside the FS implementation (fs::FSImpl, not
+// reachable through fs::FS) and KFCFS_begin() mounts with the framework defaults, so the mount
+// point is a compile time constant here
+#if USE_LITTLEFS
+#    define KFCFS_MOUNT_POINT  "/littlefs"
+#else
+#    define KFCFS_MOUNT_POINT  "/spiffs"
+#endif
+
 #if ESP32
 #define U_FS U_SPIFFS
 #endif
@@ -165,21 +174,19 @@ namespace fs {
         }
 
         Dir(const char *path) :
-            #if USE_LITTLEFS
-                _path(LittleFS.mountpoint()),
-            #else
-                _path(SPIFFS.mountpoint()),
-            #endif
+            _path(KFCFS_MOUNT_POINT),
             _entry(nullptr),
             _stats({})
         {
-            if (!_path.endsWith('/') && *path != '/') {
-                _path += '/';
+            if (!_path.length() || _path.charAt(_path.length() - 1) != '/') {
+                if (*path != '/') {
+                    _path += '/';
+                }
             }
             // start of the path without the mount point
             _pathStart = _path.length();
             _path += path;
-            if (!_path.endsWith('/')) {
+            if (!_path.length() || _path.charAt(_path.length() - 1) != '/') {
                 _path += '/';
             }
             _dir = opendir(_path.c_str());

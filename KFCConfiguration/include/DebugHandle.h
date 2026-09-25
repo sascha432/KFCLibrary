@@ -43,11 +43,11 @@ public:
     }
 
     bool operator==(const char *name) const {
-        return strcmp_P_P(_name, name) == 0;
+        return StrView(FPSTR(name)).equals(FPSTR(_name));
     }
 
     bool operator!=(const char *name) const {
-        return strcmp_P_P(_name, name) != 0;
+        return !StrView(FPSTR(name)).equals(FPSTR(_name));
     }
 
     const char *getName() const {
@@ -59,7 +59,7 @@ public:
     }
 
     bool equals(const char *name) const {
-        return strcmp_P_P(_name, name) == 0;
+        return StrView(FPSTR(name)).equals(FPSTR(_name));
     }
 
     void print(Print &output) const;

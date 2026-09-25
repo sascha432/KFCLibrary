@@ -56,14 +56,9 @@ namespace FormUI {
             ///
             // compare name operators and other name related methods
             ///
-            bool operator==(const String &name) const {
-                return strcmp_P(name.c_str(), _name) == 0;
-            }
-            bool operator==(const __FlashStringHelper *name) const {
-                return strcmp_P_P((PGM_P)name, _name) == 0;
-            }
-            bool operator==(const char *name) const {
-                return strcmp_P_P(name, _name) == 0;
+            template<typename T>
+            bool operator==(T name) const {
+                return StrView(name) == FPSTR(_name);
             }
 
             const __FlashStringHelper *getName() const;

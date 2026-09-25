@@ -148,7 +148,7 @@ namespace KFCJson {
     bool JsonString::equals(const char *str) const
     {
         if (isProgMem()) {
-            return strcmp_P(str, _getConstPtr()) == 0;
+            return StrView(_getConstPtr()) == str;
         }
         return strcmp(str, getPtr()) == 0;
     }
@@ -156,7 +156,7 @@ namespace KFCJson {
     bool JsonString::equals(const String &str) const
     {
         if (isProgMem()) {
-            return strcmp_P(str.c_str(), getPtr()) == 0;
+            return StrView(getPtr()) == str.c_str();
         }
         return strcmp(str.c_str(), getPtr()) == 0;
     }
@@ -165,10 +165,10 @@ namespace KFCJson {
     {
         if (isProgMem()) {
             if (str.isProgMem()) {
-                return strcmp_P_P(str.getPtr(), getPtr()) == 0;
+                return StrView(str.getPtr()) == getPtr();
             }
             else {
-                return strcmp_P(str.getPtr(), getPtr()) == 0;
+                return StrView(getPtr()) == str.getPtr();
             }
         }
         return strcmp(str.getPtr(), getPtr()) == 0;
@@ -176,10 +176,7 @@ namespace KFCJson {
 
     bool JsonString::equals(const __FlashStringHelper *str) const
     {
-        if (isProgMem()) {
-            return strcmp_P_P(getPtr(), RFPSTR(str)) == 0;
-        }
-        return strcmp_P(getPtr(), RFPSTR(str)) == 0;
+        return StrView(getPtr()) == str;
     }
 
     void JsonString::clear()

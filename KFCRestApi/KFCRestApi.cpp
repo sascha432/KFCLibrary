@@ -122,7 +122,7 @@ void KFCRestAPI::HttpRequest::setUri(const String &uri)
                 uint8_t buffer[64];
                 HeapStream stream(buffer);
                 JsonCallbackReader reader(stream, [&message](const String& key, const String& value, size_t partialLength, JsonBaseReader& json) {
-                    if (json.getLevel() == 1 && key.equals(F("message"))) {
+                    if (json.getLevel() == 1 && F("message") == key) {
                         message = value;
                     }
                     return true;

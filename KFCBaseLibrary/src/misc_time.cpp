@@ -2,7 +2,9 @@
   Author: sascha_lammers@gmx.de
 */
 
-#define __XSI_VISIBLE
+// newlib enables the XSI extensions for setenv/tzset with this level. an empty definition breaks
+// the "#if __XSI_VISIBLE" checks in the system headers (wchar.h, sys/time.h)
+#define __XSI_VISIBLE 700
 
 #include "misc_time.h"
 #include <Arduino_compat.h>

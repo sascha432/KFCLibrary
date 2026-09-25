@@ -21,7 +21,7 @@ bool JsonConfigReader::beginObject(bool isArray)
             //Serial.printf("key %s\n", getKey().c_str());
         }
     }
-    else if (!isArray && getLevel() == 2 && !strcmp_P(getKey().c_str(), SPGM(config))) {
+    else if (!isArray && getLevel() == 2 && getKey().equals(FSPGM(config))) {
         _isConfigObject = true;
     }
     return true;
@@ -108,7 +108,7 @@ bool JsonConfigReader::endObject()
             //Serial.printf("handle %04x done\n", _handle);
             _handle = INVALID_HANDLE;
         }
-        else if (getLevel() == 2 && getKey() == FSPGM(config_object_name)) {
+        else if (getLevel() == 2 && FSPGM(config_object_name) == getKey()) {
             _isConfigObject = false;
         }
     }
@@ -118,19 +118,14 @@ bool JsonConfigReader::endObject()
 bool JsonConfigReader::processElement()
 {
     if (_isConfigObject) {
-        auto keyStr = getKey();
-        auto key = keyStr.c_str();
-        //auto pathStr = getPath(false);
-        //auto path = pathStr.c_str();
-        //Serial.printf("key %s value %s type %s path %s index %d\n", key, getValue().c_str(), jsonType2String(getType()).c_str(), path, getObjectIndex());
-
-        if (!strcmp_P(key, PSTR("type"))) {
+        const auto &keyStr = getKey();
+        if (F("type") == keyStr) {
             _type = (ParameterType)stringToLl(getValue());
         }
-        else if (!strcmp_P(key, PSTR("length"))) {
+        else if (F("length") == keyStr) {
             _length = (uint16_t)stringToLl(getValue());
         }
-        else if (!strcmp_P(key, PSTR("data"))) {
+        else if (F("data") == keyStr) {
             _data = getValue();
         }
     }

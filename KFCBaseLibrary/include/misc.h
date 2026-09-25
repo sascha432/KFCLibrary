@@ -32,7 +32,6 @@ PROGMEM_READ_ALIGNED_CHUNK(var)
 
 #include "WString.h"
 #include "misc_string.h"
-#include "misc_safestring.h"
 #include "misc_time.h"
 #include "StrView.h"
 
@@ -102,21 +101,6 @@ extern "C" {
     }
 
 #endif
-
-// increment a counter and decrement when leaving then scope
-// interrupts are locked while modifying the counter
-template<typename _Ta>
-struct ScopeCounter {
-    _Ta *_ptr;
-    ScopeCounter(_Ta &value) : _ptr(std::addressof(value)) {
-        InterruptLock();
-        *_ptr++;
-    }
-    ~ScopeCounter() {
-        InterruptLock();
-        *_ptr--;
-    }
-};
 
 //class String;
 using StringVector = std::vector<String>;

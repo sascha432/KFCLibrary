@@ -115,6 +115,11 @@ namespace KFCJson {
             return _keyStr;
         }
 
+        // get key. key is empty if it is an array
+        inline const String &getKey() {
+            return _keyStr;
+        }
+
         // returns -1 if it isn't an array, otherwise the index
         inline int16_t getIndex() const {
             return _arrayIndex;

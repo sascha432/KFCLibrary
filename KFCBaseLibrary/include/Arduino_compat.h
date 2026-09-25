@@ -8,6 +8,19 @@
 
 #pragma once
 
+// The Arduino cores of this project are patched (github.com/sascha432) and add methods to String
+// that do not exist in the stock Arduino cores: __release(), __getAllocSize(), __getMemorySize(),
+// rtrim/ltrim(...), startsWith/endsWith(char), startsWithIgnoreCase, replace() -> bool,
+// trim() -> String&, ...
+//
+// the code for both is kept, the build environment selects the core:
+//      conf/common_esp8266.ini     0   stock platformio/framework-arduinoespressif8266
+//      conf/common_esp32.ini       1   sascha432/arduino-esp32.git
+// the default is 0, so a stock core always compiles
+#ifndef WSTRING_HAVE_EXTENDED_API
+#    define WSTRING_HAVE_EXTENDED_API 0
+#endif
+
 #if DEBUG && _MSC_VER
 #ifndef _DEBUG
 #error _DEBUG required
@@ -130,6 +143,10 @@ class __FlashStringHelper;
 
 #include "esp32_compat.h"
 
+// the project's own PROGMEM string/pointer helpers (__S(), is_HEAP_P/is_PGM_P, strcasecmp_P_P, strchr_P, ...)
+// the header has an #if ESP32 branch, on ESP32 they are plain libc calls
+#include "misc_string.h"
+
 #    define SPGM(name, ...)  PROGMEM_STRING_ID(name)
 #    define FSPGM(name, ...) reinterpret_cast<const __FlashStringHelper *>(SPGM(name))
 #    define PSPGM(name, ...) (PGM_P)(SPGM(name))
@@ -198,6 +215,7 @@ extern "C" bool gdb_present(void);
 #        define PWMRANGE 1023
 #    endif
 
+#    include "misc_string.h"
 #    include "debug_helper.h"
 #    include "misc.h"
 
@@ -337,6 +355,82 @@ extern "C" {
     void __dump_binary_to(Print &output, const void *ptr, int len, size_t perLine = DUMP_BINARY_DEFAULTS, PGM_P title = DUMP_BINARY_NO_TITLE, uint8_t groupBytes = static_cast<uint8_t>(DUMP_BINARY_DEFAULTS));
 }
 
+// the ESP8266 core has File::fullName(), the stock ESP32 core names it path()
+inline
+__attribute__((__always_inline__))
+const char *fullName(const fs::File &file) {
+#if ESP32
+    return file.path();
+#else
+    return file.fullName();
+#endif
+}
+
+#if ESP32
+// the ESP8266 core provides FSInfo and FS::info(), the stock ESP32 core has neither
+// (LittleFS only exports totalBytes()/usedBytes())
+struct FSInfo {
+    size_t totalBytes;
+    size_t usedBytes;
+    size_t blockSize;
+    size_t pageSize;
+    size_t maxOpenFiles;
+    size_t maxPathLength;
+};
+#endif
+
+inline
+__attribute__((__always_inline__))
+void getFSInfo(FSInfo &info) {
+#if ESP32
+    memset(&info, 0, sizeof(info));
+    info.totalBytes = KFCFS.totalBytes();
+    info.usedBytes = KFCFS.usedBytes();
+    // not exported by the stock core
+    info.blockSize = 4096;
+    info.maxOpenFiles = 5;
+    info.maxPathLength = KFCFS_MAX_PATH_LEN;
+#else
+    KFCFS.info(info);
+#endif
+}
+
+// the ESP8266 core has ESP.random(), the ESP32 core esp_random()/esp_fill_random()
+inline
+__attribute__((__always_inline__))
+uint32_t getRandom() {
+#if ESP32
+    return esp_random();
+#else
+    return ESP.random();
+#endif
+}
+
+inline
+__attribute__((__always_inline__))
+void getRandom(uint8_t *buffer, size_t size) {
+#if ESP32
+    esp_fill_random(buffer, size);
+#else
+    ESP.random(buffer, size);
+#endif
+}
+
+// the ESP8266 core has ESP.getHeapFragmentation(), ESP32 only reports the largest free block
+inline
+__attribute__((__always_inline__))
+uint8_t getHeapFragmentation() {
+#if ESP32
+    const uint32_t freeHeap = ESP.getFreeHeap();
+    if (!freeHeap) {
+        return 0;
+    }
+    return static_cast<uint8_t>(100 - (heap_caps_get_largest_free_block(MALLOC_CAP_DEFAULT) * 100 / freeHeap));
+#else
+    return static_cast<uint8_t>(ESP.getHeapFragmentation());
+#endif
+}
+
 inline
 __attribute__((__always_inline__))
 void KFCFS_begin_func() {
@@ -360,3 +454,22 @@ void KFCFS_begin_func() {
 #endif
 
 #endif
+
+// ----------------------------------------------------------------------------
+// comparing a String with a flash string in either order
+// ----------------------------------------------------------------------------
+// the String class of the patched cores has the member operators for `str == F("...")` only,
+// `F("...") == str` does not compile at all: a member operator can never have the class on the
+// right and C++17 does not consider member candidates when the left operand is not a class type
+//
+// the non-member operators below handle the reversed order without a temporary String or an
+// allocation - the stock Arduino cores have to convert the flash string into a String object
+// (short literals end up in the SSO buffer, everything else allocates)
+
+inline bool operator ==(const __FlashStringHelper *lhs, const String &rhs) {
+    return rhs.equals(lhs);
+}
+
+inline bool operator !=(const __FlashStringHelper *lhs, const String &rhs) {
+    return !rhs.equals(lhs);
+}

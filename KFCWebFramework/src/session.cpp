@@ -14,7 +14,7 @@ const uint8_t *pepper_and_salt(const uint8_t *originalSalt, SessionHash &hash, S
     }
     else {
         salt = saltBuffer;
-        ESP.random(salt, sizeof(saltBuffer));
+        getRandom(salt, sizeof(saltBuffer));
     }
     hash.update(salt, sizeof(saltBuffer));
     return salt;

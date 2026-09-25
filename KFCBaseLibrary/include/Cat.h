@@ -66,7 +66,7 @@ namespace StreamOutput {
             if (!_file) {
                 return String();
             }
-            return _file.fullName();
+            return fullName(_file);
         }
 
         size_t getSize() {
@@ -91,7 +91,7 @@ namespace StreamOutput {
             }
             if (_buffer && _file) {
                 if (_printInfo) {
-                    output.printf_P(PSTR("+CAT: file=%s:\n"), _file.fullName());
+                    output.printf_P(PSTR("+CAT: file=%s:\n"), fullName(_file));
                 }
                 _loopAdded = true;
                 LOOP_FUNCTION_ADD_ARG([this]() {

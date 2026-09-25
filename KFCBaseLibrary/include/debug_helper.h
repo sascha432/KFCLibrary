@@ -170,6 +170,7 @@ inline _Ta *__validatePointer(const _Ta *ptr, ValidatePointerType type, const ch
 #define ___IsValidStackPointer(ptr)                         _CrtIsValidHeapPointer(ptr)
 #define ___IsValidHeapPointer(ptr)                          _CrtIsValidHeapPointer(ptr)
 #define ___IsValidDRAMPointer(ptr)                          _CrtIsValidHeapPointer(ptr)
+#define ___IsValidStaticRAMPointer(ptr)                     _CrtIsValidHeapPointer(ptr)
 #define ___IsValidPROGMEMPointer(ptr)                       _CrtIsValidHeapPointer(ptr)
 #define ___IsValidPointer(ptr)                              _CrtIsValidHeapPointer(ptr)
 #define ___isValidPointerAlignment(ptr)                     true
@@ -181,6 +182,10 @@ inline _Ta *__validatePointer(const _Ta *ptr, ValidatePointerType type, const ch
 #define ___IsValidStackPointer(ptr)                         ((uint32_t)ptr >= SECTION_HEAP_END_ADDRESS && (uint32_t)ptr <= SECTION_STACK_END_ADDRESS)
 #define ___IsValidHeapPointer(ptr)                          ((uint32_t)ptr >= SECTION_HEAP_START_ADDRESS && (uint32_t)ptr < SECTION_DRAM_END_ADDRESS)
 #define ___IsValidDRAMPointer(ptr)                          (mmu_is_dram(ptr))
+// static RAM (data/rodata/bss) below the heap, it is valid RAM but neither heap nor stack.
+// the window ends where the heap starts and the heap ends below the stack, so it never
+// overlaps the stack region (dram0_0_seg = 0x3FFE8000..0x3FFFC000, the stacks are above it)
+#define ___IsValidStaticRAMPointer(ptr)                     ((uint32_t)ptr >= SECTION_DRAM_START_ADDRESS && (uint32_t)ptr < SECTION_HEAP_START_ADDRESS)
 #define ___IsValidIRAMPointer(ptr)                          (mmu_is_iram(ptr))
 #define ___IsValidPROGMEMPointer(ptr)                       ((uint32_t)ptr >= SECTION_FLASH_START_ADDR(irom0_text) && (uint32_t)ptr < SECTION_FLASH_END_ADDR(irom0_text))
 #define ___IsValidPointer(ptr)                              (___IsValidHeapPointer(ptr) || ___IsValidPROGMEMPointer(ptr))
@@ -191,6 +196,7 @@ inline _Ta *__validatePointer(const _Ta *ptr, ValidatePointerType type, const ch
 #define ___IsValidStackPointer(ptr)                         true
 #define ___IsValidHeapPointer(ptr)                          true
 #define ___IsValidDRAMPointer(ptr)                          true
+#define ___IsValidStaticRAMPointer(ptr)                     true
 #define ___IsValidIRAMPointer(ptr)                          true
 #define ___IsValidPROGMEMPointer(ptr)                       true
 #define ___IsValidPointer(ptr)                              true
