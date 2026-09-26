@@ -135,7 +135,7 @@ const char *StringBufferPool::addString(const char *str, size_t len)
     if (!target) {
         // add new pool
         size_t newSize = knthPoolSize;
-        if (len > newSize) { // this string required extra space
+        if (len >= newSize) { // this string required extra space
             newSize = len + 1 + knthPoolSize;
         }
         newSize = (newSize + 7) & ~7; // align to memory block size

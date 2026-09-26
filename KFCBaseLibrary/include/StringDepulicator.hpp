@@ -145,9 +145,17 @@ inline const char *StringDeduplicator::attachString(const char *str)
                 _fpDupesCount++;
             }
         }
+        auto attached = _strings.addString(str, len);
+        if (!attached) {
+            // the result is used as a printf argument or stored in the form data, returning nullptr
+            // would crash the caller (strlen/print with a null pointer)
+            __DBG_printf_E("string pool out of memory, len=%u", (unsigned)len);
+            return emptyString.c_str();
+        }
+        return attached;
+    #else
+        return _strings.addString(str, len);
     #endif
-
-    return _strings.addString(str, len);
 }
 
 inline const char *StringDeduplicator::attachString(const __FlashStringHelper *str)
