@@ -60,7 +60,7 @@ namespace PluginComponents {
     using DeepSleepPinStateUninitialized = stdex::UninitializedClass<DeepSleep::PinState>;
     static DeepSleepPinStateUninitialized deepSleepPinStateNoInit __attribute__((section(".noinit")));
 
-    using DeepSleepParamUninitialized = stdex::UninitializedClass<DeepSleepParam>;
+    using DeepSleepParamUninitialized = stdex::UninitializedClass<DeepSleep::DeepSleepParam>;
     static DeepSleepParamUninitialized deepSleepParamNoInit __attribute__((section(".noinit")));
 
     namespace DeepSleep {
