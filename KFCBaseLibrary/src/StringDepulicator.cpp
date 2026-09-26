@@ -136,7 +136,7 @@ const char *StringBufferPool::addString(const char *str, size_t len)
         // add new pool
         size_t newSize = knthPoolSize;
         if (len >= newSize) { // this string required extra space
-            newSize = len + 1 + knthPoolSize;
+            newSize = len + knthPoolSize;
         }
         newSize = (newSize + 7) & ~7; // align to memory block size
         __LDBG_printf("pools=%u new=%u", _pool.size(), newSize);
