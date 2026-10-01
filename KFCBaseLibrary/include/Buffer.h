@@ -409,6 +409,10 @@ public:
     Buffer &operator+=(const Buffer &buffer);
 
     void setLength(size_t length);
+    // Extend the used part by `count` bytes that were written directly into the buffer at end().
+    // The area has to be reserved before it is written to (a reallocation would invalidate the
+    // pointer that was used to write the data). Returns false if the buffer is too small.
+    bool advance(size_t count);
 
 public:
      template <typename _Ta, std::enable_if_t<

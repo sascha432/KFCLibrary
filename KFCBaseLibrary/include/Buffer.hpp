@@ -30,6 +30,15 @@ inline void Buffer::setLength(size_t length)
     _length = length;
 }
 
+inline bool Buffer::advance(size_t count)
+{
+    if (_length + count > _size) {
+        return false;
+    }
+    _length += count;
+    return true;
+}
+
 inline Buffer &Buffer::operator+=(const char *str)
 {
     write(str, strlen(str));
