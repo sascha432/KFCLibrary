@@ -165,6 +165,7 @@ static_assert(sizeof(StrView) == sizeof(const char *), "StrView must not use any
 //
 //      String name = _config.getAnimationName(type);       // one copy, the wrapper modifies it
 //      S(name).replace(' ', '_');                          // = name.replace(' ', '_')
+//      S(name).slugify();                                  // "Color Fade" -> "color-fade"
 //      S(name).rtrim().toLowerCase();                      // = name.rtrim(), name.toLowerCase()
 //      if (S(name).equalsIgnoreCase(slug)) { ... }         // no String temporary, no allocation
 //
@@ -210,6 +211,14 @@ public:
     // same as String::toLowerCase/toUpperCase - the length does not change
     StrWrapper &toLowerCase();
     StrWrapper &toUpperCase();
+
+    // converts the string into a slug: lower case and every group of characters that is not a letter
+    // or a digit is replaced by a single separator, leading/trailing separators are removed - the
+    // result only contains lower case letters, digits and the separator
+    //      "Color Fade" -> "color-fade" (default separator '-')
+    //      "Colon: Solid" -> "colon_solid" for slugify('_')
+    // like trim/ltrim/rtrim the length of the String is updated when the result shrinks
+    StrWrapper &slugify(char separator = '-');
 
 private:
     // the buffer of the view, a String's buffer is always RAM
@@ -664,6 +673,43 @@ inline StrWrapper &StrWrapper::toUpperCase()
     }
     for (; *ptr; ptr++) {
         *ptr = static_cast<char>(toupper(static_cast<uint8_t>(*ptr)));
+    }
+    return *this;
+}
+
+inline StrWrapper &StrWrapper::slugify(char separator)
+{
+    auto &str = _string();
+    auto ptr = _buffer();
+    if (!ptr || !separator) {
+        return *this;
+    }
+    // one pass without any libc call: '| 0x20' maps 'A'-'Z' to 'a'-'z' and leaves a digit unchanged,
+    // so the same value detects a letter or a digit and already is the lower case character (no
+    // isalnum()/tolower() call and no ctype table access). the slug is compacted in place, every
+    // character is read before it is written (dst <= src), so no temporary buffer is needed
+    char *dst = ptr;
+    for (const char *src = ptr; *src; src++) {
+        const auto ch = static_cast<uint8_t>(*src);
+        const auto lower = static_cast<uint8_t>(ch | 0x20);
+        if (static_cast<uint8_t>(lower - 'a') < 26U || static_cast<uint8_t>(ch - '0') < 10U) {
+            *dst++ = static_cast<char>(lower);
+        }
+        else if (dst != ptr && dst[-1] != separator) {
+            // a group of characters that is not a letter or a digit becomes one separator and a
+            // leading separator is not written at all
+            *dst++ = separator;
+        }
+    }
+    // the string does not end with a separator
+    if (dst != ptr && dst[-1] == separator) {
+        dst--;
+    }
+    const auto length = static_cast<unsigned int>(str.length());
+    const auto newLength = static_cast<unsigned int>(dst - ptr);
+    if (length != newLength) {
+        // String::remove() keeps the length of the String in sync, the buffer never moves
+        str.remove(newLength, length - newLength);
     }
     return *this;
 }
