@@ -20,7 +20,8 @@ public:
         _file(file),
         _position(0),
         _length(0),
-        _provider(provider)
+        _provider(provider),
+        _refillCounter(0)
     {
         #if DEBUG_SSI_PROXY_STREAM
             _ramUsage = ESP.getFreeHeap();
@@ -138,6 +139,23 @@ private:
     size_t _position;
     size_t _length;
     DataProviderInterface &_provider;
+
+    // The refill buffer used to be allocated for every refill, which is a lot of allocation churn
+    // for a response that is streamed in 512 byte chunks (a 460 KB page is ~900 alloc/free pairs).
+    // The poison check of the debug version needs 32 bytes of space on both sides
+    #if DEBUG_SSI_PROXY_STREAM
+        static constexpr size_t kScratchSize = 512 + (32 * 2);
+        static constexpr size_t kScratchPoisonBytes = 32;
+    #else
+        static constexpr size_t kScratchSize = 512;
+    #endif
+    // shrink the buffer every kShrinkInterval refills if more than kShrinkMinFree bytes are unused
+    static constexpr uint16_t kShrinkInterval = 32;
+    static constexpr size_t kShrinkMinFree = 1024;
+
+    uint16_t _refillCounter;
+    alignas(4) uint8_t _scratch[kScratchSize];
+
     #if DEBUG_SSI_PROXY_STREAM
         uint32_t _ramUsage;
     #endif

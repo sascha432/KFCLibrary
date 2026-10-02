@@ -39,23 +39,16 @@ size_t SSIProxyStream::_readBuffer(bool templateCheck)
     // __LDBG_printf("templateCheck=%u", templateCheck);
     #define DEBUG_SSI_PROXY_STREAM_POISON_CHECK DEBUG_SSI_PROXY_STREAM
     #if DEBUG_SSI_PROXY_STREAM_POISON_CHECK
-        constexpr size_t bufferSizePosionCheck = 32;
-        size_t bufferSize = 512 + (bufferSizePosionCheck * 2);
+        constexpr size_t bufferSize = kScratchSize - (kScratchPoisonBytes * 2);
     #else
-        constexpr size_t bufferSize = 512;
+        constexpr size_t bufferSize = kScratchSize;
     #endif
-    auto bufferPtr = std::unique_ptr<uint32_t[]>(new uint32_t[bufferSize / sizeof(uint32_t)]);
-    auto buf = reinterpret_cast<uint8_t *>(bufferPtr.get());
-    if (!buf) {
-        __LDBG_printf_E("allocation failed size=%u", bufferSize);
-        return 0;
-    }
+    auto buf = _scratch;
     #if DEBUG_SSI_PROXY_STREAM_POISON_CHECK
-        std::fill_n(bufferPtr.get(), bufferSize / sizeof(uint32_t), 0xccccccccU);
+        std::fill_n(reinterpret_cast<uint32_t *>(_scratch), kScratchSize / sizeof(uint32_t), 0xccccccccU);
         auto bufBegin = buf;
-        auto bufEnd = buf + bufferSize - bufferSizePosionCheck;
-        buf += bufferSizePosionCheck;
-        bufferSize -= bufferSizePosionCheck * 2;
+        auto bufEnd = buf + kScratchSize - kScratchPoisonBytes;
+        buf += kScratchPoisonBytes;
     #endif
 
     size_t len = 0;
@@ -84,7 +77,13 @@ size_t SSIProxyStream::_readBuffer(bool templateCheck)
         ptrdiff_t posOffset = _template.to_offset(_template.position); // save offset
         if (_template.marker == -1 && _position) {
             // only shrink if no template marker is set
-            _buffer.removeAndShrink(0, _position);
+            _buffer.remove(0, _position);
+            if (++_refillCounter >= kShrinkInterval) {
+                // the buffer is reused across refills. a template that expanded into a large buffer
+                // should not keep the memory forever, but a realloc per refill would be worse
+                _refillCounter = 0;
+                _buffer.removeAndShrink(0, 0, kShrinkMinFree);
+            }
             posOffset -= _position; // move offset
             _position = 0;
         }
@@ -192,7 +191,7 @@ size_t SSIProxyStream::_readBuffer(bool templateCheck)
         }
     }
     #if DEBUG_SSI_PROXY_STREAM_POISON_CHECK
-        for(size_t i = 0; i < bufferSizePosionCheck; i++) {
+        for(size_t i = 0; i < kScratchPoisonBytes; i++) {
             if (bufBegin[i] != 0xcc) {
                 __DBG_printf_E("buffer overrun @bufBegin[%u]", i);
                 break;
@@ -207,5 +206,13 @@ size_t SSIProxyStream::_readBuffer(bool templateCheck)
     #if DEBUG_SSI_PROXY_STREAM
         _ramUsage = std::min(ESP.getFreeHeap(), _ramUsage);
     #endif
+    if (len == 0) {
+        // Neither the provider nor the file delivered data. `read()` returns 0 for that state and the
+        // caller treats it as the end of the stream, so the reason has to be visible: the file can
+        // have reached its end or the handle is not readable any more
+        __LDBG_printf("no data: file=%d size=%u position=%u available=%d buffer=%u offset=%u length=%u provider=%d",
+            (bool)_file, (unsigned)_file.size(), (unsigned)_file.position(), _file.available(),
+            (unsigned)_buffer.length(), (unsigned)_position, (unsigned)_length, (bool)_provider);
+    }
     return len;
 }
