@@ -54,7 +54,9 @@
 #pragma once
 
 #include <Arduino_compat.h>
+#include <stdarg.h>
 #include <stdint.h>
+#include <stdio.h>
 #include <pgmspace.h>
 #include <string.h>
 #include <strings.h>
@@ -168,6 +170,7 @@ static_assert(sizeof(StrView) == sizeof(const char *), "StrView must not use any
 //      S(name).slugify();                                  // "Color Fade" -> "color-fade"
 //      S(name).rtrim().toLowerCase();                      // = name.rtrim(), name.toLowerCase()
 //      if (S(name).equalsIgnoreCase(slug)) { ... }         // no String temporary, no allocation
+//      S(msg).printf("failed after %ums", dur);            // formatted text appended
 //
 // replace(char, char) returns bool (like String::replace) and the other modifiers return the
 // wrapper for chaining - only the bool cannot be chained with another modifier
@@ -220,6 +223,38 @@ public:
     // like trim/ltrim/rtrim the length of the String is updated when the result shrinks
     StrWrapper &slugify(char separator = '-');
 
+    // ----------------------------------------------------------------------------------------
+    // formatted output
+    // ----------------------------------------------------------------------------------------
+    //
+    // The formatted text is APPENDED to the String (the same semantics as PrintString::printf,
+    // the text is written at the end of the String, nothing is replaced):
+    //
+    //      String msg;
+    //      S(msg).printf("line %u: %s", 42u, "unknown key");  // "line 42: unknown key"
+    //      S(msg).printf(F(" (%u)"), 7u);                     // "line 42: unknown key (7)"
+    //
+    // printf(F(...)) is the flash string variant and the same call as printf_P(PSTR(...)), the
+    // format string is read from PROGMEM. On ESP8266 the two functions of the platform are not
+    // interchangeable (vsnprintf reads RAM, vsnprintf_P reads PROGMEM), on ESP32 PROGMEM is memory
+    // mapped and both read the same memory
+    //
+    // The return value is the number of characters that were appended, -1 if the text could not be
+    // appended (out of memory or an invalid format string). The functions are not chained, the
+    // result has to be checked by the caller
+    int printf(const char *format, ...) __attribute__((format(printf, 2, 3)));
+    int printf(const __FlashStringHelper *format, ...);
+    // On ESP32 printf_P is a macro of the core that maps to printf (PROGMEM is memory mapped there,
+    // PGM_P is a const char *), so the same call works there without a method of its own - only
+    // ESP8266 has a function of the platform that reads the format string from flash
+#if !defined(printf_P)
+    int printf_P(PGM_P format, ...) __attribute__((format(printf, 2, 3)));
+#endif
+
+    int vprintf(const char *format, va_list arg);
+    int vprintf(const __FlashStringHelper *format, va_list arg);
+    int vprintf_P(PGM_P format, va_list arg);
+
 private:
     // the buffer of the view, a String's buffer is always RAM
     char *_buffer() const;
@@ -228,6 +263,12 @@ private:
     // to update the length of the String as well, writing a NUL byte into the buffer is not enough
     // (String::length/charAt/setCharAt/+= use the length that is stored in the object)
     String &_string() const;
+
+    // the shared implementation of the printf family, the template selects the function of the
+    // platform: false = vsnprintf for a format string in RAM, true = vsnprintf_P for PROGMEM (on
+    // ESP32 both are the same, PROGMEM is memory mapped there)
+    template<bool _Progmem>
+    int _vprintf(const char *format, va_list arg);
 
     String *_str;
 };
@@ -712,4 +753,103 @@ inline StrWrapper &StrWrapper::slugify(char separator)
         str.remove(newLength, length - newLength);
     }
     return *this;
+}
+
+// ----------------------------------------------------------------------------
+// formatted output
+// ----------------------------------------------------------------------------
+//
+// 64 bytes on the stack hold the usual message, the first pass of vsnprintf only measures a longer
+// result. A longer text is written directly into the buffer of the String: the space is reserved
+// first (reserve() never moves a buffer that is large enough) and String::concat() afterwards only
+// extends the length of the String - no temporary buffer, no heap allocation of its own and the
+// va_list is consumed by one formatting pass
+//
+// the bytes after length() are not part of the String until concat() extends it, the terminating
+// NUL byte is restored when the text could not be written completely
+template<bool _Progmem>
+inline int StrWrapper::_vprintf(const char *format, va_list arg)
+{
+    if (!format) {
+        return -1;
+    }
+    auto &str = _string();
+    char temp[128];
+    // the copy is consumed by the pass below, arg is still untouched for the pass into the String
+    va_list measure;
+    va_copy(measure, arg);
+    const int length = _Progmem ? vsnprintf_P(temp, sizeof(temp), format, measure) : vsnprintf(temp, sizeof(temp), format, measure);
+    va_end(measure);
+    if (length < 0) {
+        return -1;
+    }
+    // length is the number of characters without the terminating NUL byte, the text fits into the
+    // buffer when it is shorter than it (including the NUL byte)
+    if (static_cast<size_t>(length) < sizeof(temp)) {
+        return str.concat(temp, static_cast<unsigned int>(length)) ? length : -1;
+    }
+    // The text is longer than the stack buffer: the String is grown first and the text is formatted
+    // directly into its buffer. reserve() returns true immediately when the capacity is already
+    // large enough (it never shrinks or moves it), so the buffer keeps its address and the pointer
+    // below stays valid for the concat() that extends the length
+    const auto oldLength = str.length();
+    if (!str.reserve(oldLength + static_cast<unsigned int>(length))) {
+        return -1;
+    }
+    auto buffer = _buffer() + oldLength;
+    const auto written = _Progmem ? vsnprintf_P(buffer, static_cast<size_t>(length) + 1, format, arg) : vsnprintf(buffer, static_cast<size_t>(length) + 1, format, arg);
+    // concat() is the only way to extend the length of a String, the source and the destination are
+    // the same address - the text is already where it belongs (ESP8266 uses memmove for it, ESP32 a
+    // memcpy of the same pointer, which is a no-op) and the capacity was reserved above, so nothing
+    // is copied or allocated a second time
+    if (written == length && str.concat(buffer, static_cast<unsigned int>(length))) {
+        return length;
+    }
+    buffer[0] = 0;
+    return -1;
+}
+
+inline int StrWrapper::printf(const char *format, ...)
+{
+    va_list arg;
+    va_start(arg, format);
+    const auto result = vprintf(format, arg);
+    va_end(arg);
+    return result;
+}
+
+inline int StrWrapper::printf(const __FlashStringHelper *format, ...)
+{
+    va_list arg;
+    va_start(arg, format);
+    const auto result = vprintf(format, arg);
+    va_end(arg);
+    return result;
+}
+
+#if !defined(printf_P)
+inline int StrWrapper::printf_P(PGM_P format, ...)
+{
+    va_list arg;
+    va_start(arg, format);
+    const auto result = vprintf_P(format, arg);
+    va_end(arg);
+    return result;
+}
+#endif
+
+inline int StrWrapper::vprintf(const char *format, va_list arg)
+{
+    return _vprintf<false>(format, arg);
+}
+
+// the cast to PGM_P is the same the F() macro does, the format string is read from flash
+inline int StrWrapper::vprintf(const __FlashStringHelper *format, va_list arg)
+{
+    return vprintf_P(reinterpret_cast<PGM_P>(format), arg);
+}
+
+inline int StrWrapper::vprintf_P(PGM_P format, va_list arg)
+{
+    return _vprintf<true>(format, arg);
 }
