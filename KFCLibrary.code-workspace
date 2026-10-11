@@ -31,8 +31,7 @@
             "string_view": "cpp",
             "initializer_list": "cpp",
             "ranges": "cpp",
-            "regex": "cpp",
-            "KFCWebBuilder.json": "jsonc"
+            "regex": "cpp"
         }
     }
 }

@@ -1,0 +1,35 @@
+# KFC WebUI builder - defaults
+#
+# Included by the project file (KFCWebBuilder.yaml in the project directory). The sections bin, commands,
+# configuration and web_builder are merged key by key, a key of the project file wins.
+# ${path.current_config} is the directory of this file.
+
+# runtime config
+configuration:
+  # shell command that runs after a successful build
+  run_command_on_success: ''
+  package_hash_file: ${path.shared_temp_dir}/kfcfw-package.hash
+
+# pre-defined commands
+#
+# ${file.tmp_in} / ${file.tmp_out} are the quoted input and output file of the processor,
+# ${file.all_sources} the list of the source files of a combined file
+commands:
+  # closure compiler, branch use_closure_compiler
+  minify_js: ${bin.java} -jar ${bin.closure_compiler} --compilation_level=ADVANCED --warning_level=QUIET --js_output_file=${file.tmp_out} ${file.all_sources}
+  uglify_js: ${bin.nodejs} ${bin.uglify_js} --compress --mangle -o ${file.tmp_out} ${file.tmp_in}
+  minify_html: ${bin.java} -jar ${bin.html_compressor} --type html --compress-js --compress-css --output ${file.tmp_out} ${file.tmp_in}
+  minify_css: ${bin.java} -jar ${bin.yui_compressor} --type css ${file.tmp_in} > ${file.tmp_out}
+  # built in, the same output as "gzip -9 -n"
+  compress_gzip: '@gzip'
+
+# executables and jar files
+#
+# A name without a path is searched in PATH, a leading "@" makes a missing file non-fatal. ${bin.<name>} is
+# the quoted absolute path. nodejs, java and uglify_js are provided by the toolchain: the system
+# installation if it is suitable, otherwise they are downloaded (see README.md).
+bin:
+  closure_compiler: ${path.current_config}/bin/closure-compiler-v20181210.jar
+  # htmlcompressor loads yuicompressor-2.4.8.jar from its own directory for --compress-js/--compress-css
+  html_compressor: ${path.current_config}/bin/htmlcompressor-1.5.3.jar
+  yui_compressor: ${path.current_config}/bin/yuicompressor-2.4.8.jar

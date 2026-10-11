@@ -1,0 +1,8 @@
+{
+  "name": "kfc-webbuilder-tools",
+  "private": true,
+  "description": "Node.js tools of the KFC web builder, installed with npm ci into $KFC_WEBBUILDER_TOOLS/node",
+  "dependencies": {
+    "uglify-js": "3.17.4"
+  }
+}

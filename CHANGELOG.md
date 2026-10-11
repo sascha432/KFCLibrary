@@ -2,6 +2,7 @@
 
 ## Version 0.1.6
 
+- KFCWebBuilder rewritten in Python (`kfc_webbuilder`, YAML config, tools auto-installed, zopfli compression), the PHP version was removed
 - Updated OpenWeatherMap API to OneCall API 3.0
 - Fixed memory leak in KFCConfiguration
 - Improved NVS support for KFCConfiguration

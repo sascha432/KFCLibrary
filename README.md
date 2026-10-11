@@ -20,17 +20,11 @@ Framework to build WebUIs with bootstrap and store them mostly compressed in a v
 
 #### Building the VFS
 
-Following software is required to build the virtual file system. Compatible versions might work as well, the listed ones have been tested...
+The WebUI is built by the Python web builder ``KFCWebBuilder/kfc_webbuilder`` when PlatformIO creates the filesystem image (``pio run -t buildfs``). It runs with PlatformIO's Python; Node.js, uglify-js and a Java runtime are used from ``PATH`` or installed automatically into ``~/.platformio/kfc_webbuilder``. Files are gzip compressed with zopfli (pip package, installed automatically as well).
 
- - Java JRE 8 / openjdk-18-jre-headless
- - NodeJS v12 or v16
- - Install node dependencies with ``npm install``
- - PHP 7.4.x (8.x is not supported yet)
  - mklittlefs - If it is not being installed automatically, run ``pio pkg install -t "platformio/tool-mklittlefs@~1.203.0"``
 
-Executables must be in ``PATH``. If you have PHP 8.x, install PHP 7.x from source and ``export PHPEXE=/home/sascha/Desktop/php-7.4.30/sapi/cli/php``. For Windows, create an environment variable ``PHPEXE`` pointing to php.exe
-
-More details about binaries can be found/changed in [lib/KFCWebBuilder/KFCWebBuilder.json](lib/KFCWebBuilder/KFCWebBuilder.json)
+Configuration, tools and the preprocessor are described in [KFCWebBuilder/README.md](KFCWebBuilder/README.md), the defaults are in [KFCWebBuilder/KFCWebBuilder.yaml](KFCWebBuilder/KFCWebBuilder.yaml)
 
 ### KFCVirtualFileSystem
 

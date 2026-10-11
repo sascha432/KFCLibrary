@@ -1,0 +1,11 @@
+# Python packages of the KFC web builder (kfc_webbuilder), installed automatically when needed into
+# $KFC_WEBBUILDER_TOOLS/python<major><minor> (default ~/.platformio/kfc_webbuilder), see README.md
+#
+# configuration files, always required
+PyYAML>=6.0,<7
+# gzip compression (about 4% smaller than gzip -9), zlib is used if it cannot be installed
+zopfli==0.4.3
+# Node.js for uglify-js, only if no Node.js >= 14 with npm is in PATH
+nodejs-wheel-binaries==22.20.0
+# Java runtime for the YUI and HTML compressor, only if no Java >= 8 is in PATH
+install-jdk==1.1.0

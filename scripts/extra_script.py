@@ -1,4 +1,5 @@
 Import("env")
+import atexit
 import datetime
 try:
     import configparser
@@ -13,7 +14,6 @@ import click
 import re
 from datetime import datetime
 import platform
-from shutil import which
 
 # NOTE: Single extra script per library.json
 
@@ -41,15 +41,6 @@ def build_webui(source, target, env, force = False):
 
     verbose = int(ARGUMENTS.get("PIOVERBOSE", 0))
 
-    php_bin = env.subst(env.GetProjectOption('custom_php_exe', env.subst('$PHPEXE')))
-    if not php_bin:
-        if 'PHPEXE' in os.environ:
-            php_bin = os.environ['PHPEXE']
-        else:
-            #php_bin = platform.system() == 'Windows' and 'php.exe' or 'php'
-            php_bin = 'php'
-    php_bin = which(php_bin);
-
     src = path.abspath(env.subst("$PROJECT_LIBDEPS_DIR/$PIOENV/KFCLibrary"))
     lib_dst = path.abspath(env.subst("$PROJECT_DIR/lib/KFCLibrary"))
     if platform.system() == 'Windows':
@@ -64,10 +55,11 @@ def build_webui(source, target, env, force = False):
     if return_code:
         click.secho('Failed to create symlink: [%u] %s -> %s\nMake sure this links to the current library' % (return_code, src, lib_dst), fg='yellow')
 
-    php_file = env_abspath(env, '$PROJECT_LIBDEPS_DIR/$PIOENV/KFCLibrary/KFCWebBuilder/bin/include/cli_tool.php')
-    if not path.exists(php_file):
-        php_file = env_abspath(env, '$PROJECT_DIR/lib/KFCLibrary/KFCWebBuilder/bin/include/cli_tool.php')
-    json_file = env_abspath(env, '$PROJECT_DIR/KFCWebBuilder.json')
+    # the Python web builder (KFCWebBuilder/kfc_webbuilder), run with the Python of PlatformIO
+    builder_dir = env_abspath(env, '$PROJECT_LIBDEPS_DIR/$PIOENV/KFCLibrary/KFCWebBuilder')
+    if not path.isdir(path.join(builder_dir, 'kfc_webbuilder')):
+        builder_dir = env_abspath(env, '$PROJECT_DIR/lib/KFCLibrary/KFCWebBuilder')
+    config_file = env_abspath(env, '$PROJECT_DIR/KFCWebBuilder.yaml')
 
     build = extract_re([r'number\s*=\s*(?P<build>[0-9]+)'], env_abspath(env, '$PROJECT_DIR/include/build_number.txt'))
     version = extract_re([r'#define\s+FIRMWARE_VERSION_MAJOR\s+(?P<major>[0-9]+) ', r'#define\s+FIRMWARE_VERSION_MINOR\s+(?P<minor>[0-9]+) ', r'#define\s+FIRMWARE_VERSION_REVISION\s+(?P<rev>[0-9]+) '], env_abspath(env, '$PROJECT_DIR/include/global.h'))
@@ -89,17 +81,15 @@ def build_webui(source, target, env, force = False):
                 val = 1;
             file.write('%s=%s\n' % (env.subst(key), env.subst(val)))
 
-    if not path.isfile(php_bin):
-        click.secho('cannot find php binary: %s: set custom_php_exe=<php binary> or environment variable PHPEXE' % php_bin, fg='yellow')
+    if not path.isdir(path.join(builder_dir, 'kfc_webbuilder')):
+        click.secho('cannot find the web builder in %s' % builder_dir, fg='yellow')
         env.Exit(1)
-    if not path.isfile(php_file):
-        click.secho('cannot find %s' % php_file, fg='yellow')
-        env.Exit(1)
-    if not path.isfile(json_file):
-        click.secho('cannot find %s' % json_file, fg='yellow')
+    if not path.isfile(config_file):
+        click.secho('cannot find %s' % config_file, fg='yellow')
         env.Exit(1)
 
-    args = [ php_bin, php_file, json_file, '--branch', 'spiffs', '--env', 'env:%s' % env.subst('$PIOENV'), '--clean-exit-code', '0', '--dirty-exit-code', '0', '--defines-from', definesFile ]
+    python_exe = env.subst('$PYTHONEXE')
+    args = [ python_exe, '-m', 'kfc_webbuilder', config_file, '--branch', 'littlefs', '--env', 'env:%s' % env.subst('$PIOENV'), '--clean-exit-code', '0', '--dirty-exit-code', '0', '--defines-from', definesFile ]
 
     dirs = []
     for item in defines:
@@ -138,12 +128,14 @@ def build_webui(source, target, env, force = False):
     if verbose:
         args.append('--verbose');
 
-    # cli_cmd = subprocess.check_output(args, shell=True);
-    cli_cmd = ' '.join(args);
+    cli_cmd = subprocess.list2cmdline(args)
     if verbose:
         click.echo(cli_cmd)
 
-    return_code = subprocess.run(args, shell=(platform.system() == 'Windows')).returncode
+    builder_env = dict(os.environ)
+    builder_env['PYTHONPATH'] = builder_dir + (os.pathsep + builder_env['PYTHONPATH'] if builder_env.get('PYTHONPATH') else '')
+    builder_env['PYTHONIOENCODING'] = 'UTF-8'
+    return_code = subprocess.run(args, env=builder_env).returncode
 
     if return_code!=0:
         click.secho('failed to run: %s' % cli_cmd)
@@ -155,17 +147,23 @@ def build_webui(source, target, env, force = False):
 def rebuild_webui(source, target, env):
     build_webui(source, target, env, True)
 
-def build_webui_cleanup(source, target, env):
+def build_webui_cleanup():
     global symlinks
     verbose = int(ARGUMENTS.get("PIOVERBOSE", 0))
-    if symlinks:
-        for lnk in symlinks:
-            if verbose:
-                click.secho('Removing symlink %s' % lnk, fg='yellow')
-            os.remove(lnk)
+    for lnk in symlinks:
+        if verbose:
+            click.secho('Removing symlink %s' % lnk, fg='yellow')
+        os.remove(lnk)
+    symlinks = []
 
-env.AddPreAction("$BUILD_DIR/littlefs.bin", build_webui)
-env.AddPostAction("$BUILD_DIR/littlefs.bin", build_webui_cleanup)
+# the INCLUDE_DATA_DIRS links must exist while mklittlefs packs data/, they are removed when SCons exits
+atexit.register(build_webui_cleanup)
+
+# The WebUI is built before the filesystem image is packed (buildfs, uploadfs, uploadfsota): littlefs.bin depends
+# on an always built command. The library script runs before the platform script defines the target of littlefs.bin,
+# so a pre-action on it would be lost when the builder is assigned; a dependency is stored in the node itself.
+webui_target = env.Command("$BUILD_DIR/webui.stamp", None, build_webui)
+env.AlwaysBuild(webui_target)
+env.Depends("$BUILD_DIR/littlefs.bin", webui_target)
 
 env.AlwaysBuild(env.Alias("rebuildfs", None, rebuild_webui))
-env.AlwaysBuild(env.Alias("buildfs", None, build_webui))

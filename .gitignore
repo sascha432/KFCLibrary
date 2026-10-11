@@ -3,3 +3,4 @@
 .vs/
 builder.log
 web_builder.hash
+__pycache__/
