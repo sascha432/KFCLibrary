@@ -85,13 +85,13 @@ bool Form::BaseForm::validateOnly()
                 iterator = _validatorFindNext(iterator, field);
             }
 
-            // if an error has occured, restore the user input using the base class
+            // if an error has occurred, restore the user input using the base class
             if (restoreUserValue) {
                 static_cast<Field::BaseField *>(field)->setValue(_data->arg(FPSTR(field->getName())));
             }
         }
         else if (_invalidMissing && !_field->isOptional()) {
-            // all fields are manadatory by default
+            // all fields are mandatory by default
             _addError(field, FSPGM(Form_value_missing_default_message));
         }
     }
