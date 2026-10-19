@@ -207,8 +207,12 @@ void SyslogTCP::_freeClient(bool clear)
         _client->onAck(nullptr);
         _client->onError(nullptr);
         _client->onTimeout(nullptr);
-        // close and abort forcefully
-        _client->close(true);
+        // close and abort forcefully. ESP32 (AsyncTCP 3.x): close() is synchronous, close(bool) is deprecated
+        #if ESP32
+            _client->close();
+        #else
+            _client->close(true);
+        #endif
         _client->abort();
         delete _client;
         _client = nullptr;
