@@ -250,23 +250,34 @@ bool ConfigurationParameter::_readData(Configuration &conf, uint16_t offset)
     // allocated memory will be increased to read data dword aligned if the size exceeds the temporary buffer
     ConfigurationHelper::allocate(_param.size(), *this);
     conf.setLastReadAccess();
+    if (!hasData()) {
+        return false; // allocation failed
+    }
 
+    // a failed read releases the buffer: it is zero filled and hasData() would return it as valid data with
+    // the next read (low heap: the NVS cannot be initialized)
     #if defined(HAVE_NVS_FLASH)
 
         size_t size = _param.length();
         esp_err_t err;
         if ((err = conf._nvs_get_blob_with_open(conf._nvs_key_handle_name(_param.type(), _param.getHandle()), _param._readable, &size)) != ESP_OK) {
             __DBG_printf_E("cannot read data handle=%04x size=%u read=%u err=%x", _param.getHandle(), _param.length(), size, err);
+            if (err != ESP_ERR_NVS_NOT_FOUND) {
+                conf._nvsReadFailed = true;
+            }
+            ConfigurationHelper::deallocate(*this);
             return false;
         }
         else if (size != _param.length()) {
             __DBG_printf_E("cannot read data handle=%04x size=%u read=%u", _param.getHandle(), _param.length(), size);
+            ConfigurationHelper::deallocate(*this);
             return false;
         }
 
     #else
 
         if (!_readDataTo(conf, offset, _param.data())) {
+            ConfigurationHelper::deallocate(*this);
             return false;
         }
 

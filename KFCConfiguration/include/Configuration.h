@@ -329,8 +329,11 @@ public:
         else {
             size_type length;
             auto ptr = param.getBinary(*this, length, offset);
-            if (ptr) {
-                __DBG_assertf(length == maxLength, "%04x: resizing binary blob=%u to %u maxLength=%u type=%u", handle, length, sizeof(_Ta), maxLength, ConfigurationParameter::getType<_Ta>());
+            if (ptr && length != maxLength) {
+                // the layout of the structure changed: the parameter is reset (accepted design, see getConfig()).
+                // Not an assert - it repeats on every form request until the parameter is saved, and the
+                // error log is written to the file system each time
+                __LDBG_printf("%04x: resizing binary blob=%u to maxLength=%u type=%u", handle, length, maxLength, ConfigurationParameter::getType<_Ta>());
             }
         }
         makeWriteable(param, maxLength);
@@ -472,6 +475,15 @@ public:
     }
 
     void dump(Print &output, bool dirty = false, const String &name = String());
+    #if defined(HAVE_NVS_FLASH)
+        // a parameter could not be read from the NVS since the last discard()/write() (e.g. the partition
+        // could not be initialized on a low heap): the writeable copies hold zeros instead of the stored
+        // values and write() discards the changes - a form must not be rendered or saved with them
+        bool hasNvsReadFailed() const {
+            return _nvsReadFailed;
+        }
+    #endif
+
     bool isDirty();
 
     void exportAsJson(Print& output, const String &version);
@@ -556,6 +568,10 @@ private:
         bool _nvsHavePartitionInitialized;
         const char *_nvsNamespace;
         uint32_t _nvsHeapUsage;
+        // a parameter could not be read from the NVS (error other than "not found", e.g. the partition could
+        // not be initialized with a low heap): its writeable copy holds zeros instead of the stored data and
+        // write() discards the changes instead of storing them
+        bool _nvsReadFailed;
         Event::Timer _nvsDeinitTimer;
 
     #endif
