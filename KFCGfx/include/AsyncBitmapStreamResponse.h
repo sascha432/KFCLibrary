@@ -24,7 +24,7 @@ private:
 };
 
 inline AsyncBitmapStreamResponse::AsyncBitmapStreamResponse(GFXCanvasCompressed &canvas, const __FlashStringHelper *contentType) :
-    AsyncAbstractResponse(nullptr),
+    AsyncAbstractResponse(),
     _stream(canvas)
 {
 	_code = 200;
