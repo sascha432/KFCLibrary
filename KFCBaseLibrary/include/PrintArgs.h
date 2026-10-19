@@ -198,8 +198,13 @@ protected:
         size_t size = sizeof(FormatType) + _calc_size(args...);
         __PADBG_printf("size=%u data=%u buf=%u args=%u ", size, dataLen, _buffer.length(), sizeof...(args));
 
-        // resize buffer to fit in all arguments and data
-        _buffer.reserve(_buffer.length() + size + dataLen);
+        // resize buffer to fit in all arguments and data. Without the memory the call is dropped: the
+        // arguments are written through _bufferPtr behind the end of the buffer, a failed reserve()
+        // followed by the small write() below allocated a block that _collect() overran (heap corruption
+        // with large form POSTs, "CORRUPT HEAP: Bad tail")
+        if (!_buffer.reserve(_buffer.length() + size + dataLen)) {
+            return;
+        }
         if (dataLen) {
             _buffer.write(data, dataLen);
         }

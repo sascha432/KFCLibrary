@@ -32,12 +32,12 @@ bool Buffer::_changeBuffer(size_t newSize)
                 }
             }
             else {
-                _buffer = reinterpret_cast<uint8_t *>(realloc(_buffer, resize));
-                if (!_buffer) {
-                    _size = 0;
-                    _length = 0;
+                auto newBuffer = reinterpret_cast<uint8_t *>(realloc(_buffer, resize));
+                if (!newBuffer) {
+                    // realloc() keeps the old block: it stays the buffer with its content (it was lost before)
                     return false;
                 }
+                _buffer = newBuffer;
                 if (_length > newSize) {
                     _length = newSize;
                 }

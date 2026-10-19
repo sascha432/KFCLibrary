@@ -41,6 +41,7 @@ inline void Configuration::discard()
         _readAccess = 0;
 
         #if defined(HAVE_NVS_FLASH)
+            _nvsReadFailed = false;
             _nvs_close();
         #endif
     }

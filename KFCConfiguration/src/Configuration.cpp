@@ -30,6 +30,7 @@ Configuration::Configuration(uint16_t size) :
         _nvsHavePartitionInitialized(false),
         _nvsNamespace("kfcfw_config"),
         _nvsHeapUsage(1024),
+        _nvsReadFailed(false),
     #endif
     _readAccess(0),
     _size(size)
@@ -176,8 +177,13 @@ Configuration::Configuration(uint16_t size) :
                     if (err == ESP_OK) {
                         _nvsHavePartitionInitialized = true;
                     }
+                    else if (err != ESP_ERR_NVS_NO_FREE_PAGES && err != ESP_ERR_NVS_NEW_VERSION_FOUND) {
+                        // not a full or outdated partition (e.g. out of memory): the stored configuration is
+                        // kept and the next access tries again
+                        __DBG_printf_E("cannot init NVS partition=%s err=%08x", KFC_CFG_NVS_PARTITION_NAME, err);
+                    }
                     else {
-                        // cannot init partition, erase it
+                        // the partition is full or has a different layout version, erase it
                         __DBG_printf_E("cannot init NVS partition=%s err=%08x, erasing it", KFC_CFG_NVS_PARTITION_NAME, err);
                         err = nvs_flash_erase_partition(KFC_CFG_NVS_PARTITION_NAME);
                         if (err != ESP_OK) {
@@ -308,6 +314,21 @@ Configuration::WriteResultType Configuration::write()
 
         #if defined(HAVE_NVS_FLASH)
             esp_err_t err = _nvs_open(true);
+            if (err != ESP_OK) {
+                __DBG_printf_E("cannot write configuration, NVS open failed err=%08x", err);
+                return WriteResultType::NVS_OPEN;
+            }
+            if (_nvsReadFailed) {
+                // do not store the zeros of a parameter that could not be read over the stored data
+                __DBG_printf_E("cannot write configuration, a parameter could not be read. discarding changes");
+                for(auto &parameter: _params) {
+                    ConfigurationHelper::deallocate(parameter);
+                }
+                _readAccess = 0;
+                _nvsReadFailed = false;
+                _nvs_close();
+                return WriteResultType::READING_CONF_FAILED;
+            }
             Header header;
 
             size_t size = sizeof(header);

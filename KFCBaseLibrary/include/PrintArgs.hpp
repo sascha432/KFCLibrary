@@ -10,6 +10,11 @@
 inline void PrintArgs::vprintf_P(const uintptr_t format, const uintptr_t *args, size_t numArgs)
 {
     __LDBG_assertf(numArgs <= kMaximumPrintfArguments, "num_args=%u exceeds max=%u", numArgs, kMaximumPrintfArguments);
+    // the entry is written completely or not at all: a part of it (out of memory) makes fillBuffer()
+    // read the following bytes as pointers
+    if (!_buffer.reserve(_buffer.length() + sizeof(uint8_t) + sizeof(uintptr_t) * (numArgs + 1))) {
+        return;
+    }
     _buffer.write(static_cast<uint8_t>(numArgs));
     _buffer.push_back(format);
     _buffer.write(reinterpret_cast<const uint8_t *>(args), sizeof(uintptr_t) * numArgs);
@@ -22,6 +27,11 @@ inline void PrintArgs::print(const char *str)
 
 inline void PrintArgs::print(const __FlashStringHelper *fpstr)
 {
+    // type and pointer are written together or not at all: a type without its pointer (out of memory)
+    // made fillBuffer() read the next entry as the string pointer (crash in strnlen_P())
+    if (!_buffer.reserve(_buffer.length() + sizeof(uint8_t) + sizeof(uintptr_t))) {
+        return;
+    }
     _buffer.write(static_cast<uint8_t>(FormatType::SINGLE_STRING));
     _buffer.push_back(reinterpret_cast<uintptr_t>(const_cast<__FlashStringHelper *>(fpstr)));
 }
