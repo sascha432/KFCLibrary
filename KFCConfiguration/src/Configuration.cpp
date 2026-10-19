@@ -107,13 +107,15 @@ Configuration::Configuration(uint16_t size) :
 
         // DebugMeasureTimer __mt(PSTR("_nvs_open"));
 
-        // check if we have an open partition and the proper read/write mode
+        // an open handle is reused if it can serve the request (a read-write handle can read as well)
         if (_nvsHandle) {
-            if (readWrite && _nvsOpenMode == NVS_READWRITE) {
+            if (!readWrite || _nvsOpenMode == NVS_READWRITE) {
                 return ESP_OK;
             }
-            // readonly, we can just close it and re-open in READWRITE
-            _nvs_close();
+            // read-only, re-open in READWRITE. Not with _nvs_close(): it arms the deinit timer, which would
+            // deinitialize the partition under the new handle 250 ms later
+            nvs_close(_nvsHandle);
+            _nvsHandle = 0;
         }
         // store open mode
         _nvsOpenMode = readWrite ? NVS_READWRITE : NVS_READONLY;
@@ -210,6 +212,12 @@ Configuration::Configuration(uint16_t size) :
     void Configuration::_nvs_deinit()
     {
         _Timer(_nvsDeinitTimer).remove();
+
+        // never deinitialize under an open handle: the deinit closes it and every later access with _nvsHandle
+        // fails. The next _nvs_close() arms the timer again
+        if (_nvsHandle) {
+            return;
+        }
 
         if (_nvsHavePartitionInitialized) {
             // DebugMeasureTimer __mt(PSTR("_nvs_deinit"));
