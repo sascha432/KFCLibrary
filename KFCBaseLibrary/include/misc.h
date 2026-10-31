@@ -34,6 +34,7 @@ PROGMEM_READ_ALIGNED_CHUNK(var)
 #include "misc_string.h"
 #include "misc_time.h"
 #include "StrView.h"
+#include "pp_tools.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -666,7 +667,7 @@ inline uint32_t createIPv4Address(uint8_t a, uint8_t b, uint8_t c, uint8_t d) {
         return name; \
     }
 
-#define CREATE_GETTER_SETTER_TYPE(name, size, type, prefix)  BOOST_PP_CAT(CREATE_GETTER_SETTER_TYPE_,prefix)(name, size, type, prefix)
+#define CREATE_GETTER_SETTER_TYPE(name, size, type, prefix)  KFC_PP_CAT(CREATE_GETTER_SETTER_TYPE_,prefix)(name, size, type, prefix)
 
 #define CREATE_GETTER_SETTER_TYPE_int(name, size, type, prefix) \
     static constexpr size_t kBitCountFor_##name = size; \
