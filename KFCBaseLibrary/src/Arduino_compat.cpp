@@ -22,9 +22,9 @@ const char ICACHE_FLASH_ATTR __attribute__((aligned(4))) *fs::FileOpenMode::read
 const char ICACHE_FLASH_ATTR __attribute__((aligned(4))) *fs::FileOpenMode::writeplus = "w+";
 const char ICACHE_FLASH_ATTR __attribute__((aligned(4))) *fs::FileOpenMode::appendplus = "a+";
 
-int ___debugbreak_and_panic(const char *filename, int line, const char *function) {
+int ___debug_panic_at(const char *filename, int line, const char *function) {
 #if DEBUG
-    DEBUG_OUTPUT.printf_P(PSTR("___debugbreak_and_panic() called in %s:%u - %s\n"), filename, line, function);
+    DEBUG_OUTPUT.printf_P(PSTR("___debug_panic_at() called in %s:%u - %s\n"), filename, line, function);
     ::delay(5000);
     DEBUG_OUTPUT.flush();
 #endif

@@ -380,7 +380,7 @@ namespace PinMonitor {
             __DBG_printf("PinMonitor::Monitor::_detach() called while running");
             end();
         }
-        detach(std::remove_if(_handlers.begin(), _handlers.end(), stdex::compare_unique_ptr(handler)), _handlers.end());
+        detach(std::remove_if(_handlers.begin(), _handlers.end(), [handler](const std::unique_ptr<Pin> &ptr) { return ptr.get() == handler; }), _handlers.end());
     }
 
     void Monitor::_attachLoop()

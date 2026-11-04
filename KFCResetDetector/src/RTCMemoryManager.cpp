@@ -283,7 +283,7 @@ bool RTCMemoryManager::_write(RTCMemoryId id, const void *dataPtr, uint8_t dataL
         currentLength += entry.append(outPtr, dataPtr);
     }
 
-    if __CONSTEXPR17 (kBlockSize > 1) {
+    if constexpr (kBlockSize > 1) {
         // align before adding header
         while (!_isAligned(currentLength)) {
             *outPtr++ = 0;

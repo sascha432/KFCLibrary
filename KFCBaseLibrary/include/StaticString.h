@@ -6,12 +6,6 @@
 
 #include <Arduino_compat.h>
 
-#ifdef new
-#pragma push_macro("new")
-#undef new
-#define pop_macro_new
-#endif
-
 class StaticString {
 public:
 
@@ -156,7 +150,3 @@ private:
 #endif
 };
 
-#ifdef pop_macro_new
-#pragma pop_macro("new")
-#undef pop_macro_new
-#endif

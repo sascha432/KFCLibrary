@@ -14,13 +14,7 @@
 #pragma GCC optimize("O3")
 
 #ifndef WSTRING_HAVE_SETLEN
-#    if ESP8266
-#        define WSTRING_HAVE_SETLEN 1
-#    elif 0 // MSVC
-#        define WSTRING_HAVE_SETLEN 0
-#    else
-#        define WSTRING_HAVE_SETLEN 1
-#    endif
+#    define WSTRING_HAVE_SETLEN 1
 #endif
 
 #if 0

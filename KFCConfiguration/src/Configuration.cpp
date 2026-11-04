@@ -544,7 +544,7 @@ Configuration::WriteResultType Configuration::write()
 
                 #if CONFIGURATION_HEADER_OFFSET
                     std::unique_ptr<uint8_t[]> data;
-                    if __CONSTEXPR17 (kHeaderOffset != 0) {
+                    if constexpr (kHeaderOffset != 0) {
                         // load data before the offset
                         data.reset(new uint8_t[kHeaderOffset]); // copying the previous data could be done before allocating "buffer" after the interrupt lock
                         if (!data) {
@@ -570,7 +570,7 @@ Configuration::WriteResultType Configuration::write()
                 }
 
                 #if CONFIGURATION_HEADER_OFFSET
-                    if __CONSTEXPR17 (kHeaderOffset != 0) {
+                    if constexpr (kHeaderOffset != 0) {
                         // restore data before the offset
                         flashWrite(address, data.get(), kHeaderOffset);
                         // if this fails, we cannot do anything anymore
@@ -876,7 +876,7 @@ bool Configuration::_readParams()
                 for(; paramIdx < header.numParams() && ptr + sizeof(ParameterInfo()._header) < endPtr; paramIdx++) {
                     ParameterInfo param;
 
-                    if __CONSTEXPR17 (sizeof(param._header) == sizeof(uint32_t)) {
+                    if constexpr (sizeof(param._header) == sizeof(uint32_t)) {
                         param._header = *reinterpret_cast<uint32_t *>(ptr);
                     }
                     else {

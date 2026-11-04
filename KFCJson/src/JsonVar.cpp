@@ -59,7 +59,7 @@ namespace KFCJson {
     #if DEBUG
             if (strcasecmp_P(value.c_str(), SPGM(true)) != 0 && strcasecmp_P(value.c_str(), SPGM(false)) != 0) {
                 debug_printf_P(PSTR("Invalid JSON value '%s'\n"), value.c_str());
-                __debugbreak_and_panic();
+                __DBG_panic_at();
             }
     #endif
             if (value.length() == 4) { // its true or false

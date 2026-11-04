@@ -7,7 +7,6 @@
 #include <Arduino_compat.h>
 #include <functional>
 #include <vector>
-#include <stl_ext/is_trivially_copyable.h>
 #include <stl_ext/type_traits.h>
 #include <PrintHtmlEntitiesString.h>
 #include "Types.h"

@@ -21,14 +21,6 @@ class __FlashStringHelper;
 #define PGM_VOID_P const void *
 #endif
 
-#ifndef __CONSTEXPR17
-#   if __GNUC__ >= 8
-#       define __CONSTEXPR17 constexpr
-#   else
-#       define __CONSTEXPR17
-#   endif
-#endif
-
 // ---------------------------------------------------------------------------
 // PROGMEM/RAM pointer checks and __S()
 //
@@ -296,7 +288,7 @@ String decbin(_Ta value) {
     auto endPtr = &buf[(sizeof(_Ta) << 3)];
     auto ptr = buf;
     uint8_t space;
-    if __CONSTEXPR17 (addSpaces != 0xff) {
+    if constexpr (addSpaces != 0xff) {
         space = addSpaces;
     }
     for(;;) {
@@ -304,13 +296,13 @@ String decbin(_Ta value) {
         if (ptr >= endPtr) {
             break;
         }
-        if __CONSTEXPR17 (_Reverse) {
+        if constexpr (_Reverse) {
             value >>= 1;
         }
         else {
             value <<= 1;
         }
-        if __CONSTEXPR17 (addSpaces != 0xff) {
+        if constexpr (addSpaces != 0xff) {
             if (--space == 0) {
                 space = addSpaces;
                 *ptr++ = ' ';

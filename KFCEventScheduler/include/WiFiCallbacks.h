@@ -76,11 +76,11 @@ inline WiFiCallbacks::EventType WiFiCallbacks::add(EventType events, Callback ca
 {
     __SLDBG_printf("events=%u callbackPtr=%p callback=%p", events, callbackPtr, lambda_target(callback));
 
-    EventTypeEnum(events) &= EventTypeEnum(EventTypeEnum::Enum::ANY);
+    events = EventTypeEnum(events) & EventType::ANY;
     for (auto &callback : _callbacks) {
         if (callbackPtr == callback.callbackPtr) {
             __SLDBG_printf("callbackPtr=%p, changed events from %u to %u", callbackPtr, callback.events, events);
-            return EventTypeEnum(callback.events) |= EventTypeEnum(events);
+            return callback.events = EventTypeEnum(callback.events) | events;
         }
     }
     __SLDBG_printf("callbackPtr=%p new entry events %d", callbackPtr, events);
@@ -103,8 +103,8 @@ inline WiFiCallbacks::EventType WiFiCallbacks::remove(EventType events, Callback
     __SLDBG_printf("events=%u callbackPtr=%p", events, callbackPtr);
     for (auto iterator = _callbacks.begin(); iterator != _callbacks.end(); ++iterator) {
         if (callbackPtr == iterator->callbackPtr) {
-            // __SLDBG_printf("callbackPtr=%p changed events from %u to %u", callbackPtr, iterator->events, EventTypeEnum(iterator->events) ^ EventTypeEnum((events));
-            EventTypeEnum(iterator->events) ^= EventTypeEnum(events);
+            // remove the bits of events
+            iterator->events = EventTypeEnum(iterator->events) ^ events;
             if (iterator->events == EventType::NONE) {
                 if (!_locked) {
                     _callbacks.erase(iterator);

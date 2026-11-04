@@ -4,16 +4,18 @@
 
 #pragma once
 
-#include "./stl_ext/non_std.h"
+#include <array>
+#include <iterator>
+#include <new>
+#include <utility>
+#include <algorithm>
+#include "non_std.h"
 
 #if defined(ARDUINO)
 #include <Print.h>
 #endif
 
-#pragma push_macro("new")
-#undef new
-
-namespace STL_STD_EXT_NAMESPACE_EX {
+namespace stdex {
 
     template<class _Ty, size_t SIZE>
     class fixed_circular_buffer {
@@ -310,12 +312,12 @@ namespace STL_STD_EXT_NAMESPACE_EX {
 
         inline __attribute__((__always_inline__))
         const_reference front() const {
-            return front();
+            return *begin();
         }
 
         inline __attribute__((__always_inline__))
         const_reference back() const {
-            return back();
+            return *std::prev(end());
         }
 
         inline __attribute__((__always_inline__))
@@ -330,12 +332,12 @@ namespace STL_STD_EXT_NAMESPACE_EX {
 
         inline __attribute__((__always_inline__))
         const_iterator begin() const {
-            return const_iterator(*this, (const_pointer)&_values.data()[_read_position]);
+            return const_iterator(*this, _values.data() + _read_position);
         }
 
         inline __attribute__((__always_inline__))
             const_iterator end() const {
-            return const_iterator(*this, (const_pointer)&_values.data()[_count]);
+            return const_iterator(*this, _values.data() + _count);
         }
 
         inline __attribute__((__always_inline__))
@@ -371,12 +373,7 @@ namespace STL_STD_EXT_NAMESPACE_EX {
     private:
         inline __attribute__((__always_inline__))
         constexpr const_pointer _begin() const {
-            return (const_pointer)&_values[0];
-        }
-
-        inline __attribute__((__always_inline__))
-        constexpr const_pointer _end() const {
-            return (const_pointer)&_values[SIZE];
+            return _values.data();
         }
 
     private:
@@ -387,5 +384,3 @@ namespace STL_STD_EXT_NAMESPACE_EX {
     };
 
 }
-
-#pragma pop_macro("new")

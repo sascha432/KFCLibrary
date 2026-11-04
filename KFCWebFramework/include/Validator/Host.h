@@ -26,7 +26,7 @@ namespace FormUI {
             {
                 // add default value if set to empty online
                 if (_allowedTypes == AllowedType::EMPTY) {
-                    AllowedTypeEnum(_allowedTypes) |= AllowedTypeEnum(AllowedTypeEnum::Enum::HOST_OR_IP);
+                    _allowedTypes = AllowedTypeEnum(_allowedTypes) | AllowedType::HOST_OR_IP;
                 }
                 __LDBG_assertf(allowedTypes != AllowedType::NONE, "allowed type NONE");
             }

@@ -48,17 +48,12 @@ DebugHandle::DebugHandle(DebugHandle &&handle) noexcept :
 {
 }
 
-#pragma push_macro("new")
-#undef new
-
 DebugHandle &DebugHandle::operator=(DebugHandle &&handle) noexcept
 {
     this->~DebugHandle();
     ::new(static_cast<void *>(this)) DebugHandle(std::move(handle));
     return *this;
 }
-
-#pragma pop_macro("new")
 
 DebugHandle::DebugHandle() :
     _name((char *)emptyString.c_str()),

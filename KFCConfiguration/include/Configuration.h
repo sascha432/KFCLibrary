@@ -11,8 +11,6 @@
 #include <PrintString.h>
 #include <crc16.h>
 #include <list>
-#include <stl_ext/chunked_list.h>
-#include <stl_ext/is_trivially_copyable.h>
 #include <type_traits>
 #include <vector>
 #include <EventScheduler.h>
@@ -203,7 +201,6 @@ public:
     // iterators must not change when the list is modified
     using ParameterList = std::list<ConfigurationParameter>;
 
-    // using ParameterList = stdex::chunked_list<ConfigurationParameter, 6>;
     // static constexpr size_t ParameterListChunkSize = ParameterList::chunk_element_count * 8 + sizeof(uint32_t); ; //ParameterList::chunk_size;
 
     // Offset 0

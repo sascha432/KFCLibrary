@@ -174,24 +174,12 @@ extern "C" bool gdb_present(void);
 #endif
 
 #include "FileOpenMode.h"
-#include "constexpr_tools.h"
 #include <stl_ext/utility.h>
-
-#if __GNUC__
 
 static size_t constexpr constexpr_strlen(const char *str) noexcept
 {
     return __builtin_strlen(str);
 }
-
-#else
-
-constexpr size_t constexpr_strlen(const char *s) noexcept
-{
-    return s ? (*s ? 1 + constexpr_strlen(s + 1) : 0) : 0;
-}
-
-#endif
 
 #ifndef _STRINGIFY
 #define _STRINGIFY(...)                     ___STRINGIFY(__VA_ARGS__)
@@ -206,14 +194,6 @@ constexpr size_t constexpr_strlen(const char *s) noexcept
 // equivalent to __FlashStringHelper/const char *
 // __FlashBufferHelper/const uint8_t *
 class __FlashBufferHelper;
-
-namespace __va_args__
-{
-    template<typename ...Args>
-    constexpr std::size_t va_count(Args &&...) { return sizeof...(Args); }
-}
-
-#define __VA_ARGS_COUNT__(...)                          __va_args__::va_count(__VA_ARGS__)
 
 
 #define DUMP_BINARY_DEFAULTS ~0U

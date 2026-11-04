@@ -78,8 +78,6 @@ void *__validatePointer(const void *ptr, ValidatePointerType type, const char *f
 // use with "build_flags = -finstrument-functions"
 #if HAVE_INSTRUMENT_FUNCTIONS
 
-#include <stl_ext/fixed_circular_buffer>
-
 extern "C" {
 
     void __cyg_profile_func_enter (void *this_fn, void *call_site) {

@@ -6,7 +6,6 @@
 
 #include <Arduino_compat.h>
 #include "GFXCanvasConfig.h"
-#include "GFXCanvasBufferPool.h"
 
 #include <debug_helper.h>
 

@@ -69,9 +69,6 @@ extern "C" {
         ~InterruptLock() {
             portEXIT_CRITICAL_SAFE(&_mux);
         }
-        static constexpr uint32_t savedInterruptLevel() {
-            return 0;
-        }
         portMUX_TYPE _mux;
     };
 
@@ -82,24 +79,7 @@ extern "C" {
 
 #else
 
-    struct InterruptLock {
-        InterruptLock() {
-        }
-        ~InterruptLock() {
-        }
-        static constexpr uint32_t savedInterruptLevel() {
-            return 0;
-        }
-    };
-
-    inline static auto __start = std::chrono::steady_clock::now();
-
-    inline uint64_t millis64()
-    {
-        auto time = std::chrono::steady_clock::now();
-        auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(time - __start);
-        return elapsed.count();
-    }
+    #error Platform not supported
 
 #endif
 
@@ -499,39 +479,27 @@ inline IPAddress convertToIPAddress(const String &hostname)
     return convertToIPAddress(hostname.c_str());
 }
 
-#define __PP_CAT(a, b)                  __PP_CAT_I(a, b)
-#define __PP_CAT_I(a, b)                __PP_CAT_II(~, a ## b)
-#define __PP_CAT_II(p, res)             res
-#define __UNIQUE_NAME(base)             __PP_CAT(__PP_CAT(__PP_CAT(base, __COUNTER__), _), __LINE__)
+#define __UNIQUE_NAME(base)             KFC_PP_CAT(KFC_PP_CAT(KFC_PP_CAT(base, __COUNTER__), _), __LINE__)
 
 uint8_t numberOfSetBits(uint32_t i);
 uint8_t numberOfSetBits(uint16_t i);
 
 // #include "BitsToStr.h"
 
-constexpr size_t kNumBitsRequired(int value, int n = 0) {
-	return value ? kNumBitsRequired(value >> 1, n + 1) : n;
+// number of bits required to store the unsigned value
+constexpr size_t kNumBitsRequired(unsigned value)
+{
+    size_t bits = 0;
+    for (; value; value >>= 1) {
+        bits++;
+    }
+    return bits;
 }
 
 template<typename T>
-constexpr size_t kNumBitsRequired(T value) {
-    return kNumBitsRequired((int)value, 0);
-}
-
-template<typename T>
-constexpr size_t kNumBitsRequired() {
-    return kNumBitsRequired((int)T::MAX - 1, 0);
-}
-
-constexpr size_t _kGetRequiredBitsForValue(uint64_t value, size_t count = 0);
-
-constexpr size_t _kGetRequiredBitsForValue(uint64_t value, size_t count) {
-    return value == 0 ? count : _kGetRequiredBitsForValue(value >> 1, count + 1);
-}
-
-// get number of bits to store value
-constexpr size_t kGetRequiredBitsForValue(int64_t value, size_t count) {
-    return value == 0 ? count : value < 0 ? _kGetRequiredBitsForValue(static_cast<uint64_t>(-value), 1) : _kGetRequiredBitsForValue(value >> 1, count + 1);
+constexpr size_t kNumBitsRequired()
+{
+    return kNumBitsRequired(static_cast<unsigned>(T::MAX) - 1);
 }
 
 // this functions downcasts the end (i.e. millis() or micros()) to the same type that an overrun does not affect the time measured
@@ -543,14 +511,6 @@ Ta get_time_since(Ta start, Tb end)
     static_assert(std::is_unsigned_v<Ta>, "start must be unsigned");
     static_assert(sizeof(Ta) <= sizeof(Tb), "start type must be the same size or smaller than the provided end time");
     return static_cast<Ta>(end) - start;
-}
-
-// check if a certain duration has been passed
-
-template <typename Ta, typename Tb>
-Ta has_duration_passed(Ta start, Tb end, Ta duration)
-{
-    return (get_time_since<Ta, Tb>) > duration;
 }
 
 // get millis() and never return 0
@@ -567,34 +527,9 @@ decltype(millis()) millis_not_zero(decltype(millis()) value = 1)
     return value;
 }
 
-#ifdef max
-#undef max
-#endif
-
-#ifdef min
-#undef min
-#endif
-
-#include <stl_ext/algorithm>
-
-// get number of bits to store values between from and to
-constexpr size_t kGetRequiredBitsForRange(int64_t from, int64_t to) {
-    return from < 0 || to < 0 ?
-        std::max(_kGetRequiredBitsForValue(static_cast<uint64_t>(-std::min<int64_t>(from, to)), 1), _kGetRequiredBitsForValue(-from + to + 1, from <= 0 && to <= 0 ? 0 : 1)) :
-        std::max(_kGetRequiredBitsForValue(std::max<uint64_t>(from, to), 0), _kGetRequiredBitsForValue(from + to));
-}
-
-// get number of bits for values from 0 to (num - offset)
-constexpr size_t kGetRequiredBitsWithOffset(uint64_t offset, uint64_t num) {
-    return offset > num ? _kGetRequiredBitsForValue(offset - num, 1) : _kGetRequiredBitsForValue(num - offset);
-}
-
-constexpr uint32_t kCreateIPv4Address(uint8_t a, uint8_t b, uint8_t c, uint8_t d) {
-	return a | (b << 8U) | (c << 16U) | (d << 24U);
-}
-
-inline uint32_t createIPv4Address(uint8_t a, uint8_t b, uint8_t c, uint8_t d) {
-    return a | (b << 8U) | (c << 16U) | (d << 24U);
+constexpr uint32_t createIPv4Address(uint8_t a, uint8_t b, uint8_t c, uint8_t d)
+{
+    return a | (b << 8U) | (c << 16U) | (static_cast<uint32_t>(d) << 24U);
 }
 
 #define CREATE_ENUM_BITFIELD_SIZE(name, size, enum_type, underlying_type, underlying_type_name) \

@@ -30,8 +30,13 @@ namespace PinMonitor {
             const GPIOMaskType mask;
 
             template<typename _Ta>
-            static constexpr GPIOMaskType mask_of(const _Ta &arr, const size_t index = 0, const GPIOMaskType mask = 0) {
-                return index < arr.size() ? (GPIO_PIN_TO_MASK(arr[index]) | mask_of(arr, index + 1, mask)) : mask;
+            static constexpr GPIOMaskType mask_of(const _Ta &arr)
+            {
+                GPIOMaskType mask = 0;
+                for (const auto pin : arr) {
+                    mask |= GPIO_PIN_TO_MASK(pin);
+                }
+                return mask;
             }
         };
 

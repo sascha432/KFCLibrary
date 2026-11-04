@@ -13,8 +13,13 @@
 
 namespace ProgMemHelper {
 
-    constexpr size_t indexDigits(size_t value) {
-        return value < 10 ? 1 : 1 + indexDigits(value / 10);
+    constexpr size_t indexDigits(size_t value)
+    {
+        size_t digits = 1;
+        for (; value >= 10; value /= 10) {
+            digits++;
+        }
+        return digits;
     }
 
     // "<text><sep><from>" ... "<text><sep><to - 1>" in one block with a fixed stride, the compiler

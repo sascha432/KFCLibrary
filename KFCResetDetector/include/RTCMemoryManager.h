@@ -233,14 +233,14 @@ public:
     static constexpr uint16_t kHeaderAddress = (kHeaderOffset / kBlockSize) + kBaseAddress;
 
     inline static bool _isAligned(size_t len) {
-        if  __CONSTEXPR17 (kBlockSize > 1) {
+        if constexpr (kBlockSize > 1) {
             return (len % kBlockSize) == 0;
         }
         return true;
     }
 
     inline static uint16_t _getAlignedLength(uint16_t len) {
-        if  __CONSTEXPR17 (kBlockSize > 1) {
+        if constexpr (kBlockSize > 1) {
             return ((len + (kBlockSize - 1)) / kBlockSize) * kBlockSize;
         }
         return len;

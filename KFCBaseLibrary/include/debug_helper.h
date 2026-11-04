@@ -8,7 +8,6 @@
 #include <Print.h>
 // #include <StreamWrapper.h>
 #include <vector>
-#include "constexpr_tools.h"
 #include "section_defines.h"
 
 #define __DEBUG_FUNCTION__                                  __FUNCTION__
@@ -17,16 +16,25 @@
 #define DEBUG_VT100_SUPPORT                                 1
 #endif
 
-#if 1
-#define __BASENAME_FILE__                                   StringConstExpr::basename(__FILE__)
-#else
-#define __BASENAME_FILE__                                   __FILE__
-#endif
+// file name without the path, GCC folds __builtin_strrchr on a string literal at compile time
+constexpr const char *debug_helper_basename(const char *path) noexcept
+{
+    const char *base = path;
+    if (const char *ptr = __builtin_strrchr(base, '/')) {
+        base = ptr + 1;
+    }
+    if (const char *ptr = __builtin_strrchr(base, '\\')) {
+        base = ptr + 1;
+    }
+    return base;
+}
 
-// invokes panic() on ESP8266/32, calls __debugbreak() with visual studio to intercept and debug the error
-extern int ___debugbreak_and_panic(const char *filename, int line, const char *function);
+#define __BASENAME_FILE__                                   debug_helper_basename(__FILE__)
 
-#define __debugbreak_and_panic()                            ___debugbreak_and_panic(__BASENAME_FILE__, __LINE__, __DEBUG_FUNCTION__)
+// prints the source position and invokes panic()
+extern int ___debug_panic_at(const char *filename, int line, const char *function);
+
+#define __DBG_panic_at()                                    ___debug_panic_at(__BASENAME_FILE__, __LINE__, __DEBUG_FUNCTION__)
 
 #if DEBUG
 
@@ -123,7 +131,7 @@ inline _Ta *__validatePointer(const _Ta *ptr, ValidatePointerType type, const ch
 #define __DBG_printf_W(fmt, ...)                            debug_printf(PSTR(_VT100(yellow) fmt _VT100(reset) __DBG_newline), ##__VA_ARGS__)
 #define __DBG_printf_N(fmt, ...)                            debug_printf(PSTR(_VT100(bold_green) fmt _VT100(reset) __DBG_newline), ##__VA_ARGS__)
 #define __DBG_println()                                     debug_print(F(__DBG_newline))
-#define __DBG_panic(fmt, ...)                               (DEBUG_OUTPUT.printf_P(PSTR(_VT100(bold_red) fmt _VT100(reset) __DBG_newline), ##__VA_ARGS__) && __debugbreak_and_panic())
+#define __DBG_panic(fmt, ...)                               (DEBUG_OUTPUT.printf_P(PSTR(_VT100(bold_red) fmt _VT100(reset) __DBG_newline), ##__VA_ARGS__) && __DBG_panic_at())
 #define __DBG_assert(cond)                                  (!(cond) ? (__DBG_print(_VT100(bold_red) "assert( " _STRINGIFY(cond) ") FAILED" _VT100(reset)) && DebugContext::reportAssert(DebugContext_ctor(), F(_STRINGIFY(cond)))) : false)
 #define __DBG_assertf(cond, fmt, ...)                 (!(cond) ? (__DBG_print(_VT100(bold_red) "assert( " _STRINGIFY(cond) ") FAILED") && __DBG_printf(fmt _VT100(reset), ##__VA_ARGS__) && DebugContext::reportAssert(DebugContext_ctor(), F(_STRINGIFY(cond)))) : false)
 #define __DBG_assert_panic(cond, fmt, ...)                  (__DBG_assert(cond) ? __DBG_panic(fmt, ##__VA_ARGS__) : false)
@@ -304,15 +312,6 @@ static inline int DEBUG_OUTPUT_flush() {
 #define DEBUG_SOURCE_PASS_ARGS
 #define DEBUG_SOURCE_APPEND_ARGS
 #define DEBUG_SOURCE_FORMAT
-
-// MSVC version
-
-#ifndef _ASSERTE
-#define _ASSERTE(cond)                                      __DBG_assert(cond)
-#endif
-#ifndef _ASSERT_EXPR
-#define _ASSERT_EXPR(cond, fmt, ...)                        __DBG_assertf(cond, fmt, ##__VA_ARGS__)
-#endif
 
 // new functions
 

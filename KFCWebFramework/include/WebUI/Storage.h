@@ -459,7 +459,7 @@ namespace FormUI {
             }
 
             template <class _Ta>
-            class compare_type : public non_std::unary_function<_Ta, bool>
+            class compare_type
             {
             protected:
                 _Ta _type;
