@@ -169,6 +169,11 @@ public:
         return MenuItem(id, *this);
     }
 
+    // gives back the capacity the item list kept from growing, once the menu is complete
+    void shrinkToFit() {
+        _items.shrink_to_fit();
+    }
+
     MenuItem addMenu(StaticString &&label, menu_item_id_t afterId = menu_item_id_t()) {
 	    return MenuItem(_add(std::move(Item(*this, std::move(label), std::move(StaticString()))), afterId), *this);
     }
